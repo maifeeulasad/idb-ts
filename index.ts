@@ -1,20 +1,15 @@
 import 'reflect-metadata';
 
-
-interface UniqueFieldMetadata {
-  keyPath: string;
-}
-
-function Unique(): PropertyDecorator {
+function KeyPath(): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
-    const existingKeys: string[] = Reflect.getMetadata("unique", constructor) || [];
-    Reflect.defineMetadata("unique", [...existingKeys, propertyKey as string], constructor);
+    const existingKeys: string[] = Reflect.getMetadata("keypath", constructor) || [];
+    Reflect.defineMetadata("keypath", [...existingKeys, propertyKey as string], constructor);
   };
 }
 
 class User {
-  @Unique()
+  @KeyPath()
   name: string;
   age: number;
   cell?: string;
@@ -43,13 +38,13 @@ class UserDatabase {
     request.onupgradeneeded = (event) => {
       const db = request.result;
       if (!db.objectStoreNames.contains(this.storeName)) {
-        const uniqueFields = Reflect.getMetadata("unique", User) || [];
+        const keyPathFields = Reflect.getMetadata("keypath", User) || [];
 
-        if (uniqueFields.length === 0) {
-          throw new Error("No unique field defined for the object store.");
+        if (keyPathFields.length === 0) {
+          throw new Error("No keypath field defined for the object store.");
         }
 
-        db.createObjectStore(this.storeName, { keyPath: uniqueFields[0] });
+        db.createObjectStore(this.storeName, { keyPath: keyPathFields[0] });
       }
     };
 
