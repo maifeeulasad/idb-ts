@@ -2,9 +2,10 @@
   "name": "idb-crud",
   "version": "0.0.1",
   "description": "Easy CRUD for indexed-db, written in TypeScript",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "npm run build",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -21,5 +22,8 @@
     "url": "https://github.com/maifeeulasad/idb-crud/issues"
   },
   "files": ["lib"],
-  "homepage": "https://github.com/maifeeulasad/idb-crud#readme"
+  "homepage": "https://github.com/maifeeulasad/idb-crud#readme",
+  "devDependencies": {
+    "typescript": "^4.6.3"
+  }
 }
