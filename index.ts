@@ -3,14 +3,24 @@ import 'reflect-metadata';
 function KeyPath(): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
-    const existingKeys: string[] = Reflect.getMetadata("keypath", constructor) || [];
-    if (existingKeys.length > 0) {
-      throw new Error("Only one keypath can be annotated.");
-    }
     Reflect.defineMetadata("keypath", [propertyKey as string], constructor);
   };
 }
 
+function DataClass(): ClassDecorator {
+  return (target: Function) => {
+    if (!Reflect.getMetadata("keypath", target)) {
+      throw new Error(`No keypath field defined for the class ${target.name}.`);
+    }
+    const keyPathFields = Reflect.getMetadata("keypath", target) || [];
+    if (keyPathFields.length > 1) {
+      throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
+    }
+    Reflect.defineMetadata("dataclass", true, target);
+  };
+}
+
+@DataClass()
 class User {
   @KeyPath()
   name: string;
@@ -26,6 +36,7 @@ class User {
   }
 }
 
+@DataClass()
 class Location {
   @KeyPath()
   id: string;
@@ -46,6 +57,9 @@ class Database {
 
   constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
+    if (!classes.every(cls => Reflect.getMetadata("dataclass", cls))) {
+      throw new Error("All classes should be decorated with @DataClass.");
+    }
     this.classes = classes;
     this.initDB();
   }
@@ -58,10 +72,6 @@ class Database {
 
       this.classes.forEach((cls) => {
         const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
-
-        if (keyPathFields.length === 0) {
-          throw new Error(`No keypath field defined for the class ${cls.name}.`);
-        }
 
         const storeName = cls.name.toLowerCase() + "s";
 
