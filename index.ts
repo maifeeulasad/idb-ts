@@ -4,7 +4,10 @@ function KeyPath(): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
     const existingKeys: string[] = Reflect.getMetadata("keypath", constructor) || [];
-    Reflect.defineMetadata("keypath", [...existingKeys, propertyKey as string], constructor);
+    if (existingKeys.length > 0) {
+      throw new Error("Only one keypath can be annotated.");
+    }
+    Reflect.defineMetadata("keypath", [propertyKey as string], constructor);
   };
 }
 
