@@ -26,62 +26,83 @@ class User {
   }
 }
 
-class UserDatabase {
-  private dbName = "UserDB";
-  private storeName = "users";
+class Location {
+  @KeyPath()
+  id: string;
+  city: string;
+  country: string;
+
+  constructor(id: string, city: string, country: string) {
+    this.id = id;
+    this.city = city;
+    this.country = country;
+  }
+}
+
+class Database {
+  private dbName: string;
+  private classes: Function[];
   private db: IDBDatabase | null = null;
 
-  constructor() {
+  constructor(dbName: string, classes: Function[]) {
+    this.dbName = dbName;
+    this.classes = classes;
     this.initDB();
   }
 
   private initDB(): void {
     const request = indexedDB.open(this.dbName, 1);
 
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = () => {
       const db = request.result;
-      if (!db.objectStoreNames.contains(this.storeName)) {
-        const keyPathFields = Reflect.getMetadata("keypath", User) || [];
+
+      this.classes.forEach((cls) => {
+        const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
 
         if (keyPathFields.length === 0) {
-          throw new Error("No keypath field defined for the object store.");
+          throw new Error(`No keypath field defined for the class ${cls.name}.`);
         }
 
-        db.createObjectStore(this.storeName, { keyPath: keyPathFields[0] });
-      }
+        const storeName = cls.name.toLowerCase() + "s";
+
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+        }
+      });
     };
 
     request.onsuccess = () => {
       this.db = request.result;
-      console.log("Database initialized.");
+      console.log(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", " )}`);
     };
 
-    request.onerror = (event) => {
+    request.onerror = () => {
       console.error("Error initializing database:", request.error);
     };
   }
 
-  private getObjectStore(mode: IDBTransactionMode): IDBObjectStore {
+  private getObjectStore(className: string, mode: IDBTransactionMode): IDBObjectStore {
     if (!this.db) {
       throw new Error("Database not initialized.");
     }
-    const transaction = this.db.transaction(this.storeName, mode);
-    return transaction.objectStore(this.storeName);
+    const storeName = className.toLowerCase() + "s";
+    const transaction = this.db.transaction(storeName, mode);
+    return transaction.objectStore(storeName);
   }
 
-  async createUser(user: User): Promise<void> {
+  async create<T>(cls: { new (...args: any[]): T }, item: T): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const store = this.getObjectStore("readwrite");
-        const request = store.add(user);
+        const store = this.getObjectStore(cls.name, "readwrite");
+        const request = store.add(item);
 
         request.onsuccess = () => {
-          console.log("User added:", user);
+          console.log(`Item added to ${cls.name}:`, item);
           resolve();
         };
 
         request.onerror = () => {
-          console.error("Error adding user:", request.error);
+          console.error(`Error adding item to ${cls.name}:`, request.error);
           reject(request.error);
         };
       } catch (error) {
@@ -90,19 +111,19 @@ class UserDatabase {
     });
   }
 
-  async readUser(name: string): Promise<User | undefined> {
+  async read<T>(cls: { new (...args: any[]): T }, key: string): Promise<T | undefined> {
     return new Promise((resolve, reject) => {
       try {
-        const store = this.getObjectStore("readonly");
-        const request = store.get(name);
+        const store = this.getObjectStore(cls.name, "readonly");
+        const request = store.get(key);
 
         request.onsuccess = () => {
-          console.log("User read:", request.result);
-          resolve(request.result as User | undefined);
+          console.log(`Item read from ${cls.name}:`, request.result);
+          resolve(request.result as T | undefined);
         };
 
         request.onerror = () => {
-          console.error("Error reading user:", request.error);
+          console.error(`Error reading item from ${cls.name}:`, request.error);
           reject(request.error);
         };
       } catch (error) {
@@ -111,19 +132,19 @@ class UserDatabase {
     });
   }
 
-  async updateUser(user: User): Promise<void> {
+  async update<T>(cls: { new (...args: any[]): T }, item: T): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const store = this.getObjectStore("readwrite");
-        const request = store.put(user);
+        const store = this.getObjectStore(cls.name, "readwrite");
+        const request = store.put(item);
 
         request.onsuccess = () => {
-          console.log("User updated:", user);
+          console.log(`Item updated in ${cls.name}:`, item);
           resolve();
         };
 
         request.onerror = () => {
-          console.error("Error updating user:", request.error);
+          console.error(`Error updating item in ${cls.name}:`, request.error);
           reject(request.error);
         };
       } catch (error) {
@@ -132,19 +153,19 @@ class UserDatabase {
     });
   }
 
-  async deleteUser(name: string): Promise<void> {
+  async delete<T>(cls: { new (...args: any[]): T }, key: string): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        const store = this.getObjectStore("readwrite");
-        const request = store.delete(name);
+        const store = this.getObjectStore(cls.name, "readwrite");
+        const request = store.delete(key);
 
         request.onsuccess = () => {
-          console.log("User deleted:", name);
+          console.log(`Item deleted from ${cls.name}:`, key);
           resolve();
         };
 
         request.onerror = () => {
-          console.error("Error deleting user:", request.error);
+          console.error(`Error deleting item from ${cls.name}:`, request.error);
           reject(request.error);
         };
       } catch (error) {
@@ -153,19 +174,19 @@ class UserDatabase {
     });
   }
 
-  async listUsers(): Promise<User[]> {
+  async list<T>(cls: { new (...args: any[]): T }): Promise<T[]> {
     return new Promise((resolve, reject) => {
       try {
-        const store = this.getObjectStore("readonly");
+        const store = this.getObjectStore(cls.name, "readonly");
         const request = store.getAll();
 
         request.onsuccess = () => {
-          console.log("All users:", request.result);
-          resolve(request.result as User[]);
+          console.log(`All items from ${cls.name}:`, request.result);
+          resolve(request.result as T[]);
         };
 
         request.onerror = () => {
-          console.error("Error listing users:", request.error);
+          console.error(`Error listing items from ${cls.name}:`, request.error);
           reject(request.error);
         };
       } catch (error) {
@@ -177,30 +198,33 @@ class UserDatabase {
 
 // Example usage:
 (async () => {
-  const db = new UserDatabase();
+  const db = new Database("AppDB", [User, Location]);
 
   // Wait for the DB to initialize
   setTimeout(async () => {
     const alice = new User("Alice", 25, "123 Main St");
-    const bob = new User("Bob", 30, "456 Elm St", "123-456-7890");
+    const nyc = new Location("1", "New York", "USA");
 
-    await db.createUser(alice);
-    await db.createUser(bob);
+    await db.create(User, alice);
+    await db.create(Location, nyc);
 
-    const readAlice = await db.readUser("Alice");
+    const readAlice = await db.read(User, "Alice");
     console.log("Read user:", readAlice);
 
     alice.age = 26;
     alice.address = "789 Maple St";
-    await db.updateUser(alice);
+    await db.update(User, alice);
 
-    const users = await db.listUsers();
+    const users = await db.list(User);
     console.log("All users:", users);
 
-    await db.deleteUser("Bob");
-    console.log("User Bob deleted.");
+    await db.delete(User, "Alice");
+    console.log("User Alice deleted.");
 
-    const remainingUsers = await db.listUsers();
+    const remainingUsers = await db.list(User);
     console.log("Remaining users:", remainingUsers);
+
+    const locations = await db.list(Location);
+    console.log("All locations:", locations);
   }, 1000);
 })();
