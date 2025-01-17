@@ -21,9 +21,12 @@
   "bugs": {
     "url": "https://github.com/maifeeulasad/idb-crud/issues"
   },
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "homepage": "https://github.com/maifeeulasad/idb-crud#readme",
   "devDependencies": {
+    "reflect-metadata": "^0.2.2",
     "typescript": "^4.6.3"
   }
 }
