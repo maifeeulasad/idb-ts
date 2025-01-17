@@ -1,5 +1,5 @@
 {
-  "name": "idb-crud",
+  "name": "idb-ts",
   "version": "0.0.1",
   "description": "Easy CRUD for indexed-db, written in TypeScript",
   "main": "index.ts",
