@@ -6,11 +6,20 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maifeeulasad/idb-crud.git"
+  },
   "keywords": [
     "idb",
     "ts",
     "indexed-db"
   ],
   "author": "Maifee Ul Asad <maifeeulasad@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/maifeeulasad/idb-crud/issues"
+  },
+  "files": ["lib"],
+  "homepage": "https://github.com/maifeeulasad/idb-crud#readme"
 }
