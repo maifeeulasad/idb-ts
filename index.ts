@@ -1,8 +1,31 @@
-interface IUser {
+import 'reflect-metadata';
+
+
+interface UniqueFieldMetadata {
+  keyPath: string;
+}
+
+function Unique(): PropertyDecorator {
+  return (target: Object, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    const existingKeys: string[] = Reflect.getMetadata("unique", constructor) || [];
+    Reflect.defineMetadata("unique", [...existingKeys, propertyKey as string], constructor);
+  };
+}
+
+class User {
+  @Unique()
   name: string;
   age: number;
   cell?: string;
   address: string;
+
+  constructor(name: string, age: number, address: string, cell?: string) {
+    this.name = name;
+    this.age = age;
+    this.address = address;
+    this.cell = cell;
+  }
 }
 
 class UserDatabase {
@@ -20,7 +43,13 @@ class UserDatabase {
     request.onupgradeneeded = (event) => {
       const db = request.result;
       if (!db.objectStoreNames.contains(this.storeName)) {
-        db.createObjectStore(this.storeName, { keyPath: "name" }); // Assuming 'name' is unique
+        const uniqueFields = Reflect.getMetadata("unique", User) || [];
+
+        if (uniqueFields.length === 0) {
+          throw new Error("No unique field defined for the object store.");
+        }
+
+        db.createObjectStore(this.storeName, { keyPath: uniqueFields[0] });
       }
     };
 
@@ -42,7 +71,7 @@ class UserDatabase {
     return transaction.objectStore(this.storeName);
   }
 
-  async createUser(user: IUser): Promise<void> {
+  async createUser(user: User): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         const store = this.getObjectStore("readwrite");
@@ -63,7 +92,7 @@ class UserDatabase {
     });
   }
 
-  async readUser(name: string): Promise<IUser | undefined> {
+  async readUser(name: string): Promise<User | undefined> {
     return new Promise((resolve, reject) => {
       try {
         const store = this.getObjectStore("readonly");
@@ -71,7 +100,7 @@ class UserDatabase {
 
         request.onsuccess = () => {
           console.log("User read:", request.result);
-          resolve(request.result);
+          resolve(request.result as User | undefined);
         };
 
         request.onerror = () => {
@@ -84,7 +113,7 @@ class UserDatabase {
     });
   }
 
-  async updateUser(user: IUser): Promise<void> {
+  async updateUser(user: User): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         const store = this.getObjectStore("readwrite");
@@ -126,7 +155,7 @@ class UserDatabase {
     });
   }
 
-  async listUsers(): Promise<IUser[]> {
+  async listUsers(): Promise<User[]> {
     return new Promise((resolve, reject) => {
       try {
         const store = this.getObjectStore("readonly");
@@ -134,7 +163,7 @@ class UserDatabase {
 
         request.onsuccess = () => {
           console.log("All users:", request.result);
-          resolve(request.result);
+          resolve(request.result as User[]);
         };
 
         request.onerror = () => {
@@ -154,13 +183,18 @@ class UserDatabase {
 
   // Wait for the DB to initialize
   setTimeout(async () => {
-    await db.createUser({ name: "Alice", age: 25, address: "123 Main St" });
-    await db.createUser({ name: "Bob", age: 30, cell: "123-456-7890", address: "456 Elm St" });
+    const alice = new User("Alice", 25, "123 Main St");
+    const bob = new User("Bob", 30, "456 Elm St", "123-456-7890");
 
-    const alice = await db.readUser("Alice");
-    console.log("Read user:", alice);
+    await db.createUser(alice);
+    await db.createUser(bob);
 
-    await db.updateUser({ name: "Alice", age: 26, address: "789 Maple St" });
+    const readAlice = await db.readUser("Alice");
+    console.log("Read user:", readAlice);
+
+    alice.age = 26;
+    alice.address = "789 Maple St";
+    await db.updateUser(alice);
 
     const users = await db.listUsers();
     console.log("All users:", users);
