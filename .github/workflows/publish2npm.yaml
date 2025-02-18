@@ -19,8 +19,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: ${{ matrix.registry-url }}
-      - name: 'Installing deps'
-        run: npm i
+      - name: 'Installing prod deps'
+        run: npm ci
       - name: 'Build'
         run: npm run build
       - name: 'Publish'
