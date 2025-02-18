@@ -25,16 +25,21 @@ class Database {
   private classes: Function[];
   private db: IDBDatabase | null = null;
 
-  constructor(dbName: string, classes: Function[]) {
+  private constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
     if (!classes.every(cls => Reflect.getMetadata("dataclass", cls))) {
       throw new Error("All classes should be decorated with @DataClass.");
     }
     this.classes = classes;
-    this.initDB();
   }
 
-  private initDB(): Promise<void | Error> {
+  static async build(dbName: string, classes: Function[]): Promise<Database> {
+    const instance = new Database(dbName, classes);
+    await instance.initDB();
+    return instance;
+  }
+
+  private async initDB(): Promise<void> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, 1);
 
