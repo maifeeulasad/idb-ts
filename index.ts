@@ -34,31 +34,35 @@ class Database {
     this.initDB();
   }
 
-  private initDB(): void {
-    const request = indexedDB.open(this.dbName, 1);
+  private initDB(): Promise<void | Error> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, 1);
 
-    request.onupgradeneeded = () => {
-      const db = request.result;
+      request.onupgradeneeded = () => {
+        const db = request.result;
 
-      this.classes.forEach((cls) => {
-        const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
+        this.classes.forEach((cls) => {
+          const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
 
-        const storeName = cls.name.toLowerCase() + "s";
+          const storeName = cls.name.toLowerCase() + "s";
 
-        if (!db.objectStoreNames.contains(storeName)) {
-          db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
-        }
-      });
-    };
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+          }
+        });
+      };
 
-    request.onsuccess = () => {
-      this.db = request.result;
-      console.log(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", ")}`);
-    };
+      request.onsuccess = () => {
+        this.db = request.result;
+        console.log(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", ")}`);
+        resolve();
+      };
 
-    request.onerror = () => {
-      console.error("Error initializing database:", request.error);
-    };
+      request.onerror = () => {
+        console.error("Error initializing database:", request.error);
+        reject(request.error);
+      };
+    });
   }
 
   private getObjectStore(className: string, mode: IDBTransactionMode): IDBObjectStore {
