@@ -1,4 +1,9 @@
-# ts-indexeddb
+# idb-ts
+
+## Installation
+```
+npm i idb-ts
+```
 
 ## Example
 
@@ -65,3 +70,7 @@ console.log("Remaining users:", remainingUsers);
 const locations = await db.list(Location);
 console.log("All locations:", locations);
 ```
+
+## Links
+ - GitHub: https://github.com/maifeeulasad/idb-ts
+ - NPM: https://www.npmjs.com/package/idb-ts
