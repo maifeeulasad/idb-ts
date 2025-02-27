@@ -43,7 +43,7 @@ class Location {
 
 ### CRUD on DB
 ```
-const db = new Database("idb-crud", [User, Location]);
+const db = await Database.build("idb-crud", [User, Location]);
 
 const alice = new User("Alice", 25, "123 Main St");
 const nyc = new Location("1", "New York", "USA");
