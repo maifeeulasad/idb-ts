@@ -33,7 +33,7 @@ class Database {
     this.classes = classes;
   }
 
-  static async build(dbName: string, classes: Function[]): Promise<Database> {
+  public static async build(dbName: string, classes: Function[]): Promise<Database> {
     const instance = new Database(dbName, classes);
     await instance.initDB();
     return instance;
