@@ -5,7 +5,6 @@
   "license": "MIT",
   "homepage": ".",
   "dependencies": {
-    "@ant-design/pro-components": "^2.6.11",
     "@babel/core": "^7.26.7",
     "@babel/preset-env": "^7.26.0",
     "@testing-library/jest-dom": "^5.16.4",
@@ -18,7 +17,6 @@
     "rc-field-form": "^2.7.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-router-dom": "^6.17.0",
     "reflect-metadata": "^0.2.2",
     "typescript": "^4.6.4",
     "vite": "^6.1.0",
@@ -35,7 +33,6 @@
     "@types/react-dom": "^18.0.4",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
     "@typescript-eslint/parser": "^5.32.0",
-    "autoprefixer": "^10.4.8",
     "eslint": "^7.32.0 || ^8.2.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-typescript": "^17.0.0",
@@ -44,11 +41,8 @@
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
     "gh-pages": "^6.3.0",
-    "postcss": "^8.4.14",
     "rollup": "^2.79.2",
     "rollup-plugin-visualizer": "^5.8.0",
-    "sass": "^1.54.4",
-    "tailwindcss": "^3.1.7",
     "vite-plugin-radar": "^0.9.1"
   },
   "scripts": {
