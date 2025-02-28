@@ -28,8 +28,7 @@ jobs:
       working-directory: ./examples/vite+react
     - name: 'Deploy'
       uses: peaceiris/actions-gh-pages@v4
-      working-directory: ./examples/vite+react
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        publish_dir: ./build
+        publish_dir: ./examples/vite+react/build
         allow_empty_commit: true
