@@ -29,6 +29,6 @@ jobs:
     - name: 'Deploy'
       uses: peaceiris/actions-gh-pages@v4
       with:
-      deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-      publish_dir: ./examples/vite+react/build
-      allow_empty_commit: true
+        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        publish_dir: ./examples/vite+react/build
+        allow_empty_commit: true
