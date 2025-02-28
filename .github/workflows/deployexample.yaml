@@ -20,15 +20,16 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: 'Change directory to examples/vite+react'
-      run: cd examples/vite+react
     - name: 'Installing deps'    
       run: yarn
+      working-directory: ./examples/vite+react
     - name: 'Build'
       run: yarn build
+      working-directory: ./examples/vite+react
     - name: 'Deploy'
       uses: peaceiris/actions-gh-pages@v4
+      working-directory: ./examples/vite+react
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        publish_dir: ./examples/vite+react/build
+        publish_dir: ./build
         allow_empty_commit: true
