@@ -19,7 +19,7 @@ jobs:
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
-      node-version: ${{ matrix.node-version }}
+        node-version: ${{ matrix.node-version }}
     - name: 'Installing deps'    
       run: yarn
     - name: 'Change directory to examples/vite+react'
