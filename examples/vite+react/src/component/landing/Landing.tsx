@@ -1,7 +1,10 @@
-import React from 'react';
-import { Table, Button, Space, Modal, Input } from 'antd';
-import { useEffect, useState } from 'react';
-import { Database, DataClass, KeyPath } from 'idb-ts/lib';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Table, Button, Space, Modal, Input, notification } from 'antd';
+import { DataClass, KeyPath } from 'idb-ts/lib';
+
+import useIDBOperations from '../../hook/useIDBOperations';
+
+const Context = React.createContext({ name: 'Default' });
 
 @DataClass()
 class User {
@@ -34,23 +37,46 @@ class Location {
 }
 
 const Landing = () => {
+  const [api, contextHolder] = notification.useNotification();
+  const contextValue = useMemo(() => ({ name: 'idb-ts example' }), []);
+
+
+  const {
+    db,
+    loading,
+    error,
+    initializeDB,
+    createItem,
+    readItem,
+    updateItem,
+    deleteItem,
+    listItems,
+  } = useIDBOperations();
+
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [db, setDb] = useState<Database | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [isUserModalVisible, setIsUserModalVisible] = useState(false);
+  const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
+  const [newUser, setNewUser] = useState<User | null>(null);
+  const [newLocation, setNewLocation] = useState<Location | null>(null);
 
   useEffect(() => {
-    const initDb = async () => {
-      const database = await Database.build("idb-crud", [User, Location]);
-      setDb(database);
-      const usersList = await database.list(User);
-      setUsers(usersList);
-      const locationsList = await database.list(Location);
-      setLocations(locationsList);
-    };
-    initDb();
+    initializeDB("idb-crud", [User, Location]);
   }, []);
+
+  useEffect(() => {
+    if (db) {
+      const fetchData = async () => {
+        const usersList = await listItems(User);
+        const locationsList = await listItems(Location);
+        if (usersList) setUsers(usersList);
+        if (locationsList) setLocations(locationsList);
+      };
+      fetchData();
+    }
+  }, [db]);
 
   const userColumns = [
     { title: 'Name', dataIndex: 'name', key: 'name' },
@@ -62,8 +88,8 @@ const Landing = () => {
       key: 'action',
       render: (text: any, record: User) => (
         <Space size="middle">
-          <Button onClick={() => handleEditUser(record.name)}>Edit</Button>
-          <Button onClick={() => handleDeleteUser(record.name)}>Delete</Button>
+          <Button type='primary' onClick={() => { handleEditUser(record.name); setNewUser(record); }}>Edit</Button>
+          <Button type='primary' onClick={() => handleDeleteUser(record.name)}>Delete</Button>
         </Space>
       ),
     },
@@ -78,59 +104,46 @@ const Landing = () => {
       key: 'action',
       render: (text: any, record: Location) => (
         <Space size="middle">
-          <Button onClick={() => handleEditLocation(record.id)}>Edit</Button>
-          <Button onClick={() => handleDeleteLocation(record.id)}>Delete</Button>
+          <Button type='primary' onClick={() => { handleEditLocation(record.id); setNewLocation(record); }}>Edit</Button>
+          <Button type='primary' onClick={() => handleDeleteLocation(record.id)}>Delete</Button>
         </Space>
       ),
     },
   ];
 
   const handleDeleteUser = async (name: string) => {
-    if (db) {
-      await db.delete(User, name);
-      const updatedUsers = await db.list(User);
-      setUsers(updatedUsers);
-    }
+    await deleteItem(User, name);
+    const updatedUsers = await listItems(User);
+    if (updatedUsers) setUsers(updatedUsers);
   };
 
   const handleDeleteLocation = async (id: string) => {
-    if (db) {
-      await db.delete(Location, id);
-      const updatedLocations = await db.list(Location);
-      setLocations(updatedLocations);
-    }
+    await deleteItem(Location, id);
+    const updatedLocations = await listItems(Location);
+    if (updatedLocations) setLocations(updatedLocations);
   };
 
   const handleEditUser = async (name: string) => {
-    if (db) {
-      const user = await db.read(User, name);
-      setSelectedUser(user || null);
-      setIsUserModalVisible(true);
-    }
+    const user = await readItem(User, name);
+    setSelectedUser(user || null);
+    setIsUserModalVisible(true);
   };
 
   const handleEditLocation = async (id: string) => {
-    if (db) {
-      const location = await db.read(Location, id);
-      setSelectedLocation(location || null);
-      setIsLocationModalVisible(true);
-    }
+    const location = await readItem(Location, id);
+    setSelectedLocation(location || null);
+    setIsLocationModalVisible(true);
   };
 
-  const [isUserModalVisible, setIsUserModalVisible] = useState(false);
-  const [isLocationModalVisible, setIsLocationModalVisible] = useState(false);
-  const [newUser, setNewUser] = useState<User | null>(null);
-  const [newLocation, setNewLocation] = useState<Location | null>(null);
-
   const handleAddUser = async () => {
-    if (db && newUser) {
+    if (newUser) {
       if (selectedUser) {
-        await db.update(User, newUser);
+        await updateItem(User, newUser);
       } else {
-        await db.create(User, newUser);
+        await createItem(User, newUser);
       }
-      const updatedUsers = await db.list(User);
-      setUsers(updatedUsers);
+      const updatedUsers = await listItems(User);
+      if (updatedUsers) setUsers(updatedUsers);
       setIsUserModalVisible(false);
       setNewUser(null);
       setSelectedUser(null);
@@ -138,60 +151,81 @@ const Landing = () => {
   };
 
   const handleAddLocation = async () => {
-    if (db && newLocation) {
+    if (newLocation) {
       if (selectedLocation) {
-        await db.update(Location, newLocation);
+        await updateItem(Location, newLocation);
       } else {
-        await db.create(Location, newLocation);
+        await createItem(Location, newLocation);
       }
-      const updatedLocations = await db.list(Location);
-      setLocations(updatedLocations);
+      const updatedLocations = await listItems(Location);
+      if (updatedLocations) setLocations(updatedLocations);
       setIsLocationModalVisible(false);
       setNewLocation(null);
       setSelectedLocation(null);
     }
   };
 
+  useEffect(() => {
+    if (error) {
+      api.error({
+        message: 'Error',
+        description: error,
+      });
+    }
+  }, [error]);
+
   return (
-    <div>
-      <h1>Users</h1>
-      <Button type="primary" onClick={() => setIsUserModalVisible(true)}>Add User</Button>
-      <Table dataSource={users} columns={userColumns} rowKey="name" />
-      <h1>Locations</h1>
-      <Button type="primary" onClick={() => setIsLocationModalVisible(true)}>Add Location</Button>
-      <Table dataSource={locations} columns={locationColumns} rowKey="id" />
+    <Context.Provider value={contextValue}>
+      {contextHolder}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1>Users</h1>
+          <Button type="primary" onClick={() => setIsUserModalVisible(true)}>Add User</Button>
+        </div>
+        <Table dataSource={users} columns={userColumns} rowKey="name" loading={loading} />
 
-      <Modal
-        title={selectedUser ? "Edit User" : "Add User"}
-        open={isUserModalVisible}
-        onOk={handleAddUser}
-        onCancel={() => {
-          setIsUserModalVisible(false);
-          setSelectedUser(null);
-          setNewUser(null);
-        }}
-      >
-        <Input placeholder="Name" value={newUser?.name || selectedUser?.name || ''} onChange={(e) => setNewUser({ ...newUser, name: e.target.value } as User)} />
-        <Input placeholder="Age" type="number" value={newUser?.age || selectedUser?.age || ''} onChange={(e) => setNewUser({ ...newUser, age: parseInt(e.target.value) } as User)} />
-        <Input placeholder="Cell" value={newUser?.cell || selectedUser?.cell || ''} onChange={(e) => setNewUser({ ...newUser, cell: e.target.value } as User)} />
-        <Input placeholder="Address" value={newUser?.address || selectedUser?.address || ''} onChange={(e) => setNewUser({ ...newUser, address: e.target.value } as User)} />
-      </Modal>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1>Locations</h1>
+          <Button type="primary" onClick={() => setIsLocationModalVisible(true)}>Add Location</Button>
+        </div>
+        <Table dataSource={locations} columns={locationColumns} rowKey="id" loading={loading} />
 
-      <Modal
-        title={selectedLocation ? "Edit Location" : "Add Location"}
-        open={isLocationModalVisible}
-        onOk={handleAddLocation}
-        onCancel={() => {
-          setIsLocationModalVisible(false);
-          setSelectedLocation(null);
-          setNewLocation(null);
-        }}
-      >
-        <Input placeholder="ID" value={newLocation?.id || selectedLocation?.id || ''} onChange={(e) => setNewLocation({ ...newLocation, id: e.target.value } as Location)} />
-        <Input placeholder="City" value={newLocation?.city || selectedLocation?.city || ''} onChange={(e) => setNewLocation({ ...newLocation, city: e.target.value } as Location)} />
-        <Input placeholder="Country" value={newLocation?.country || selectedLocation?.country || ''} onChange={(e) => setNewLocation({ ...newLocation, country: e.target.value } as Location)} />
-      </Modal>
-    </div>
+        {/* User Modal */}
+        <Modal
+          title={selectedUser ? "Edit User" : "Add User"}
+          open={isUserModalVisible}
+          onOk={handleAddUser}
+          onCancel={() => {
+            setIsUserModalVisible(false);
+            setSelectedUser(null);
+            setNewUser(null);
+          }}
+        >
+          <Input placeholder="Name" value={newUser?.name || selectedUser?.name || ''} onChange={(e) => setNewUser({ ...newUser, name: e.target.value } as User)} />
+          <Input placeholder="Age" type="number" value={newUser?.age || selectedUser?.age || ''} onChange={(e) => setNewUser({ ...newUser, age: parseInt(e.target.value) } as User)} />
+          <Input placeholder="Cell" value={newUser?.cell || selectedUser?.cell || ''} onChange={(e) => setNewUser({ ...newUser, cell: e.target.value } as User)} />
+          <Input placeholder="Address" value={newUser?.address || selectedUser?.address || ''} onChange={(e) => setNewUser({ ...newUser, address: e.target.value } as User)} />
+        </Modal>
+
+        {/* Location Modal */}
+        <Modal
+          title={selectedLocation ? "Edit Location" : "Add Location"}
+          open={isLocationModalVisible}
+          onOk={handleAddLocation}
+          onCancel={() => {
+            setIsLocationModalVisible(false);
+            setSelectedLocation(null);
+            setNewLocation(null);
+          }}
+        >
+          <Input placeholder="ID" value={newLocation?.id || selectedLocation?.id || ''} onChange={(e) => setNewLocation({ ...newLocation, id: e.target.value } as Location)} />
+          <Input placeholder="City" value={newLocation?.city || selectedLocation?.city || ''} onChange={(e) => setNewLocation({ ...newLocation, city: e.target.value } as Location)} />
+          <Input placeholder="Country" value={newLocation?.country || selectedLocation?.country || ''} onChange={(e) => setNewLocation({ ...newLocation, country: e.target.value } as Location)} />
+        </Modal>
+
+        {error && <div style={{ color: 'red' }}>{error}</div>}
+      </div>
+    </Context.Provider>
   );
 };
 
