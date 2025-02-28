@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/maifeeulasad/idb-crud.git"
+    "url": "git+https://github.com/maifeeulasad/idb-ts.git"
   },
   "keywords": [
     "idb",
@@ -19,12 +19,12 @@
   "author": "Maifee Ul Asad <maifeeulasad@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/maifeeulasad/idb-crud/issues"
+    "url": "https://github.com/maifeeulasad/idb-ts/issues"
   },
   "files": [
     "lib"
   ],
-  "homepage": "https://github.com/maifeeulasad/idb-crud#readme",
+  "homepage": "https://github.com/maifeeulasad/idb-ts#readme",
   "devDependencies": {
     "reflect-metadata": "^0.2.2",
     "typescript": "^4.6.3"
