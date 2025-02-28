@@ -18,7 +18,7 @@ export default defineConfig({
     __HEAD_COMMIT_HASH__: JSON.stringify(headCommitHash()),
   },
   build: {
-    outDir: "./build",
+    outDir: "./build/vitereact",
   },
   base: "./",
   plugins: [
