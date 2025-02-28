@@ -1,0 +1,34 @@
+name: Deploy React Vite Example to GitHub Pages
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+      node-version: ${{ matrix.node-version }}
+    - name: 'Installing deps'    
+      run: yarn
+    - name: 'Change directory to examples/vite+react'
+      run: cd examples/vite+react
+    - name: 'Build'
+      run: yarn build
+    - name: 'Deploy'
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+      deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+      publish_dir: ./examples/vite+react/build
+      allow_empty_commit: true
