@@ -20,10 +20,10 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: 'Installing deps'    
-      run: yarn
     - name: 'Change directory to examples/vite+react'
       run: cd examples/vite+react
+    - name: 'Installing deps'    
+      run: yarn
     - name: 'Build'
       run: yarn build
     - name: 'Deploy'
