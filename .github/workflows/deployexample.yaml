@@ -20,6 +20,9 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: 'Prepare for production'    
+      run: node replace-on-prod.js
+      working-directory: ./examples/vite+react
     - name: 'Installing deps'    
       run: yarn
       working-directory: ./examples/vite+react
