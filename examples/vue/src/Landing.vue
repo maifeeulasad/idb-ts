@@ -2,20 +2,20 @@
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center">
       <h1>Users</h1>
-      <a-button type="primary" @click="setIsUserModalVisible()">Add User</a-button>
+      <a-button type="primary" @click="setIsUserModalVisible">Add User</a-button>
     </div>
     <a-table :dataSource="users" :columns="userColumns" rowKey="name" :loading="loading" />
 
     <div style="display: flex; justify-content: space-between; align-items: center">
       <h1>Locations</h1>
-      <a-button type="primary" @click="setIsLocationModalVisible()">Add Location</a-button>
+      <a-button type="primary" @click="setIsLocationModalVisible">Add Location</a-button>
     </div>
     <a-table :dataSource="locations" :columns="locationColumns" rowKey="id" :loading="loading" />
 
     <!-- User Modal -->
     <a-modal
       :title="selectedUser ? 'Edit User' : 'Add User'"
-      :visible="isUserModalVisible"
+      v-model:open="isUserModalVisible"
       @ok="handleAddUser"
       @cancel="handleUserModalCancel"
     >
@@ -28,7 +28,7 @@
     <!-- Location Modal -->
     <a-modal
       :title="selectedLocation ? 'Edit Location' : 'Add Location'"
-      :visible="isLocationModalVisible"
+      v-model:open="isLocationModalVisible"
       @ok="handleAddLocation"
       @cancel="handleLocationModalCancel"
     >
