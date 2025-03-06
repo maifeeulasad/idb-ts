@@ -11,6 +11,7 @@ export default defineConfig({
   build: {
     outDir: "./build/vue",
   },
+  base: "./",
   plugins: [
     vue(),
     vueJsx(),
