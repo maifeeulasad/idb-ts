@@ -8,6 +8,9 @@ import babel from 'vite-plugin-babel';
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    outDir: "./build/vue",
+  },
   plugins: [
     vue(),
     vueJsx(),
