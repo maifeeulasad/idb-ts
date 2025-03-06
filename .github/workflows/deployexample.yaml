@@ -53,12 +53,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download React Build Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: react-build
           path: ./public/react
       - name: Download Vue Build Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: vue-build
           path: ./public/vue
