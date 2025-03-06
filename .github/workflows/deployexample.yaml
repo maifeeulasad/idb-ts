@@ -56,12 +56,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: react-build
-          path: ./public/react
+          path: ./public
       - name: Download Vue Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: vue-build
-          path: ./public/vue
+          path: ./public
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
