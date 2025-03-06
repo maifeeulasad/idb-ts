@@ -1,4 +1,5 @@
-name: Deploy React Vite Example to GitHub Pages
+name: Deploy React Vite and Vue Examples to GitHub Pages
+
 on:
   push:
     branches: [ main ]
@@ -6,32 +7,64 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  build-react:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [18.x]
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: 'Prepare for production'    
-      run: node replace-on-prod.js
-      working-directory: ./examples/vite+react
-    - name: 'Installing deps'    
-      run: yarn
-      working-directory: ./examples/vite+react
-    - name: 'Build'
-      run: yarn build
-      working-directory: ./examples/vite+react
-    - name: 'Deploy'
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-        publish_dir: ./examples/vite+react/build
-        allow_empty_commit: true
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Install dependencies
+        run: yarn
+        working-directory: ./examples/vite+react
+      - name: Build React App
+        run: yarn build
+        working-directory: ./examples/vite+react
+      - name: Upload React Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: react-build
+          path: ./examples/vite+react/build
+
+  build-vue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./examples/vue
+      - name: Build Vue App
+        run: npm run build
+        working-directory: ./examples/vue
+      - name: Upload Vue Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: vue-build
+          path: ./examples/vue/build
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-react, build-vue]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download React Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: react-build
+          path: ./public/react
+      - name: Download Vue Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: vue-build
+          path: ./public/vue
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./public
+          allow_empty_commit: true
