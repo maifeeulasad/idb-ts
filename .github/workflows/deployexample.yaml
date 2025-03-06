@@ -22,7 +22,7 @@ jobs:
         run: yarn build
         working-directory: ./examples/vite+react
       - name: Upload React Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: react-build
           path: ./examples/vite+react/build
@@ -42,7 +42,7 @@ jobs:
         run: npm run build
         working-directory: ./examples/vue
       - name: Upload Vue Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vue-build
           path: ./examples/vue/build
