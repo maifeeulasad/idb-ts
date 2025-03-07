@@ -87,6 +87,8 @@ jobs:
         with:
           name: typescript-build
           path: ./public
+      - name: Copy index.html to public directory
+        run: cp ./examples/index.html ./public/index.html
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
