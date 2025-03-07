@@ -2,7 +2,7 @@ import { DataClass, KeyPath, Database } from "idb-ts";
 
 @DataClass()
 class User {
-    @KeyPath
+    @KeyPath()
     name: string;
     age: number;
     cell?: string;
