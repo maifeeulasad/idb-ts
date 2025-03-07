@@ -1,4 +1,4 @@
-name: Deploy React Vite and Vue Examples to GitHub Pages
+name: Deploy React Vite and Vue Examples and TypeScript to GitHub Pages
 
 on:
   push:
@@ -47,9 +47,29 @@ jobs:
           name: vue-build
           path: ./examples/vue/build
 
+  build-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./examples/typescript
+      - name: Build TypeScript App
+        run: npm run build
+        working-directory: ./examples/typescript
+      - name: Upload TypeScript Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-build
+          path: ./examples/typescript/build
+
   deploy:
     runs-on: ubuntu-latest
-    needs: [build-react, build-vue]
+    needs: [build-react, build-vue, build-typescript]
     steps:
       - uses: actions/checkout@v3
       - name: Download React Build Artifacts
@@ -61,6 +81,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vue-build
+          path: ./public
+      - name: Download TypeScript Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: typescript-build
           path: ./public
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
