@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf node_modules/.cache && npx tsc --build --clean && npx tsc"
   },
   "author": "Maifee Ul Asad <maifeeulasad@gmail.com>",
   "license": "MIT",
@@ -13,6 +13,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.8",
-    "typescript": "5.1"
+    "typescript": "^5.2"
   }
 }
