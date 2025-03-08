@@ -3,8 +3,6 @@ name: Deploy React Vite and Vue Examples and TypeScript to GitHub Pages
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build-react:
