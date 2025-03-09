@@ -1,5 +1,8 @@
 # idb-ts
 
+## Introduction
+Use IndexedDB with TypeScript in a declarative style
+
 ## Installation
 ```
 npm i idb-ts
