@@ -49,7 +49,7 @@ const newUser = ref<User>({ name: '', age: 0, address: '', cell: '' });
 const newLocation = ref<Location>({ id: '', city: '', country: '' });
 
 onMounted(async () => {
-  await initializeDB('idb-crud', [User, Location]);
+  await initializeDB('idb-crud-vue', [User, Location]);
   users.value = await listItems(User) || [];
   locations.value = await listItems(Location) || [];
 });
