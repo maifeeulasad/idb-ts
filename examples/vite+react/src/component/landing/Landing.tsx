@@ -63,7 +63,7 @@ const Landing = () => {
   const [newLocation, setNewLocation] = useState<Location | null>(null);
 
   useEffect(() => {
-    initializeDB("idb-crud", [User, Location]);
+    initializeDB("idb-crud-react", [User, Location]);
   }, []);
 
   useEffect(() => {
