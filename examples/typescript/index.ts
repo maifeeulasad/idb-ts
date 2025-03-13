@@ -31,7 +31,7 @@ class Location {
 }
 
 async function main() {
-    const db = await Database.build("idb-crud", [User, Location]);
+    const db = await Database.build("idb-crud-typescript", [User, Location]);
 
     const alice = new User("Alice", 25, "123 Main St");
     const nyc = new Location("1", "New York", "USA");
