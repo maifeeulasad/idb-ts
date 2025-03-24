@@ -3,6 +3,7 @@
   "version": "3.0.3",
   "description": "Easy CRUD for indexed-db, written in TypeScript",
   "main": "lib/index.js",
+  "type": "module",
   "scripts": {
     "prepare": "npm run build",
     "build": "tsc"
