@@ -1,5 +1,13 @@
 # 🚀 idb-ts
 
+[![npm version](https://img.shields.io/npm/v/idb-ts.svg)](https://www.npmjs.com/package/idb-ts)
+[![minified](https://badgen.net/bundlephobia/min/idb-ts)](https://badgen.net/bundlephobia/min/idb-ts)
+[![minified + gzipped](https://badgen.net/bundlephobia/minzip/idb-ts)](https://badgen.net/bundlephobia/minzip/idb-ts)
+
+[![GitHub stars](https://img.shields.io/github/stars/maifeeulasad/idb-ts)](https://github.com/maifeeulasad/idb-ts/stargazers)
+[![GitHub watchers](https://img.shields.io/github/watchers/maifeeulasad/idb-ts)](https://github.com/maifeeulasad/idb-ts/watchers)
+[![Commits after release](https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases)](https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases)
+
 ## 📌 Introduction
 **idb-ts** is a lightweight, declarative, and type-safe way to work with IndexedDB using TypeScript. Effortlessly perform CRUD operations on your database with clean, structured code! 🔥
 
