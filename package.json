@@ -13,7 +13,9 @@
   },
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsc"
+    "build": "npm run build:tsc && npm run build:rollup",
+    "build:tsc": "tsc",
+    "build:rollup": "rollup -c"
   },
   "repository": {
     "type": "git",
