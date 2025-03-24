@@ -2,7 +2,7 @@
   "name": "idb-ts",
   "version": "3.0.1",
   "description": "Easy CRUD for indexed-db, written in TypeScript",
-  "main": "index.ts",
+  "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build",
     "build": "tsc"
