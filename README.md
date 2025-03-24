@@ -5,10 +5,10 @@
     <img src="https://img.shields.io/npm/v/idb-ts.svg" alt="npm version">
   </a>
   <a href="https://badgen.net/bundlephobia/min/idb-ts">
-    <img src="https://badgen.net/bundlephobia/min/idb-ts" alt="minified">
+    <img src="https://badgen.net/bundlephobia/min/idb-ts&cache-control=no-cache" alt="minified">
   </a>
   <a href="https://badgen.net/bundlephobia/minzip/idb-ts">
-    <img src="https://badgen.net/bundlephobia/minzip/idb-ts" alt="minified + gzipped">
+    <img src="https://badgen.net/bundlephobia/minzip/idb-ts&cache-control=no-cache" alt="minified + gzipped">
   </a>
 </p>
 
