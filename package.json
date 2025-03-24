@@ -24,7 +24,13 @@
   "keywords": [
     "idb",
     "ts",
-    "indexed-db"
+    "indexed-db",
+    "typescript",
+    "database",
+    "db",
+    "indexeddb",
+    "crud",
+    "storage"
   ],
   "author": "Maifee Ul Asad <maifeeulasad@gmail.com>",
   "license": "MIT",
