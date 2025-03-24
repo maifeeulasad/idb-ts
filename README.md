@@ -1,12 +1,29 @@
 # 🚀 idb-ts
 
-[![npm version](https://img.shields.io/npm/v/idb-ts.svg)](https://www.npmjs.com/package/idb-ts)
-[![minified](https://badgen.net/bundlephobia/min/idb-ts)](https://badgen.net/bundlephobia/min/idb-ts)
-[![minified + gzipped](https://badgen.net/bundlephobia/minzip/idb-ts)](https://badgen.net/bundlephobia/minzip/idb-ts)
+<p align="center">
+  <a href="https://www.npmjs.com/package/idb-ts">
+    <img src="https://img.shields.io/npm/v/idb-ts.svg" alt="npm version">
+  </a>
+  <a href="https://badgen.net/bundlephobia/min/idb-ts">
+    <img src="https://badgen.net/bundlephobia/min/idb-ts" alt="minified">
+  </a>
+  <a href="https://badgen.net/bundlephobia/minzip/idb-ts">
+    <img src="https://badgen.net/bundlephobia/minzip/idb-ts" alt="minified + gzipped">
+  </a>
+</p>
 
-[![GitHub stars](https://img.shields.io/github/stars/maifeeulasad/idb-ts)](https://github.com/maifeeulasad/idb-ts/stargazers)
-[![GitHub watchers](https://img.shields.io/github/watchers/maifeeulasad/idb-ts)](https://github.com/maifeeulasad/idb-ts/watchers)
-[![Commits after release](https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases)](https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases)
+<p align="center">
+  <a href="https://github.com/maifeeulasad/idb-ts/stargazers">
+    <img src="https://img.shields.io/github/stars/maifeeulasad/idb-ts" alt="GitHub stars">
+  </a>
+  <a href="https://github.com/maifeeulasad/idb-ts/watchers">
+    <img src="https://img.shields.io/github/watchers/maifeeulasad/idb-ts" alt="GitHub watchers">
+  </a>
+  <a href="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases">
+    <img src="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases" alt="Commits after release">
+  </a>
+</p>
+
 
 ## 📌 Introduction
 **idb-ts** is a lightweight, declarative, and type-safe way to work with IndexedDB using TypeScript. Effortlessly perform CRUD operations on your database with clean, structured code! 🔥
