@@ -183,6 +183,29 @@ class Database {
       }
     });
   }
+
+  async listPaginated<T>(cls: { new(...args: any[]): T }, page: number, pageSize: number): Promise<T[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        const store = this.getObjectStore(cls.name, "readonly");
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const items = request.result as T[];
+          const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+          console.log(`Paginated items from ${cls.name}:`, paginatedItems);
+          resolve(paginatedItems);
+        };
+
+        request.onerror = () => {
+          console.error(`Error listing items from ${cls.name}:`, request.error);
+          reject(request.error);
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
 }
 
 export { Database, KeyPath, DataClass };
