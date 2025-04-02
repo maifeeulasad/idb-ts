@@ -59,7 +59,7 @@ class Database {
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.log(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", ")}`);
+        console.debug(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", ")}`);
         resolve();
       };
 
@@ -86,7 +86,7 @@ class Database {
         const request = store.add(item);
 
         request.onsuccess = () => {
-          console.log(`Item added to ${cls.name}:`, item);
+          console.debug(`Item added to ${cls.name}:`, item);
           resolve();
         };
 
@@ -107,7 +107,7 @@ class Database {
         const request = store.get(key);
 
         request.onsuccess = () => {
-          console.log(`Item read from ${cls.name}:`, request.result);
+          console.debug(`Item read from ${cls.name}:`, request.result);
           resolve(request.result as T | undefined);
         };
 
@@ -128,7 +128,7 @@ class Database {
         const request = store.put(item);
 
         request.onsuccess = () => {
-          console.log(`Item updated in ${cls.name}:`, item);
+          console.debug(`Item updated in ${cls.name}:`, item);
           resolve();
         };
 
@@ -149,7 +149,7 @@ class Database {
         const request = store.delete(key);
 
         request.onsuccess = () => {
-          console.log(`Item deleted from ${cls.name}:`, key);
+          console.debug(`Item deleted from ${cls.name}:`, key);
           resolve();
         };
 
@@ -170,7 +170,7 @@ class Database {
         const request = store.getAll();
 
         request.onsuccess = () => {
-          console.log(`All items from ${cls.name}:`, request.result);
+          console.debug(`All items from ${cls.name}:`, request.result);
           resolve(request.result as T[]);
         };
 
@@ -193,7 +193,7 @@ class Database {
         request.onsuccess = () => {
           const items = request.result as T[];
           const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
-          console.log(`Paginated items from ${cls.name}:`, paginatedItems);
+          console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
           resolve(paginatedItems);
         };
 
