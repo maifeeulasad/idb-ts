@@ -3,7 +3,8 @@ import 'reflect-metadata';
 function KeyPath(): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
-    Reflect.defineMetadata("keypath", [propertyKey as string], constructor);
+    const existing = Reflect.getMetadata("keypath", constructor) || [];
+    Reflect.defineMetadata("keypath", [...existing, propertyKey as string], constructor);
   };
 }
 
