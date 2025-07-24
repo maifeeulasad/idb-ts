@@ -15,7 +15,11 @@
     "prepare": "npm run build",
     "build": "npm run build:tsc && npm run build:rollup",
     "build:tsc": "tsc",
-    "build:rollup": "rollup -c"
+    "build:rollup": "rollup -c",
+    "test": "jest --runInBand --detectOpenHandles",
+    "test:watch": "jest --watchAll --runInBand --detectOpenHandles",
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
+    "test:coverage:watch": "jest --coverage --watchAll --runInBand --detectOpenHandles"
   },
   "repository": {
     "type": "git",
