@@ -25,4 +25,33 @@ describe('IndexedDB annotation', () => {
     }).rejects.toThrow(/All classes should be decorated/);
   });
 
+  it('should throw error if multiple keypaths are defined', () => {
+    expect(() => {
+      @DataClass()
+      class MultiKey1 {
+        @KeyPath() x!: string;
+        @KeyPath() y!: string;
+      }
+
+      void MultiKey1;
+    }).toThrow(/Only one keypath field can be defined/);
+  });
+
+  it('should throw error if even one class is not decorated with @DataClass', async () => {
+    @DataClass()
+    class Good {
+      @KeyPath()
+      id!: string;
+    }
+
+    class Bad {
+      @KeyPath()
+      id!: string;
+    }
+
+    await expect(async () => {
+      await Database.build('InvalidDB3', [Good, Bad]);
+    }).rejects.toThrow(/All classes should be decorated/);
+  });
+
 });
