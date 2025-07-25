@@ -82,129 +82,105 @@ class Database {
 
   async create<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.add(item);
+      const store = this.getObjectStore(cls.name, "readwrite");
+      const request = store.add(item);
 
-        request.onsuccess = () => {
-          console.debug(`Item added to ${cls.name}:`, item);
-          resolve();
-        };
+      request.onsuccess = () => {
+        console.debug(`Item added to ${cls.name}:`, item);
+        resolve();
+      };
 
-        request.onerror = () => {
-          console.error(`Error adding item to ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error adding item to ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 
   async read<T>(cls: { new(...args: any[]): T }, key: string): Promise<T | undefined> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readonly");
-        const request = store.get(key);
+      const store = this.getObjectStore(cls.name, "readonly");
+      const request = store.get(key);
 
-        request.onsuccess = () => {
-          console.debug(`Item read from ${cls.name}:`, request.result);
-          resolve(request.result as T | undefined);
-        };
+      request.onsuccess = () => {
+        console.debug(`Item read from ${cls.name}:`, request.result);
+        resolve(request.result as T | undefined);
+      };
 
-        request.onerror = () => {
-          console.error(`Error reading item from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error reading item from ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 
   async update<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.put(item);
+      const store = this.getObjectStore(cls.name, "readwrite");
+      const request = store.put(item);
 
-        request.onsuccess = () => {
-          console.debug(`Item updated in ${cls.name}:`, item);
-          resolve();
-        };
+      request.onsuccess = () => {
+        console.debug(`Item updated in ${cls.name}:`, item);
+        resolve();
+      };
 
-        request.onerror = () => {
-          console.error(`Error updating item in ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error updating item in ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 
   async delete<T>(cls: { new(...args: any[]): T }, key: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.delete(key);
+      const store = this.getObjectStore(cls.name, "readwrite");
+      const request = store.delete(key);
 
-        request.onsuccess = () => {
-          console.debug(`Item deleted from ${cls.name}:`, key);
-          resolve();
-        };
+      request.onsuccess = () => {
+        console.debug(`Item deleted from ${cls.name}:`, key);
+        resolve();
+      };
 
-        request.onerror = () => {
-          console.error(`Error deleting item from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error deleting item from ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 
   async list<T>(cls: { new(...args: any[]): T }): Promise<T[]> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readonly");
-        const request = store.getAll();
+      const store = this.getObjectStore(cls.name, "readonly");
+      const request = store.getAll();
 
-        request.onsuccess = () => {
-          console.debug(`All items from ${cls.name}:`, request.result);
-          resolve(request.result as T[]);
-        };
+      request.onsuccess = () => {
+        console.debug(`All items from ${cls.name}:`, request.result);
+        resolve(request.result as T[]);
+      };
 
-        request.onerror = () => {
-          console.error(`Error listing items from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error listing items from ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 
   async listPaginated<T>(cls: { new(...args: any[]): T }, page: number, pageSize: number): Promise<T[]> {
     return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readonly");
-        const request = store.getAll();
+      const store = this.getObjectStore(cls.name, "readonly");
+      const request = store.getAll();
 
-        request.onsuccess = () => {
-          const items = request.result as T[];
-          const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
-          console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
-          resolve(paginatedItems);
-        };
+      request.onsuccess = () => {
+        const items = request.result as T[];
+        const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+        console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
+        resolve(paginatedItems);
+      };
 
-        request.onerror = () => {
-          console.error(`Error listing items from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+      request.onerror = () => {
+        console.error(`Error listing items from ${cls.name}:`, request.error);
+        reject(request.error);
+      };
     });
   }
 }
