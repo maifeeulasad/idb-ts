@@ -116,6 +116,8 @@ console.log("🌍 All locations:", locations);
 ## 🔗 Useful Links
 - 📂 **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
 - 📦 **NPM**: [idb-ts](https://www.npmjs.com/package/idb-ts)
+- Demo: https://maifeeulasad.github.io/idb-ts/
+- Code Coverage report: https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
 
