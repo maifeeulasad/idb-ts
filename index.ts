@@ -57,11 +57,18 @@ class Database {
 
         this.classes.forEach((cls) => {
           const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
+          const indexFields = Reflect.getMetadata("indexes", cls) || [];
 
           const storeName = cls.name.toLowerCase() + "s";
 
           if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+            const store = db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+            
+            indexFields.forEach((indexField: string) => {
+              if (!store.indexNames.contains(indexField)) {
+                store.createIndex(indexField, indexField, { unique: false });
+              }
+            });
           }
         });
       };
@@ -191,6 +198,54 @@ class Database {
       };
     });
   }
+
+  async findByIndex<T>(cls: { new(...args: any[]): T }, indexName: string, value: any): Promise<T[]> {
+    return new Promise((resolve, reject) => {
+      const store = this.getObjectStore(cls.name, "readonly");
+      
+      if (!store.indexNames.contains(indexName)) {
+        reject(new Error(`Index '${indexName}' does not exist on ${cls.name}`));
+        return;
+      }
+
+      const index = store.index(indexName);
+      const request = index.getAll(value);
+
+      request.onsuccess = () => {
+        console.debug(`Items found by index ${indexName} with value ${value}:`, request.result);
+        resolve(request.result as T[]);
+      };
+
+      request.onerror = () => {
+        console.error(`Error finding items by index ${indexName}:`, request.error);
+        reject(request.error);
+      };
+    });
+  }
+
+  async findOneByIndex<T>(cls: { new(...args: any[]): T }, indexName: string, value: any): Promise<T | undefined> {
+    return new Promise((resolve, reject) => {
+      const store = this.getObjectStore(cls.name, "readonly");
+      
+      if (!store.indexNames.contains(indexName)) {
+        reject(new Error(`Index '${indexName}' does not exist on ${cls.name}`));
+        return;
+      }
+
+      const index = store.index(indexName);
+      const request = index.get(value);
+
+      request.onsuccess = () => {
+        console.debug(`Item found by index ${indexName} with value ${value}:`, request.result);
+        resolve(request.result as T | undefined);
+      };
+
+      request.onerror = () => {
+        console.error(`Error finding item by index ${indexName}:`, request.error);
+        reject(request.error);
+      };
+    });
+  }
 }
 
-export { Database, KeyPath, DataClass };
+export { Database, KeyPath, DataClass, Index };
