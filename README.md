@@ -48,16 +48,23 @@ npm i idb-ts
 Use decorators to define your data models with automatic schema management.
 
 ```typescript
+import { Database, DataClass, KeyPath, Index } from "idb-ts";
+
 @DataClass()
 class User {
   @KeyPath()
   name: string;
+  
+  @Index()
+  email: string;
+  
   age: number;
   cell?: string;
   address: string;
 
-  constructor(name: string, age: number, address: string, cell?: string) {
+  constructor(name: string, email: string, age: number, address: string, cell?: string) {
     this.name = name;
+    this.email = email;
     this.age = age;
     this.address = address;
     this.cell = cell;
@@ -68,7 +75,10 @@ class User {
 class Location {
   @KeyPath()
   id: string;
+  
+  @Index()
   city: string;
+  
   country: string;
 
   constructor(id: string, city: string, country: string) {
@@ -85,11 +95,15 @@ Perform database operations in an intuitive way:
 ```typescript
 const db = await Database.build("idb-crud", [User, Location]);
 
-const alice = new User("Alice", 25, "123 Main St");
+const alice = new User("Alice", "alice@example.com", 25, "123 Main St");
+const bob = new User("Bob", "bob@example.com", 30, "456 Oak Ave");
 const nyc = new Location("1", "New York", "USA");
+const sf = new Location("2", "San Francisco", "USA");
 
 await db.create(User, alice);
+await db.create(User, bob);
 await db.create(Location, nyc);
+await db.create(Location, sf);
 
 const readAlice = await db.read(User, "Alice");
 console.log("👤 Read user:", readAlice);
@@ -101,6 +115,12 @@ await db.update(User, alice);
 const users = await db.list(User);
 console.log("📋 All users:", users);
 
+const userByEmail = await db.findOneByIndex(User, 'email', 'bob@example.com');
+console.log("🔎 User by email:", userByEmail);
+
+const locationsInSF = await db.findByIndex(Location, 'city', 'San Francisco');
+console.log("🌆 Locations in San Francisco:", locationsInSF);
+
 await db.delete(User, "Alice");
 console.log("❌ User Alice deleted.");
 
@@ -110,6 +130,46 @@ console.log("🔍 Remaining users:", remainingUsers);
 const locations = await db.list(Location);
 console.log("🌍 All locations:", locations);
 ```
+
+### 🔍 Indexing Support
+Create indexes on fields for fast querying:
+
+```typescript
+@DataClass()
+class Product {
+  @KeyPath()
+  id: string;
+  
+  @Index()
+  category: string;
+  
+  @Index()
+  price: number;
+  
+  name: string;
+  description: string;
+
+  constructor(id: string, category: string, price: number, name: string, description: string) {
+    this.id = id;
+    this.category = category;
+    this.price = price;
+    this.name = name;
+    this.description = description;
+  }
+}
+
+const db = await Database.build("products-db", [Product]);
+
+const electronics = await db.findByIndex(Product, 'category', 'Electronics');
+
+const expensiveItems = await db.findByIndex(Product, 'price', 999.99);
+
+const firstElectronic = await db.findOneByIndex(Product, 'category', 'Electronics');
+```
+
+#### Index Methods:
+- `findByIndex<T>(cls, indexName, value): Promise<T[]>` - Find all records matching the index value
+- `findOneByIndex<T>(cls, indexName, value): Promise<T | undefined>` - Find the first record matching the index value
 
 ---
 
