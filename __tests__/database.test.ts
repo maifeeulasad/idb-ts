@@ -1,17 +1,21 @@
-import { Database, KeyPath, DataClass } from '../index';
+import { Database, KeyPath, DataClass, Index } from '../index';
 
 @DataClass()
 class User {
   @KeyPath()
   id!: string;
 
+  @Index()
+  email!: string;
+
   name!: string;
   age!: number;
 
-  constructor(id: string, name: string, age: number) {
+  constructor(id: string, name: string, age: number, email?: string) {
     this.id = id;
     this.name = name;
     this.age = age;
+    this.email = email || `${name.toLowerCase()}@example.com`;
   }
 }
 
@@ -59,6 +63,24 @@ describe('IndexedDB CRUD', () => {
     await db.delete(User, 'u1');
     const deleted = await db.read(User, 'u1');
     expect(deleted).toBeUndefined();
+  });
+
+  it('should find users by email index', async () => {
+    const user = new User('u5', 'Diana', 35, 'diana@example.com');
+    await db.create(User, user);
+
+    const found = await db.findByIndex(User, 'email', 'diana@example.com');
+    expect(found.length).toBe(1);
+    expect(found[0].name).toBe('Diana');
+  });
+
+  it('should find one user by email index', async () => {
+    const user = new User('u6', 'Eve', 29, 'eve@example.com');
+    await db.create(User, user);
+
+    const found = await db.findOneByIndex(User, 'email', 'eve@example.com');
+    expect(found).toBeDefined();
+    expect(found!.name).toBe('Eve');
   });
 
 });

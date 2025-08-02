@@ -1,4 +1,4 @@
-import { Database, KeyPath, DataClass } from '../index';
+import { Database, KeyPath, DataClass, Index } from '../index';
 
 describe('IndexedDB annotation', () => {
   it('should throw error if class is missing @KeyPath', async () => {
@@ -52,6 +52,22 @@ describe('IndexedDB annotation', () => {
     await expect(async () => {
       await Database.build('InvalidDB3', [Good, Bad]);
     }).rejects.toThrow(/All classes should be decorated/);
+  });
+
+  it('should work with @Index decorator', async () => {
+    @DataClass()
+    class IndexedUser {
+      @KeyPath()
+      id!: string;
+
+      @Index()
+      email!: string;
+
+      name!: string;
+    }
+
+    const db = await Database.build('IndexedDB', [IndexedUser]);
+    expect(db).toBeDefined();
   });
 
 });
