@@ -8,6 +8,14 @@ function KeyPath(): PropertyDecorator {
   };
 }
 
+function Index(): PropertyDecorator {
+  return (target: Object, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    const existing = Reflect.getMetadata("indexes", constructor) || [];
+    Reflect.defineMetadata("indexes", [...existing, propertyKey as string], constructor);
+  };
+}
+
 function DataClass(): ClassDecorator {
   return (target: Function) => {
     if (!Reflect.getMetadata("keypath", target)) {
