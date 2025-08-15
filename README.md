@@ -45,7 +45,7 @@ npm i idb-ts
 ## 📖 Example Usage
 
 ### 🏗️ Declaring Entities
-Use decorators to define your data models with automatic schema management.
+Use decorators to define your data models. Each class must have exactly one `@KeyPath()` and be decorated with `@DataClass()`.
 
 ```typescript
 import { Database, DataClass, KeyPath, Index } from "idb-ts";
@@ -53,33 +53,31 @@ import { Database, DataClass, KeyPath, Index } from "idb-ts";
 @DataClass()
 class User {
   @KeyPath()
-  name: string;
-  
-  @Index()
-  email: string;
-  
-  age: number;
-  cell?: string;
-  address: string;
+  id!: string;
 
-  constructor(name: string, email: string, age: number, address: string, cell?: string) {
+  @Index()
+  email!: string;
+
+  name!: string;
+  age!: number;
+
+  constructor(id: string, name: string, age: number, email?: string) {
+    this.id = id;
     this.name = name;
-    this.email = email;
     this.age = age;
-    this.address = address;
-    this.cell = cell;
+    this.email = email || `${name.toLowerCase()}@example.com`;
   }
 }
 
 @DataClass()
 class Location {
   @KeyPath()
-  id: string;
-  
+  id!: string;
+
   @Index()
-  city: string;
-  
-  country: string;
+  city!: string;
+
+  country!: string;
 
   constructor(id: string, city: string, country: string) {
     this.id = id;
@@ -90,64 +88,61 @@ class Location {
 ```
 
 ### 🔄 CRUD Operations
-Perform database operations in an intuitive way:
+Perform database operations using the repository API:
 
 ```typescript
 const db = await Database.build("idb-crud", [User, Location]);
 
-const alice = new User("Alice", "alice@example.com", 25, "123 Main St");
-const bob = new User("Bob", "bob@example.com", 30, "456 Oak Ave");
+const alice = new User("u1", "Alice", 25);
+const bob = new User("u2", "Bob", 30);
 const nyc = new Location("1", "New York", "USA");
 const sf = new Location("2", "San Francisco", "USA");
 
-await db.create(User, alice);
-await db.create(User, bob);
-await db.create(Location, nyc);
-await db.create(Location, sf);
+await db.User.create(alice);
+await db.User.create(bob);
+await db.Location.create(nyc);
+await db.Location.create(sf);
 
-const readAlice = await db.read(User, "Alice");
+const readAlice = await db.User.read("u1");
 console.log("👤 Read user:", readAlice);
 
 alice.age = 26;
-alice.address = "789 Maple St";
-await db.update(User, alice);
+await db.User.update(alice);
 
-const users = await db.list(User);
+const users = await db.User.list();
 console.log("📋 All users:", users);
 
-const userByEmail = await db.findOneByIndex(User, 'email', 'bob@example.com');
-console.log("🔎 User by email:", userByEmail);
+// Pagination
+const page1 = await db.User.listPaginated(1, 2); // page 1, 2 users per page
+console.log("📄 Page 1:", page1);
 
-const locationsInSF = await db.findByIndex(Location, 'city', 'San Francisco');
-console.log("🌆 Locations in San Francisco:", locationsInSF);
-
-await db.delete(User, "Alice");
+await db.User.delete("u1");
 console.log("❌ User Alice deleted.");
 
-const remainingUsers = await db.list(User);
+const remainingUsers = await db.User.list();
 console.log("🔍 Remaining users:", remainingUsers);
 
-const locations = await db.list(Location);
+const locations = await db.Location.list();
 console.log("🌍 All locations:", locations);
 ```
 
 ### 🔍 Indexing Support
-Create indexes on fields for fast querying:
+Create indexes on fields for fast querying. Query indexes using the repository API:
 
 ```typescript
 @DataClass()
 class Product {
   @KeyPath()
-  id: string;
-  
+  id!: string;
+
   @Index()
-  category: string;
-  
+  category!: string;
+
   @Index()
-  price: number;
-  
-  name: string;
-  description: string;
+  price!: number;
+
+  name!: string;
+  description!: string;
 
   constructor(id: string, category: string, price: number, name: string, description: string) {
     this.id = id;
@@ -160,16 +155,20 @@ class Product {
 
 const db = await Database.build("products-db", [Product]);
 
-const electronics = await db.findByIndex(Product, 'category', 'Electronics');
-
-const expensiveItems = await db.findByIndex(Product, 'price', 999.99);
-
-const firstElectronic = await db.findOneByIndex(Product, 'category', 'Electronics');
+const electronics = await db.Product.findByIndex('category', 'Electronics');
+const expensiveItems = await db.Product.findByIndex('price', 999.99);
+const firstElectronic = await db.Product.findOneByIndex('category', 'Electronics');
 ```
 
 #### Index Methods:
-- `findByIndex<T>(cls, indexName, value): Promise<T[]>` - Find all records matching the index value
-- `findOneByIndex<T>(cls, indexName, value): Promise<T | undefined>` - Find the first record matching the index value
+- `findByIndex(indexName, value): Promise<T[]>` - Find all records matching the index value
+- `findOneByIndex(indexName, value): Promise<T | undefined>` - Find the first record matching the index value
+
+#### Error Handling
+- If you query a non-existent index, an error is thrown:
+  ```typescript
+  await db.Product.findByIndex('nonexistent', 'value'); // throws
+  ```
 
 ---
 
