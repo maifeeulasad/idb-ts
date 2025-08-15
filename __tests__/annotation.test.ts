@@ -70,4 +70,23 @@ describe('IndexedDB annotation', () => {
     expect(db).toBeDefined();
   });
 
+  it('should expose getAvailableEntities utility', async () => {
+    @DataClass()
+    class Foo {
+      @KeyPath()
+      id!: string;
+    }
+
+    @DataClass()
+    class Bar {
+      @KeyPath()
+      id!: string;
+    }
+
+    const db = await Database.build('UtilDB', [Foo, Bar]);
+    const entities = db.getAvailableEntities();
+    expect(entities).toContain('Foo');
+    expect(entities).toContain('Bar');
+  });
+
 });
