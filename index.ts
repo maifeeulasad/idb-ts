@@ -29,10 +29,27 @@ function DataClass(): ClassDecorator {
   };
 }
 
+interface EntityRepository<T> {
+  create(item: T): Promise<void>;
+  read(key: string): Promise<T | undefined>;
+  update(item: T): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(): Promise<T[]>;
+  listPaginated(page: number, pageSize: number): Promise<T[]>;
+  findByIndex(indexName: string, value: any): Promise<T[]>;
+  findOneByIndex(indexName: string, value: any): Promise<T | undefined>;
+  count(): Promise<number>;
+  exists(key: string): Promise<boolean>;
+  clear(): Promise<void>;
+}
+
+type DatabaseWithRepositories<T extends Record<string, any>> = Database & T;
+
 class Database {
   private dbName: string;
   private classes: Function[];
   private db: IDBDatabase | null = null;
+  private entityRepositories: Map<string, any> = new Map();
 
   private constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
@@ -42,10 +59,14 @@ class Database {
     this.classes = classes;
   }
 
-  public static async build(dbName: string, classes: Function[]): Promise<Database> {
-    const instance = new Database(dbName, classes);
+  public static async build<T extends Record<string, EntityRepository<any>>>(
+    dbName: string,
+    classes: Function[]
+  ): Promise<DatabaseWithRepositories<T>> {
+    const instance = new Database(dbName, classes) as any;
     await instance.initDB();
-    return instance;
+    instance.generateEntityRepositories();
+    return instance as DatabaseWithRepositories<T>;
   }
 
   private async initDB(): Promise<void> {
@@ -59,11 +80,11 @@ class Database {
           const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
           const indexFields = Reflect.getMetadata("indexes", cls) || [];
 
-          const storeName = cls.name.toLowerCase() + "s";
+          const storeName = cls.name.toLowerCase();
 
           if (!db.objectStoreNames.contains(storeName)) {
             const store = db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
-            
+
             indexFields.forEach((indexField: string) => {
               if (!store.indexNames.contains(indexField)) {
                 store.createIndex(indexField, indexField, { unique: false });
@@ -86,166 +107,237 @@ class Database {
     });
   }
 
-  private getObjectStore(className: string, mode: IDBTransactionMode): IDBObjectStore {
+  private generateEntityRepositories(): void {
+    this.classes.forEach(cls => {
+      const entityName = cls.name;
+      const repository = this.createEntityRepository(cls);
+
+      // repo name, internal use
+      this.entityRepositories.set(entityName, repository);
+
+      // Dynamically add the repository as a property on the database instance
+      Object.defineProperty(this, entityName, {
+        value: repository,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      });
+    });
+  }
+
+  private createEntityRepository<T>(cls: Function): EntityRepository<T> {
+    return {
+      create: async (item: T): Promise<void> => {
+        return this.performOperation(cls.name, 'readwrite', (store) => {
+          const request = store.add(item);
+          return new Promise<void>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item added to ${cls.name}:`, item);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      read: async (key: string): Promise<T | undefined> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          const request = store.get(key);
+          return new Promise<T | undefined>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item read from ${cls.name}:`, request.result);
+              resolve(request.result as T | undefined);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      update: async (item: T): Promise<void> => {
+        return this.performOperation(cls.name, 'readwrite', (store) => {
+          const request = store.put(item);
+          return new Promise<void>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item updated in ${cls.name}:`, item);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      delete: async (key: string): Promise<void> => {
+        return this.performOperation(cls.name, 'readwrite', (store) => {
+          const request = store.delete(key);
+          return new Promise<void>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item deleted from ${cls.name}:`, key);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      list: async (): Promise<T[]> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          const request = store.getAll();
+          return new Promise<T[]>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`All items from ${cls.name}:`, request.result);
+              resolve(request.result as T[]);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      listPaginated: async (page: number, pageSize: number): Promise<T[]> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          const request = store.getAll();
+          return new Promise<T[]>((resolve, reject) => {
+            request.onsuccess = () => {
+              const items = request.result as T[];
+              const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+              console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
+              resolve(paginatedItems);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      findByIndex: async (indexName: string, value: any): Promise<T[]> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          if (!store.indexNames.contains(indexName)) {
+            throw new Error(`Index '${indexName}' does not exist on ${cls.name}`);
+          }
+
+          const index = store.index(indexName);
+          const request = index.getAll(value);
+          return new Promise<T[]>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Items found by index ${indexName} with value ${value}:`, request.result);
+              resolve(request.result as T[]);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      findOneByIndex: async (indexName: string, value: any): Promise<T | undefined> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          if (!store.indexNames.contains(indexName)) {
+            throw new Error(`Index '${indexName}' does not exist on ${cls.name}`);
+          }
+
+          const index = store.index(indexName);
+          const request = index.get(value);
+          return new Promise<T | undefined>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item found by index ${indexName} with value ${value}:`, request.result);
+              resolve(request.result as T | undefined);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      count: async (): Promise<number> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          const request = store.count();
+          return new Promise<number>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Count for ${cls.name}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      exists: async (key: string): Promise<boolean> => {
+        return this.performOperation(cls.name, 'readonly', (store) => {
+          const request = store.count(key);
+          return new Promise<boolean>((resolve, reject) => {
+            request.onsuccess = () => {
+              const exists = request.result > 0;
+              console.debug(`Exists check for ${cls.name} with key ${key}:`, exists);
+              resolve(exists);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      },
+
+      clear: async (): Promise<void> => {
+        return this.performOperation(cls.name, 'readwrite', (store) => {
+          const request = store.clear();
+          return new Promise<void>((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Cleared all items from ${cls.name}`);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }
+    };
+  }
+
+  private async performOperation<R>(
+    className: string,
+    mode: IDBTransactionMode,
+    operation: (store: IDBObjectStore) => Promise<R>
+  ): Promise<R> {
     if (!this.db) {
       throw new Error("Database not initialized.");
     }
-    const storeName = className.toLowerCase() + "s";
+
+    const storeName = className.toLowerCase();
     const transaction = this.db.transaction(storeName, mode);
-    return transaction.objectStore(storeName);
+    const store = transaction.objectStore(storeName);
+
+    return operation(store);
   }
 
+  // Legacy methods for backward compatibility
+  // will be removed in future versions
   async create<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readwrite");
-      const request = store.add(item);
-
-      request.onsuccess = () => {
-        console.debug(`Item added to ${cls.name}:`, item);
-        resolve();
-      };
-
-      request.onerror = () => {
-        console.error(`Error adding item to ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
+    const entityName = cls.name.toLowerCase();
+    const repository = this.entityRepositories.get(entityName);
+    return repository?.create(item);
   }
 
   async read<T>(cls: { new(...args: any[]): T }, key: string): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readonly");
-      const request = store.get(key);
-
-      request.onsuccess = () => {
-        console.debug(`Item read from ${cls.name}:`, request.result);
-        resolve(request.result as T | undefined);
-      };
-
-      request.onerror = () => {
-        console.error(`Error reading item from ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
+    const entityName = cls.name.toLowerCase();
+    const repository = this.entityRepositories.get(entityName);
+    return repository?.read(key);
   }
 
   async update<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readwrite");
-      const request = store.put(item);
-
-      request.onsuccess = () => {
-        console.debug(`Item updated in ${cls.name}:`, item);
-        resolve();
-      };
-
-      request.onerror = () => {
-        console.error(`Error updating item in ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
+    const entityName = cls.name.toLowerCase();
+    const repository = this.entityRepositories.get(entityName);
+    return repository?.update(item);
   }
 
   async delete<T>(cls: { new(...args: any[]): T }, key: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readwrite");
-      const request = store.delete(key);
-
-      request.onsuccess = () => {
-        console.debug(`Item deleted from ${cls.name}:`, key);
-        resolve();
-      };
-
-      request.onerror = () => {
-        console.error(`Error deleting item from ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
+    const entityName = cls.name.toLowerCase();
+    const repository = this.entityRepositories.get(entityName);
+    return repository?.delete(key);
   }
 
   async list<T>(cls: { new(...args: any[]): T }): Promise<T[]> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readonly");
-      const request = store.getAll();
-
-      request.onsuccess = () => {
-        console.debug(`All items from ${cls.name}:`, request.result);
-        resolve(request.result as T[]);
-      };
-
-      request.onerror = () => {
-        console.error(`Error listing items from ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
+    const entityName = cls.name.toLowerCase();
+    const repository = this.entityRepositories.get(entityName);
+    return repository?.list() || [];
   }
+  // legacy method implementation ends here
 
-  async listPaginated<T>(cls: { new(...args: any[]): T }, page: number, pageSize: number): Promise<T[]> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readonly");
-      const request = store.getAll();
-
-      request.onsuccess = () => {
-        const items = request.result as T[];
-        const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
-        console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
-        resolve(paginatedItems);
-      };
-
-      request.onerror = () => {
-        console.error(`Error listing items from ${cls.name}:`, request.error);
-        reject(request.error);
-      };
-    });
-  }
-
-  async findByIndex<T>(cls: { new(...args: any[]): T }, indexName: string, value: any): Promise<T[]> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readonly");
-      
-      if (!store.indexNames.contains(indexName)) {
-        reject(new Error(`Index '${indexName}' does not exist on ${cls.name}`));
-        return;
-      }
-
-      const index = store.index(indexName);
-      const request = index.getAll(value);
-
-      request.onsuccess = () => {
-        console.debug(`Items found by index ${indexName} with value ${value}:`, request.result);
-        resolve(request.result as T[]);
-      };
-
-      request.onerror = () => {
-        console.error(`Error finding items by index ${indexName}:`, request.error);
-        reject(request.error);
-      };
-    });
-  }
-
-  async findOneByIndex<T>(cls: { new(...args: any[]): T }, indexName: string, value: any): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-      const store = this.getObjectStore(cls.name, "readonly");
-      
-      if (!store.indexNames.contains(indexName)) {
-        reject(new Error(`Index '${indexName}' does not exist on ${cls.name}`));
-        return;
-      }
-
-      const index = store.index(indexName);
-      const request = index.get(value);
-
-      request.onsuccess = () => {
-        console.debug(`Item found by index ${indexName} with value ${value}:`, request.result);
-        resolve(request.result as T | undefined);
-      };
-
-      request.onerror = () => {
-        console.error(`Error finding item by index ${indexName}:`, request.error);
-        reject(request.error);
-      };
-    });
+  getAvailableEntities(): string[] {
+    return Array.from(this.entityRepositories.keys());
   }
 }
 
-export { Database, KeyPath, DataClass, Index };
+export { Database, KeyPath, DataClass, Index, EntityRepository };
+export type { DatabaseWithRepositories };
