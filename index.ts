@@ -469,31 +469,31 @@ class Database {
   // Legacy methods for backward compatibility
   // will be removed in future versions
   async create<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    const entityName = cls.name.toLowerCase();
+    const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.create(item);
   }
 
   async read<T>(cls: { new(...args: any[]): T }, key: string): Promise<T | undefined> {
-    const entityName = cls.name.toLowerCase();
+    const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.read(key);
   }
 
   async update<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    const entityName = cls.name.toLowerCase();
+    const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.update(item);
   }
 
   async delete<T>(cls: { new(...args: any[]): T }, key: string): Promise<void> {
-    const entityName = cls.name.toLowerCase();
+    const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.delete(key);
   }
 
   async list<T>(cls: { new(...args: any[]): T }): Promise<T[]> {
-    const entityName = cls.name.toLowerCase();
+    const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.list() || [];
   }
