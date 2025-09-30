@@ -153,11 +153,86 @@ class QueryBuilder<T> {
   }
 }
 
-function KeyPath(): PropertyDecorator {
-  return (target: Object, propertyKey: string | symbol) => {
-    const constructor = target.constructor as Function;
-    const existing = Reflect.getMetadata("keypath", constructor) || [];
-    Reflect.defineMetadata("keypath", [...existing, propertyKey as string], constructor);
+interface KeyPathOptions {
+  autoIncrement?: boolean;
+  generator?: 'uuid' | 'timestamp' | 'random' | ((item?: any) => string | number);
+}
+
+interface KeyPathMetadata {
+  fields: string | string[];
+  options?: KeyPathOptions;
+}
+
+// Key generation utilities
+class KeyGenerators {
+  static uuid(): string {
+    // Simple UUID v4 implementation without external dependencies
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  static timestamp(): number {
+    return Date.now();
+  }
+
+  static random(): string {
+    return Math.random().toString(36).substring(2, 15);
+  }
+}
+
+// KeyPath decorator with support for single fields, composite keys, and options
+function KeyPath(fieldOrOptions?: string | KeyPathOptions, options?: KeyPathOptions): any {
+  // Case 1: @KeyPath() - used as property decorator without arguments
+  if (arguments.length === 0) {
+    return (target: any, propertyKey: string | symbol) => {
+      const constructor = target.constructor as Function;
+      const metadata: KeyPathMetadata = {
+        fields: propertyKey as string,
+        options: undefined
+      };
+      Reflect.defineMetadata("keypath", metadata, constructor);
+    };
+  }
+  
+  // Case 2: @KeyPath('fieldName') or @KeyPath('fieldName', options) - property decorator with field name
+  if (typeof fieldOrOptions === 'string') {
+    return (target: any, propertyKey?: string | symbol) => {
+      const constructor = target.constructor as Function;
+      const field = propertyKey ? propertyKey as string : fieldOrOptions;
+      const metadata: KeyPathMetadata = {
+        fields: field,
+        options: options
+      };
+      Reflect.defineMetadata("keypath", metadata, constructor);
+    };
+  }
+  
+  // Case 3: @KeyPath({ options }) - property decorator with just options
+  if (typeof fieldOrOptions === 'object' && !Array.isArray(fieldOrOptions)) {
+    return (target: any, propertyKey: string | symbol) => {
+      const constructor = target.constructor as Function;
+      const metadata: KeyPathMetadata = {
+        fields: propertyKey as string,
+        options: fieldOrOptions
+      };
+      Reflect.defineMetadata("keypath", metadata, constructor);
+    };
+  }
+  
+  throw new Error("Invalid KeyPath decorator usage");
+}
+
+// Separate function for composite keys (class decorator)
+function CompositeKeyPath(fields: string[], options?: KeyPathOptions): ClassDecorator {
+  return (target: Function) => {
+    const metadata: KeyPathMetadata = {
+      fields: fields,
+      options: options
+    };
+    Reflect.defineMetadata("keypath", metadata, target);
   };
 }
 
@@ -175,12 +250,9 @@ interface DataClassOptions {
 
 function DataClass(options: DataClassOptions = {}): ClassDecorator {
   return (target: Function) => {
-    if (!Reflect.getMetadata("keypath", target)) {
+    const keyPathMetadata = Reflect.getMetadata("keypath", target) as KeyPathMetadata;
+    if (!keyPathMetadata) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
-    }
-    const keyPathFields = Reflect.getMetadata("keypath", target) || [];
-    if (keyPathFields.length > 1) {
-      throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
     }
     const version = options.version || 1;
     Reflect.defineMetadata("dataclass", true, target);
@@ -190,9 +262,9 @@ function DataClass(options: DataClassOptions = {}): ClassDecorator {
 
 interface EntityRepository<T> {
   create(item: T): Promise<void>;
-  read(key: string): Promise<T | undefined>;
+  read(key: string | string[] | number): Promise<T | undefined>;
   update(item: T): Promise<void>;
-  delete(key: string): Promise<void>;
+  delete(key: string | string[] | number): Promise<void>;
   list(): Promise<T[]>;
   listPaginated(page: number, pageSize: number): Promise<T[]>;
   findByIndex(indexName: string, value: any): Promise<T[]>;
@@ -255,7 +327,7 @@ class Database {
 
         // Handle schema evolution based on versions
         this.classes.forEach((cls) => {
-          const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
+          const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
           const indexFields = Reflect.getMetadata("indexes", cls) || [];
           const classVersion = Reflect.getMetadata("version", cls) || 1;
 
@@ -265,7 +337,20 @@ class Database {
           if (classVersion > oldVersion) {
             if (!db.objectStoreNames.contains(storeName)) {
               console.debug(`Creating object store: ${storeName} (version ${classVersion})`);
-              const store = db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+              
+              // Determine store options based on keypath metadata
+              const storeOptions: IDBObjectStoreParameters = {};
+              
+              if (keyPathMetadata) {
+                storeOptions.keyPath = keyPathMetadata.fields;
+                
+                // Handle auto-increment option
+                if (keyPathMetadata.options?.autoIncrement) {
+                  storeOptions.autoIncrement = true;
+                }
+              }
+              
+              const store = db.createObjectStore(storeName, storeOptions);
 
               indexFields.forEach((indexField: string) => {
                 if (!store.indexNames.contains(indexField)) {
@@ -324,13 +409,79 @@ class Database {
 
   private createEntityRepository<T>(cls: Function): EntityRepository<T> {
   const self = this;
+  
+  // Helper function to generate keys
+  const generateKey = (item: T): string | number | undefined => {
+    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+    if (!keyPathMetadata?.options?.generator) return undefined;
+    
+    const generator = keyPathMetadata.options.generator;
+    
+    if (typeof generator === 'function') {
+      return generator(item);
+    }
+    
+    switch (generator) {
+      case 'uuid':
+        return KeyGenerators.uuid();
+      case 'timestamp':
+        return KeyGenerators.timestamp();
+      case 'random':
+        return KeyGenerators.random();
+      default:
+        return undefined;
+    }
+  };
+  
+  // Helper function to extract key from item
+  const extractKey = (item: T): any => {
+    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+    if (!keyPathMetadata) return undefined;
+    
+    const fields = keyPathMetadata.fields;
+    
+    if (Array.isArray(fields)) {
+      // Composite key
+      return fields.map(field => (item as any)[field]);
+    } else {
+      // Single field key
+      return (item as any)[fields];
+    }
+  };
+  
+  // Helper function to set key on item
+  const setKey = (item: T, key: string | number): void => {
+    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+    if (!keyPathMetadata) return;
+    
+    const fields = keyPathMetadata.fields;
+    
+    if (typeof fields === 'string') {
+      (item as any)[fields] = key;
+    }
+    // Note: Composite keys cannot be auto-generated in this simple implementation
+  };
+  
   return {
       query(): QueryBuilder<T> {
         if (!self.db) throw new Error('Database not initialized.');
         const storeName = cls.name.toLowerCase();
         return new QueryBuilder<T>(self.db, storeName);
       },
+      
       create: async (item: T): Promise<void> => {
+        // Generate key if needed
+        const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+        if (keyPathMetadata?.options?.generator && !keyPathMetadata.options.autoIncrement) {
+          const currentKey = extractKey(item);
+          if (currentKey === undefined || currentKey === null || currentKey === '') {
+            const generatedKey = generateKey(item);
+            if (generatedKey !== undefined) {
+              setKey(item, generatedKey);
+            }
+          }
+        }
+        
         return this.performOperation(cls.name, 'readwrite', (store) => {
           const request = store.add(item);
           return new Promise<void>((resolve, reject) => {
@@ -343,7 +494,7 @@ class Database {
         });
       },
 
-      read: async (key: string): Promise<T | undefined> => {
+      read: async (key: string | string[] | number): Promise<T | undefined> => {
         return this.performOperation(cls.name, 'readonly', (store) => {
           const request = store.get(key);
           return new Promise<T | undefined>((resolve, reject) => {
@@ -369,7 +520,7 @@ class Database {
         });
       },
 
-      delete: async (key: string): Promise<void> => {
+      delete: async (key: string | string[] | number): Promise<void> => {
         return this.performOperation(cls.name, 'readwrite', (store) => {
           const request = store.delete(key);
           return new Promise<void>((resolve, reject) => {
@@ -512,7 +663,7 @@ class Database {
     return repository?.create(item);
   }
 
-  async read<T>(cls: { new(...args: any[]): T }, key: string): Promise<T | undefined> {
+  async read<T>(cls: { new(...args: any[]): T }, key: string | string[] | number): Promise<T | undefined> {
     const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.read(key);
@@ -524,7 +675,7 @@ class Database {
     return repository?.update(item);
   }
 
-  async delete<T>(cls: { new(...args: any[]): T }, key: string): Promise<void> {
+  async delete<T>(cls: { new(...args: any[]): T }, key: string | string[] | number): Promise<void> {
     const entityName = cls.name;
     const repository = this.entityRepositories.get(entityName);
     return repository?.delete(key);
@@ -560,5 +711,5 @@ class Database {
   }
 }
 
-export { Database, KeyPath, DataClass, Index, EntityRepository };
-export type { DatabaseWithRepositories, DataClassOptions };
+export { Database, KeyPath, CompositeKeyPath, DataClass, Index, EntityRepository, KeyGenerators };
+export type { DatabaseWithRepositories, DataClassOptions, KeyPathOptions, KeyPathMetadata };
