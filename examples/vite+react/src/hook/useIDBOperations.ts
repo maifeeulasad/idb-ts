@@ -11,7 +11,8 @@ const useIDBOperations = () => {
     setLoading(true);
     setError(null);
     try {
-      const database = await Database.build(dbName, classes);
+      const database = new Database(dbName, classes);
+      await database.initialize();
       setDb(database);
     } catch (err) {
       setError('Failed to initialize database');
