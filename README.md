@@ -40,6 +40,7 @@ npm i idb-ts
 - 🚀 **Fully Typed API** - Benefit from TypeScript’s powerful type system.
 - 🏎️ **Performance Optimized** - Minimal overhead with IndexedDB's native capabilities.
 - 🔄 **Schema Versioning** - Manage database schema evolution with automatic migration support.
+- 🔑 **Advanced Key Management** - Auto-increment, UUID, timestamp, custom generators, and composite keys.
 
 ---
 
@@ -170,6 +171,194 @@ const firstElectronic = await db.Product.findOneByIndex('category', 'Electronics
   ```typescript
   await db.Product.findByIndex('nonexistent', 'value'); // throws
   ```
+
+---
+
+## 🔑 Multi-Field & Composite Key Support
+
+idb-ts provides flexible key management options including auto-increment keys, key generators, and composite keys for complex data relationships.
+
+### Auto-Increment Keys
+Perfect for entities where you want the database to automatically generate sequential IDs:
+
+```typescript
+@DataClass()
+class Task {
+  @KeyPath({ autoIncrement: true })
+  id!: number;
+
+  title!: string;
+  completed!: boolean;
+
+  constructor(title: string, completed = false) {
+    this.title = title;
+    this.completed = completed;
+  }
+}
+
+const db = await Database.build("tasks-db", [Task]);
+
+// IDs are automatically generated: 1, 2, 3, etc.
+const task1 = await db.Task.create(new Task("Learn TypeScript"));
+const task2 = await db.Task.create(new Task("Build amazing apps"));
+console.log(task1.id); // 1
+console.log(task2.id); // 2
+```
+
+### Key Generators
+Generate keys automatically using built-in generators:
+
+#### UUID Keys
+```typescript
+@DataClass()
+class Document {
+  @KeyPath({ generator: 'uuid' })
+  uuid!: string;
+
+  @Index()
+  category!: string;
+
+  title!: string;
+  content!: string;
+
+  constructor(category: string, title: string, content: string) {
+    this.category = category;
+    this.title = title;
+    this.content = content;
+  }
+}
+
+const db = await Database.build("docs-db", [Document]);
+
+const doc = await db.Document.create(new Document("tutorial", "Getting Started", "Welcome..."));
+console.log(doc.uuid); // e.g., "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+```
+
+#### Timestamp Keys
+```typescript
+@DataClass()
+class Event {
+  @KeyPath({ generator: 'timestamp' })
+  timestamp!: number;
+
+  @Index()
+  type!: string;
+
+  data!: any;
+
+  constructor(type: string, data: any) {
+    this.type = type;
+    this.data = data;
+  }
+}
+
+const event = await db.Event.create(new Event("user_login", { userId: "123" }));
+console.log(event.timestamp); // e.g., 1696118400000
+```
+
+#### Random Keys
+```typescript
+@DataClass()
+class Session {
+  @KeyPath({ generator: 'random' })
+  sessionId!: string;
+
+  userId!: string;
+  expiresAt!: Date;
+
+  constructor(userId: string, expiresAt: Date) {
+    this.userId = userId;
+    this.expiresAt = expiresAt;
+  }
+}
+
+const session = await db.Session.create(new Session("user123", new Date()));
+console.log(session.sessionId); // e.g., "xyz789abc123"
+```
+
+### Custom Key Generators
+Create your own key generation logic:
+
+```typescript
+@DataClass()
+class Invoice {
+  @KeyPath({ generator: (entity: any) => `INV-${entity.year}-${String(entity.number).padStart(4, '0')}` })
+  invoiceId!: string;
+
+  year!: number;
+  number!: number;
+  amount!: number;
+
+  constructor(year: number, number: number, amount: number) {
+    this.year = year;
+    this.number = number;
+    this.amount = amount;
+  }
+}
+
+const invoice = await db.Invoice.create(new Invoice(2024, 1, 1500.00));
+console.log(invoice.invoiceId); // "INV-2024-0001"
+```
+
+### Composite Keys
+Handle many-to-many relationships with composite keys using the `@CompositeKeyPath` decorator:
+
+```typescript
+import { CompositeKeyPath } from "idb-ts";
+
+@CompositeKeyPath(['userId', 'projectId'])
+@DataClass()
+class UserProject {
+  userId!: string;
+  projectId!: string;
+
+  @Index()
+  role!: string;
+
+  joinedAt!: Date;
+
+  constructor(userId: string, projectId: string, role: string) {
+    this.userId = userId;
+    this.projectId = projectId;
+    this.role = role;
+    this.joinedAt = new Date();
+  }
+}
+
+const db = await Database.build("collaboration-db", [UserProject]);
+
+// Create relationships
+await db.UserProject.create(new UserProject("user123", "project456", "developer"));
+await db.UserProject.create(new UserProject("user123", "project789", "admin"));
+await db.UserProject.create(new UserProject("user456", "project456", "viewer"));
+
+// Read with composite key
+const relationship = await db.UserProject.read(['user123', 'project456']);
+console.log(relationship?.role); // "developer"
+
+// Update relationship
+if (relationship) {
+  relationship.role = "maintainer";
+  await db.UserProject.update(relationship);
+}
+
+// Delete with composite key
+await db.UserProject.delete(['user123', 'project789']);
+
+// Query by role index
+const developers = await db.UserProject.findByIndex('role', 'developer');
+```
+
+### Key Generation Utilities
+Access key generators directly for your custom logic:
+
+```typescript
+import { KeyGenerators } from "idb-ts";
+
+const uuid = KeyGenerators.uuid();        // Generate UUID
+const timestamp = KeyGenerators.timestamp(); // Current timestamp
+const random = KeyGenerators.random();    // Random string
+```
 
 ---
 
