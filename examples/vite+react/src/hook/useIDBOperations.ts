@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Database } from 'idb-ts/lib';
+import { Database } from 'idb-ts';
 
 const useIDBOperations = () => {
   const [db, setDb] = useState<Database | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize the database
+  // Initialize the database with new API
   const initializeDB = async (dbName: string, classes: Function[]) => {
     setLoading(true);
     setError(null);
@@ -21,8 +21,8 @@ const useIDBOperations = () => {
     }
   };
 
-  // Create a new item
-  const createItem = async <T extends { new (...args: any[]): any }>(cls: T, item: InstanceType<T>) => {
+  // Create a new item using repository pattern
+  const createItem = async <T>(entityName: string, item: T) => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -30,17 +30,21 @@ const useIDBOperations = () => {
     setLoading(true);
     setError(null);
     try {
-      await db.create(cls, item);
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      await repository.create(item);
     } catch (err) {
-      setError(`Failed to create ${cls.name}`);
+      setError(`Failed to create ${entityName}`);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Read an item by key
-  const readItem = async <T extends { new (...args: any[]): any }>(cls: T, key: string) => {
+  // Read an item by key using repository pattern
+  const readItem = async <T>(entityName: string, key: any): Promise<T | undefined> => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -48,18 +52,22 @@ const useIDBOperations = () => {
     setLoading(true);
     setError(null);
     try {
-      const item = await db.read(cls, key);
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      const item = await repository.read(key);
       return item;
     } catch (err) {
-      setError(`Failed to read ${cls.name}`);
+      setError(`Failed to read ${entityName}`);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Update an item
-  const updateItem = async <T extends { new (...args: any[]): any }>(cls: T, item: InstanceType<T>) => {
+  // Update an item using repository pattern
+  const updateItem = async <T>(entityName: string, item: T) => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -67,17 +75,21 @@ const useIDBOperations = () => {
     setLoading(true);
     setError(null);
     try {
-      await db.update(cls, item);
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      await repository.update(item);
     } catch (err) {
-      setError(`Failed to update ${cls.name}`);
+      setError(`Failed to update ${entityName}`);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete an item by key
-  const deleteItem = async <T extends { new (...args: any[]): any }>(cls: T, key: string) => {
+  // Delete an item by key using repository pattern
+  const deleteItem = async (entityName: string, key: any) => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -85,29 +97,110 @@ const useIDBOperations = () => {
     setLoading(true);
     setError(null);
     try {
-      await db.delete(cls, key);
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      await repository.delete(key);
     } catch (err) {
-      setError(`Failed to delete ${cls.name}`);
+      setError(`Failed to delete ${entityName}`);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // List all items
-  const listItems = async <T extends { new (...args: any[]): any }>(cls: T) => {
+  // List all items using repository pattern
+  const listItems = async <T>(entityName: string): Promise<T[]> => {
     if (!db) {
       setError('Database not initialized');
-      return;
+      return [];
     }
     setLoading(true);
     setError(null);
     try {
-      const items = await db.list(cls);
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      const items = await repository.list();
       return items;
     } catch (err) {
-      setError(`Failed to list ${cls.name}`);
+      setError(`Failed to list ${entityName}`);
       console.error(err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Advanced query operations
+  const queryItems = async <T>(entityName: string, queryFn: (query: any) => any): Promise<T[]> => {
+    if (!db) {
+      setError('Database not initialized');
+      return [];
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      const query = repository.query();
+      const results = await queryFn(query).execute();
+      return results;
+    } catch (err) {
+      setError(`Failed to query ${entityName}`);
+      console.error(err);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Find by index
+  const findByIndex = async <T>(entityName: string, indexName: string, value: any): Promise<T | undefined> => {
+    if (!db) {
+      setError('Database not initialized');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      const item = await repository.findOneByIndex(indexName, value);
+      return item;
+    } catch (err) {
+      setError(`Failed to find by index in ${entityName}`);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Find all by index
+  const findAllByIndex = async <T>(entityName: string, indexName: string, value: any): Promise<T[]> => {
+    if (!db) {
+      setError('Database not initialized');
+      return [];
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const repository = (db as any)[entityName];
+      if (!repository) {
+        throw new Error(`Repository for ${entityName} not found`);
+      }
+      const items = await repository.findByIndex(indexName, value);
+      return items;
+    } catch (err) {
+      setError(`Failed to find all by index in ${entityName}`);
+      console.error(err);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -123,6 +216,9 @@ const useIDBOperations = () => {
     updateItem,
     deleteItem,
     listItems,
+    queryItems,
+    findByIndex,
+    findAllByIndex,
   };
 };
 
