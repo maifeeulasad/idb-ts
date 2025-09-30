@@ -32,8 +32,8 @@ describe('QueryBuilder API', () => {
         await db.User.create(new User('u5', 'eve@example.com', 40, 'inactive', 500));
     });
 
-    it('should filter, order, limit, and offset users (class pattern)', async () => {
-        const users = await db.query(User)
+    it('should filter, order, limit, and offset users (repository pattern)', async () => {
+        const users = await db.User.query()
             .where('age').gt(18)
             .and('status').equals('active')
             .orderBy('createdAt', 'desc')
@@ -58,8 +58,8 @@ describe('QueryBuilder API', () => {
         expect(users[1].id).toBe('u3');
     });
 
-    it('should query by index range (class pattern)', async () => {
-        const users = await db.query(User)
+    it('should query by index range (repository pattern)', async () => {
+        const users = await db.User.query()
             .useIndex('email')
             .range('bob@example.com', 'eve@example.com')
             .execute();
