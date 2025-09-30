@@ -9,7 +9,7 @@
   "license": "MIT",
   "description": "",
   "dependencies": {
-    "idb-ts": "^3.0.0"
+    "idb-ts": "^3.7.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.8",
