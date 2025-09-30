@@ -39,6 +39,7 @@ npm i idb-ts
 - ⚡ **Easy CRUD Operations** - Perform create, read, update, and delete seamlessly.
 - 🚀 **Fully Typed API** - Benefit from TypeScript’s powerful type system.
 - 🏎️ **Performance Optimized** - Minimal overhead with IndexedDB's native capabilities.
+- 🔄 **Schema Versioning** - Manage database schema evolution with automatic migration support.
 
 ---
 
@@ -169,6 +170,68 @@ const firstElectronic = await db.Product.findOneByIndex('category', 'Electronics
   ```typescript
   await db.Product.findByIndex('nonexistent', 'value'); // throws
   ```
+
+---
+
+## 🔄 Schema Versioning
+
+idb-ts supports schema versioning to manage database evolution over time. Version your entities and let the library handle automatic migration!
+
+### Basic Usage
+
+```typescript
+@DataClass({ version: 1 })
+class User {
+  @KeyPath() id!: string;
+  @Index() email!: string;
+  name!: string;
+}
+
+@DataClass({ version: 2 })
+class Post {
+  @KeyPath() id!: string;
+  @Index() authorId!: string;
+  title!: string;
+  content!: string;
+}
+
+@DataClass({ version: 3 })
+class Comment {
+  @KeyPath() id!: string;
+  @Index() postId!: string;
+  @Index() authorId!: string;
+  text!: string;
+}
+
+// Database version will be 3 (highest entity version)
+const db = await Database.build("blog", [User, Post, Comment]);
+
+console.log(db.getDatabaseVersion()); // 3
+console.log(db.getEntityVersions()); // Map with entity versions
+```
+
+### Key Features
+
+- **Automatic Version Calculation**: Database version = highest entity version
+- **Seamless Migration**: Only new/updated entities are processed during upgrades
+- **Backward Compatibility**: Entities without version default to version 1
+- **Index Evolution**: New indexes are automatically created during migration
+
+### Version Management
+
+```typescript
+// Check versions
+const dbVersion = db.getDatabaseVersion();
+const entityVersions = db.getEntityVersions();
+const userVersion = db.getEntityVersion('User');
+
+// Version upgrade flow:
+// v1.0: User(v1) → Database v1
+// v1.1: User(v1), Post(v2) → Database v2  
+// v1.2: User(v1), Post(v2), Comment(v3) → Database v3
+```
+
+📖 **[Complete Schema Versioning Guide](./SCHEMA_VERSIONING.md)** - Detailed documentation with examples and best practices.
 
 ---
 

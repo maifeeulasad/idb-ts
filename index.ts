@@ -169,7 +169,11 @@ function Index(): PropertyDecorator {
   };
 }
 
-function DataClass(): ClassDecorator {
+interface DataClassOptions {
+  version?: number;
+}
+
+function DataClass(options: DataClassOptions = {}): ClassDecorator {
   return (target: Function) => {
     if (!Reflect.getMetadata("keypath", target)) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
@@ -178,7 +182,9 @@ function DataClass(): ClassDecorator {
     if (keyPathFields.length > 1) {
       throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
     }
+    const version = options.version || 1;
     Reflect.defineMetadata("dataclass", true, target);
+    Reflect.defineMetadata("version", version, target);
   };
 }
 
@@ -209,6 +215,7 @@ class Database {
   private classes: Function[];
   private db: IDBDatabase | null = null;
   private entityRepositories: Map<string, any> = new Map();
+  private dbVersion: number;
 
   private constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
@@ -216,6 +223,13 @@ class Database {
       throw new Error("All classes should be decorated with @DataClass.");
     }
     this.classes = classes;
+    this.dbVersion = this.calculateDatabaseVersion();
+  }
+
+  private calculateDatabaseVersion(): number {
+    // Calculate the database version based on the highest schema version
+    const versions = this.classes.map(cls => Reflect.getMetadata("version", cls) || 1);
+    return Math.max(...versions);
   }
 
   public static async build<T extends Record<string, EntityRepository<any>>>(
@@ -230,32 +244,56 @@ class Database {
 
   private async initDB(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
+      const request = indexedDB.open(this.dbName, this.dbVersion);
 
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event) => {
         const db = request.result;
+        const oldVersion = event.oldVersion;
+        const newVersion = event.newVersion || this.dbVersion;
 
+        console.debug(`Database upgrade from version ${oldVersion} to ${newVersion}`);
+
+        // Handle schema evolution based on versions
         this.classes.forEach((cls) => {
           const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
           const indexFields = Reflect.getMetadata("indexes", cls) || [];
+          const classVersion = Reflect.getMetadata("version", cls) || 1;
 
           const storeName = cls.name.toLowerCase();
 
-          if (!db.objectStoreNames.contains(storeName)) {
-            const store = db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+          // Only create/update stores for classes whose version is greater than the old DB version
+          if (classVersion > oldVersion) {
+            if (!db.objectStoreNames.contains(storeName)) {
+              console.debug(`Creating object store: ${storeName} (version ${classVersion})`);
+              const store = db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
 
-            indexFields.forEach((indexField: string) => {
-              if (!store.indexNames.contains(indexField)) {
-                store.createIndex(indexField, indexField, { unique: false });
+              indexFields.forEach((indexField: string) => {
+                if (!store.indexNames.contains(indexField)) {
+                  store.createIndex(indexField, indexField, { unique: false });
+                }
+              });
+            } else {
+              // Store exists, check if we need to update indexes
+              console.debug(`Updating object store: ${storeName} (version ${classVersion})`);
+              const transaction = request.transaction;
+              if (transaction) {
+                const store = transaction.objectStore(storeName);
+                
+                indexFields.forEach((indexField: string) => {
+                  if (!store.indexNames.contains(indexField)) {
+                    console.debug(`Adding index: ${indexField} to ${storeName}`);
+                    store.createIndex(indexField, indexField, { unique: false });
+                  }
+                });
               }
-            });
+            }
           }
         });
       };
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.debug(`Database initialized with object stores for: ${this.classes.map(cls => cls.name).join(", ")}`);
+        console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map(cls => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
         resolve();
       };
 
@@ -502,7 +540,25 @@ class Database {
   getAvailableEntities(): string[] {
     return Array.from(this.entityRepositories.keys());
   }
+
+  getDatabaseVersion(): number {
+    return this.dbVersion;
+  }
+
+  getEntityVersions(): Map<string, number> {
+    const versions = new Map<string, number>();
+    this.classes.forEach(cls => {
+      const version = Reflect.getMetadata("version", cls) || 1;
+      versions.set(cls.name, version);
+    });
+    return versions;
+  }
+
+  getEntityVersion(entityName: string): number | undefined {
+    const cls = this.classes.find(c => c.name === entityName);
+    return cls ? (Reflect.getMetadata("version", cls) || 1) : undefined;
+  }
 }
 
 export { Database, KeyPath, DataClass, Index, EntityRepository };
-export type { DatabaseWithRepositories };
+export type { DatabaseWithRepositories, DataClassOptions };
