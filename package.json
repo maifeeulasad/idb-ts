@@ -4,11 +4,13 @@
   "description": "Easy CRUD for indexed-db, written in TypeScript",
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
+  "types": "lib/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "import": "./lib/index.esm.js",
-      "require": "./lib/index.js"
+      "require": "./lib/index.js",
+      "types": "./lib/index.d.ts"
     }
   },
   "scripts": {
