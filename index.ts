@@ -189,6 +189,12 @@ function KeyPath(fieldOrOptions?: string | KeyPathOptions, options?: KeyPathOpti
   if (arguments.length === 0) {
     return (target: any, propertyKey: string | symbol) => {
       const constructor = target.constructor as Function;
+      
+      // Get existing individual keypaths or create new array
+      const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+      existingKeypaths.push(propertyKey as string);
+      Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+      
       const metadata: KeyPathMetadata = {
         fields: propertyKey as string,
         options: undefined
@@ -202,6 +208,14 @@ function KeyPath(fieldOrOptions?: string | KeyPathOptions, options?: KeyPathOpti
     return (target: any, propertyKey?: string | symbol) => {
       const constructor = target.constructor as Function;
       const field = propertyKey ? propertyKey as string : fieldOrOptions;
+      
+      // Track individual property keypaths for validation only if it's a property decorator
+      if (propertyKey) {
+        const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+        existingKeypaths.push(propertyKey as string);
+        Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+      }
+      
       const metadata: KeyPathMetadata = {
         fields: field,
         options: options
@@ -214,6 +228,12 @@ function KeyPath(fieldOrOptions?: string | KeyPathOptions, options?: KeyPathOpti
   if (typeof fieldOrOptions === 'object' && !Array.isArray(fieldOrOptions)) {
     return (target: any, propertyKey: string | symbol) => {
       const constructor = target.constructor as Function;
+      
+      // Get existing individual keypaths or create new array
+      const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+      existingKeypaths.push(propertyKey as string);
+      Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+      
       const metadata: KeyPathMetadata = {
         fields: propertyKey as string,
         options: fieldOrOptions
@@ -254,6 +274,14 @@ function DataClass(options: DataClassOptions = {}): ClassDecorator {
     if (!keyPathMetadata) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
     }
+    
+    // Check for multiple property-level @KeyPath decorators (which is invalid)
+    // This is different from composite keys which are defined at class level
+    const individualKeypaths = Reflect.getMetadata("individual_keypaths", target) || [];
+    if (individualKeypaths.length > 1) {
+      throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
+    }
+    
     const version = options.version || 1;
     Reflect.defineMetadata("dataclass", true, target);
     Reflect.defineMetadata("version", version, target);
