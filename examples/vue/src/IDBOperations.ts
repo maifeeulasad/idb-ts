@@ -1,4 +1,4 @@
-import { DataClass, KeyPath } from 'idb-ts/lib';
+import { DataClass, KeyPath } from 'idb-ts';
 
 @DataClass()
 export class User {
