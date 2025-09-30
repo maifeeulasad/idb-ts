@@ -183,66 +183,22 @@ class KeyGenerators {
   }
 }
 
-// KeyPath decorator with support for single fields, composite keys, and options
-function KeyPath(fieldOrOptions?: string | KeyPathOptions, options?: KeyPathOptions): any {
-  // Case 1: @KeyPath() - used as property decorator without arguments
-  if (arguments.length === 0) {
-    return (target: any, propertyKey: string | symbol) => {
-      const constructor = target.constructor as Function;
-      
-      // Get existing individual keypaths or create new array
-      const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
-      existingKeypaths.push(propertyKey as string);
-      Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
-      
-      const metadata: KeyPathMetadata = {
-        fields: propertyKey as string,
-        options: undefined
-      };
-      Reflect.defineMetadata("keypath", metadata, constructor);
+// Simplified KeyPath decorator - property decorator with optional options
+function KeyPath(options?: KeyPathOptions): PropertyDecorator {
+  return (target: any, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    
+    // Track individual property keypaths for validation
+    const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+    existingKeypaths.push(propertyKey as string);
+    Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+    
+    const metadata: KeyPathMetadata = {
+      fields: propertyKey as string,
+      options: options
     };
-  }
-  
-  // Case 2: @KeyPath('fieldName') or @KeyPath('fieldName', options) - property decorator with field name
-  if (typeof fieldOrOptions === 'string') {
-    return (target: any, propertyKey?: string | symbol) => {
-      const constructor = target.constructor as Function;
-      const field = propertyKey ? propertyKey as string : fieldOrOptions;
-      
-      // Track individual property keypaths for validation only if it's a property decorator
-      if (propertyKey) {
-        const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
-        existingKeypaths.push(propertyKey as string);
-        Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
-      }
-      
-      const metadata: KeyPathMetadata = {
-        fields: field,
-        options: options
-      };
-      Reflect.defineMetadata("keypath", metadata, constructor);
-    };
-  }
-  
-  // Case 3: @KeyPath({ options }) - property decorator with just options
-  if (typeof fieldOrOptions === 'object' && !Array.isArray(fieldOrOptions)) {
-    return (target: any, propertyKey: string | symbol) => {
-      const constructor = target.constructor as Function;
-      
-      // Get existing individual keypaths or create new array
-      const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
-      existingKeypaths.push(propertyKey as string);
-      Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
-      
-      const metadata: KeyPathMetadata = {
-        fields: propertyKey as string,
-        options: fieldOrOptions
-      };
-      Reflect.defineMetadata("keypath", metadata, constructor);
-    };
-  }
-  
-  throw new Error("Invalid KeyPath decorator usage");
+    Reflect.defineMetadata("keypath", metadata, constructor);
+  };
 }
 
 // Separate function for composite keys (class decorator)
@@ -306,11 +262,6 @@ interface EntityRepository<T> {
 type DatabaseWithRepositories<T extends Record<string, any>> = Database & T;
 
 class Database {
-  public query<T>(cls: { new(...args: any[]): T }): QueryBuilder<T> {
-    if (!this.db) throw new Error('Database not initialized.');
-    const storeName = cls.name.toLowerCase();
-    return new QueryBuilder<T>(this.db, storeName);
-  }
   private dbName: string;
   private classes: Function[];
   private db: IDBDatabase | null = null;
@@ -682,39 +633,6 @@ class Database {
 
     return operation(store);
   }
-
-  // Legacy methods for backward compatibility
-  // will be removed in future versions
-  async create<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    const entityName = cls.name;
-    const repository = this.entityRepositories.get(entityName);
-    return repository?.create(item);
-  }
-
-  async read<T>(cls: { new(...args: any[]): T }, key: string | string[] | number): Promise<T | undefined> {
-    const entityName = cls.name;
-    const repository = this.entityRepositories.get(entityName);
-    return repository?.read(key);
-  }
-
-  async update<T>(cls: { new(...args: any[]): T }, item: T): Promise<void> {
-    const entityName = cls.name;
-    const repository = this.entityRepositories.get(entityName);
-    return repository?.update(item);
-  }
-
-  async delete<T>(cls: { new(...args: any[]): T }, key: string | string[] | number): Promise<void> {
-    const entityName = cls.name;
-    const repository = this.entityRepositories.get(entityName);
-    return repository?.delete(key);
-  }
-
-  async list<T>(cls: { new(...args: any[]): T }): Promise<T[]> {
-    const entityName = cls.name;
-    const repository = this.entityRepositories.get(entityName);
-    return repository?.list() || [];
-  }
-  // legacy method implementation ends here
 
   getAvailableEntities(): string[] {
     return Array.from(this.entityRepositories.keys());
