@@ -1,4 +1,4 @@
-import { Database, DataClass, KeyPath, Index } from "../index";
+import { Database, DataClass, KeyPath, Index, CompositeKeyPath } from "../index";
 
 // Test entities for coverage improvement
 @DataClass()
@@ -20,6 +20,34 @@ class CoverageUser {
     this.age = age;
     this.status = status;
     this.score = score;
+  }
+}
+
+@DataClass({ version: 1 })
+class RandomKeyEntity {
+  @KeyPath({ generator: 'random' })
+  id!: string;
+
+  name!: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+}
+
+@DataClass({ version: 1 })
+@CompositeKeyPath(['userId', 'projectId'])
+class CompositeEntity {
+  userId!: string;
+  projectId!: string;
+
+  @Index()
+  role!: string;
+
+  constructor(userId: string, projectId: string, role: string) {
+    this.userId = userId;
+    this.projectId = projectId;
+    this.role = role;
   }
 }
 
