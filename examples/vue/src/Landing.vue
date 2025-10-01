@@ -31,8 +31,8 @@
   </div>
 </template>
 
-<script setup lang="tsx">
-import { ref, onMounted } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, h } from 'vue';
 import { Table, Button, Modal, Input, Space } from 'ant-design-vue';
 import useIDBOperations from './useIDBOperations';
 import { User, Location } from './IDBOperations';
@@ -62,12 +62,17 @@ const userColumns = [
   {
     title: 'Action',
     key: 'action',
-    render: (text: any, record: User) => (
-      <Space size="middle">
-        <Button type='primary' onClick={() => handleEditUser(record.name)}>Edit</Button>
-        <Button type='primary' onClick={() => handleDeleteUser(record.name)}>Delete</Button>
-      </Space>
-    ),
+    render: (text: any, record: User) => 
+      h(Space, { size: 'middle' }, [
+        h(Button, { 
+          type: 'primary', 
+          onClick: () => handleEditUser(record.name) 
+        }, 'Edit'),
+        h(Button, { 
+          type: 'primary', 
+          onClick: () => handleDeleteUser(record.name) 
+        }, 'Delete')
+      ])
   },
 ];
 
@@ -78,12 +83,17 @@ const locationColumns = [
   {
     title: 'Action',
     key: 'action',
-    render: (text: any, record: Location) => (
-      <Space size="middle">
-        <Button type='primary' onClick={() => handleEditLocation(record.id)}>Edit</Button>
-        <Button type='primary' onClick={() => handleDeleteLocation(record.id)}>Delete</Button>
-      </Space>
-    ),
+    render: (text: any, record: Location) =>
+      h(Space, { size: 'middle' }, [
+        h(Button, { 
+          type: 'primary', 
+          onClick: () => handleEditLocation(record.id) 
+        }, 'Edit'),
+        h(Button, { 
+          type: 'primary', 
+          onClick: () => handleDeleteLocation(record.id) 
+        }, 'Delete')
+      ])
   },
 ];
 
