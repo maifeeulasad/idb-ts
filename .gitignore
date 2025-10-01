@@ -4,5 +4,6 @@ coverage
 
 examples/vue/build/vue/
 examples/typescript/build/typescript/
+examples/vite+react/build/vitereact/
 
 examples/typescript/*.js
