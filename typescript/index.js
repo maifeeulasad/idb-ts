@@ -1,28 +1,15 @@
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
+var __commonJS = (cb, mod) => function __require2() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __decorateClass = (decorators, target, key, kind) => {
   var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc(target, key) : target;
   for (var i = decorators.length - 1, decorator; i >= 0; i--)
@@ -1117,215 +1104,738 @@ var require_Reflect = __commonJS({
   }
 });
 
-// node_modules/idb-ts/index.ts
-var import_reflect_metadata = __toESM(require_Reflect());
-function KeyPath() {
+// node_modules/idb-ts/lib/index.esm.js
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.KeyGenerators = exports.Index = exports.DataClass = exports.CompositeKeyPath = exports.KeyPath = exports.Database = void 0;
+var tslib_1 = __require("tslib");
+require_Reflect();
+var QueryBuilder = class {
+  constructor(db, storeName) {
+    this.conditions = [];
+    this.orderDirection = "asc";
+    this.db = db;
+    this.storeName = storeName;
+  }
+  where(field) {
+    this.currentField = field;
+    return this;
+  }
+  and(field) {
+    this.currentField = field;
+    return this;
+  }
+  equals(value) {
+    if (!this.currentField)
+      throw new Error("No field specified for equals");
+    this.conditions.push({ field: this.currentField, op: "equals", value });
+    this.currentField = void 0;
+    return this;
+  }
+  gt(value) {
+    if (!this.currentField)
+      throw new Error("No field specified for gt");
+    this.conditions.push({ field: this.currentField, op: "gt", value });
+    this.currentField = void 0;
+    return this;
+  }
+  gte(value) {
+    if (!this.currentField)
+      throw new Error("No field specified for gte");
+    this.conditions.push({ field: this.currentField, op: "gte", value });
+    this.currentField = void 0;
+    return this;
+  }
+  lt(value) {
+    if (!this.currentField)
+      throw new Error("No field specified for lt");
+    this.conditions.push({ field: this.currentField, op: "lt", value });
+    this.currentField = void 0;
+    return this;
+  }
+  lte(value) {
+    if (!this.currentField)
+      throw new Error("No field specified for lte");
+    this.conditions.push({ field: this.currentField, op: "lte", value });
+    this.currentField = void 0;
+    return this;
+  }
+  orderBy(field, direction = "asc") {
+    this.orderField = field;
+    this.orderDirection = direction;
+    return this;
+  }
+  limit(n) {
+    this.limitCount = n;
+    return this;
+  }
+  offset(n) {
+    this.offsetCount = n;
+    return this;
+  }
+  useIndex(indexName) {
+    this.indexName = indexName;
+    return this;
+  }
+  range(start, end) {
+    this.rangeStart = start;
+    this.rangeEnd = end;
+    return this;
+  }
+  execute() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      return new Promise((resolve, reject) => {
+        const tx = this.db.transaction(this.storeName, "readonly");
+        let store = tx.objectStore(this.storeName);
+        let request;
+        let results = [];
+        if (this.indexName) {
+          if (!store.indexNames.contains(this.indexName)) {
+            reject(new Error(`Index '${this.indexName}' does not exist on ${this.storeName}`));
+            return;
+          }
+          const index = store.index(this.indexName);
+          let keyRange;
+          if (this.rangeStart !== void 0 && this.rangeEnd !== void 0) {
+            keyRange = IDBKeyRange.bound(this.rangeStart, this.rangeEnd);
+          } else if (this.rangeStart !== void 0) {
+            keyRange = IDBKeyRange.lowerBound(this.rangeStart);
+          } else if (this.rangeEnd !== void 0) {
+            keyRange = IDBKeyRange.upperBound(this.rangeEnd);
+          }
+          request = index.openCursor(keyRange);
+        } else {
+          request = store.openCursor();
+        }
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor) {
+            let match = true;
+            const value = cursor.value;
+            for (const cond of this.conditions) {
+              const val = value[cond.field];
+              switch (cond.op) {
+                case "equals":
+                  match = match && val === cond.value;
+                  break;
+                case "gt":
+                  match = match && val > cond.value;
+                  break;
+                case "gte":
+                  match = match && val >= cond.value;
+                  break;
+                case "lt":
+                  match = match && val < cond.value;
+                  break;
+                case "lte":
+                  match = match && val <= cond.value;
+                  break;
+              }
+            }
+            if (match)
+              results.push(value);
+            cursor.continue();
+          } else {
+            if (this.orderField) {
+              results.sort((a, b) => {
+                const va = a[this.orderField];
+                const vb = b[this.orderField];
+                if (va < vb)
+                  return this.orderDirection === "asc" ? -1 : 1;
+                if (va > vb)
+                  return this.orderDirection === "asc" ? 1 : -1;
+                return 0;
+              });
+            }
+            if (this.offsetCount !== void 0)
+              results = results.slice(this.offsetCount);
+            if (this.limitCount !== void 0)
+              results = results.slice(0, this.limitCount);
+            resolve(results);
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+    });
+  }
+};
+var KeyGenerators = class {
+  static uuid() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === "x" ? r : r & 3 | 8;
+      return v.toString(16);
+    });
+  }
+  static timestamp() {
+    return Date.now();
+  }
+  static random() {
+    return Math.random().toString(36).substring(2, 15);
+  }
+};
+exports.KeyGenerators = KeyGenerators;
+function KeyPath(options) {
   return (target, propertyKey) => {
     const constructor = target.constructor;
-    Reflect.defineMetadata("keypath", [propertyKey], constructor);
+    const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+    existingKeypaths.push(propertyKey);
+    Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+    const metadata = {
+      fields: propertyKey,
+      options
+    };
+    Reflect.defineMetadata("keypath", metadata, constructor);
   };
 }
-function DataClass() {
+exports.KeyPath = KeyPath;
+function CompositeKeyPath(fields, options) {
   return (target) => {
-    if (!Reflect.getMetadata("keypath", target)) {
+    const metadata = {
+      fields,
+      options
+    };
+    Reflect.defineMetadata("keypath", metadata, target);
+  };
+}
+exports.CompositeKeyPath = CompositeKeyPath;
+function Index() {
+  return (target, propertyKey) => {
+    const constructor = target.constructor;
+    const existing = Reflect.getMetadata("indexes", constructor) || [];
+    Reflect.defineMetadata("indexes", [...existing, propertyKey], constructor);
+  };
+}
+exports.Index = Index;
+function DataClass(options = {}) {
+  return (target) => {
+    const keyPathMetadata = Reflect.getMetadata("keypath", target);
+    if (!keyPathMetadata) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
     }
-    const keyPathFields = Reflect.getMetadata("keypath", target) || [];
-    if (keyPathFields.length > 1) {
+    const individualKeypaths = Reflect.getMetadata("individual_keypaths", target) || [];
+    if (individualKeypaths.length > 1) {
       throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
     }
+    const version = options.version || 1;
     Reflect.defineMetadata("dataclass", true, target);
+    Reflect.defineMetadata("version", version, target);
   };
 }
+exports.DataClass = DataClass;
 var Database = class _Database {
-  dbName;
-  classes;
-  db = null;
   constructor(dbName, classes) {
+    this.db = null;
+    this.entityRepositories = /* @__PURE__ */ new Map();
     this.dbName = dbName;
     if (!classes.every((cls) => Reflect.getMetadata("dataclass", cls))) {
       throw new Error("All classes should be decorated with @DataClass.");
     }
     this.classes = classes;
+    this.dbVersion = this.calculateDatabaseVersion();
   }
-  static async build(dbName, classes) {
-    const instance = new _Database(dbName, classes);
-    await instance.initDB();
-    return instance;
+  calculateDatabaseVersion() {
+    const versions = this.classes.map((cls) => Reflect.getMetadata("version", cls) || 1);
+    return Math.max(...versions);
   }
-  async initDB() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        this.classes.forEach((cls) => {
-          const keyPathFields = Reflect.getMetadata("keypath", cls) || [];
-          const storeName = cls.name.toLowerCase() + "s";
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, { keyPath: keyPathFields[0] });
+  static build(dbName, classes) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const instance = new _Database(dbName, classes);
+      yield instance.initDB();
+      instance.generateEntityRepositories();
+      return instance;
+    });
+  }
+  initDB() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(this.dbName, this.dbVersion);
+        request.onupgradeneeded = (event) => {
+          const db = request.result;
+          const oldVersion = event.oldVersion;
+          const newVersion = event.newVersion || this.dbVersion;
+          console.debug(`Database upgrade from version ${oldVersion} to ${newVersion}`);
+          this.classes.forEach((cls) => {
+            var _a;
+            const keyPathMetadata = Reflect.getMetadata("keypath", cls);
+            const indexFields = Reflect.getMetadata("indexes", cls) || [];
+            const classVersion = Reflect.getMetadata("version", cls) || 1;
+            const storeName = cls.name.toLowerCase();
+            if (classVersion > oldVersion) {
+              if (!db.objectStoreNames.contains(storeName)) {
+                console.debug(`Creating object store: ${storeName} (version ${classVersion})`);
+                const storeOptions = {};
+                if (keyPathMetadata) {
+                  storeOptions.keyPath = keyPathMetadata.fields;
+                  if ((_a = keyPathMetadata.options) === null || _a === void 0 ? void 0 : _a.autoIncrement) {
+                    storeOptions.autoIncrement = true;
+                  }
+                }
+                const store = db.createObjectStore(storeName, storeOptions);
+                indexFields.forEach((indexField) => {
+                  if (!store.indexNames.contains(indexField)) {
+                    store.createIndex(indexField, indexField, { unique: false });
+                  }
+                });
+              } else {
+                console.debug(`Updating object store: ${storeName} (version ${classVersion})`);
+                const transaction = request.transaction;
+                if (transaction) {
+                  const store = transaction.objectStore(storeName);
+                  indexFields.forEach((indexField) => {
+                    if (!store.indexNames.contains(indexField)) {
+                      console.debug(`Adding index: ${indexField} to ${storeName}`);
+                      store.createIndex(indexField, indexField, { unique: false });
+                    }
+                  });
+                }
+              }
+            }
+          });
+        };
+        request.onsuccess = () => {
+          this.db = request.result;
+          console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
+          resolve();
+        };
+        request.onerror = () => {
+          console.error("Error initializing database:", request.error);
+          reject(request.error);
+        };
+      });
+    });
+  }
+  generateEntityRepositories() {
+    this.classes.forEach((cls) => {
+      const entityName = cls.name;
+      const repository = this.createEntityRepository(cls);
+      this.entityRepositories.set(entityName, repository);
+      Object.defineProperty(this, entityName, {
+        value: repository,
+        writable: false,
+        enumerable: true,
+        configurable: false
+      });
+    });
+  }
+  createEntityRepository(cls) {
+    const self2 = this;
+    const generateKey = (item) => {
+      var _a;
+      const keyPathMetadata = Reflect.getMetadata("keypath", cls);
+      if (!((_a = keyPathMetadata === null || keyPathMetadata === void 0 ? void 0 : keyPathMetadata.options) === null || _a === void 0 ? void 0 : _a.generator))
+        return void 0;
+      const generator = keyPathMetadata.options.generator;
+      if (typeof generator === "function") {
+        return generator(item);
+      }
+      switch (generator) {
+        case "uuid":
+          return KeyGenerators.uuid();
+        case "timestamp":
+          return KeyGenerators.timestamp();
+        case "random":
+          return KeyGenerators.random();
+        default:
+          return void 0;
+      }
+    };
+    const extractKey = (item) => {
+      const keyPathMetadata = Reflect.getMetadata("keypath", cls);
+      if (!keyPathMetadata)
+        return void 0;
+      const fields = keyPathMetadata.fields;
+      if (Array.isArray(fields)) {
+        return fields.map((field) => item[field]);
+      } else {
+        return item[fields];
+      }
+    };
+    const setKey = (item, key) => {
+      const keyPathMetadata = Reflect.getMetadata("keypath", cls);
+      if (!keyPathMetadata)
+        return;
+      const fields = keyPathMetadata.fields;
+      if (typeof fields === "string") {
+        item[fields] = key;
+      }
+    };
+    return {
+      query() {
+        if (!self2.db)
+          throw new Error("Database not initialized.");
+        const storeName = cls.name.toLowerCase();
+        return new QueryBuilder(self2.db, storeName);
+      },
+      create: (item) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const keyPathMetadata = Reflect.getMetadata("keypath", cls);
+        if (((_a = keyPathMetadata === null || keyPathMetadata === void 0 ? void 0 : keyPathMetadata.options) === null || _a === void 0 ? void 0 : _a.generator) && !keyPathMetadata.options.autoIncrement) {
+          const currentKey = extractKey(item);
+          if (currentKey === void 0 || currentKey === null || currentKey === "") {
+            const generatedKey = generateKey(item);
+            if (generatedKey !== void 0) {
+              setKey(item, generatedKey);
+            }
           }
+        }
+        return this.performOperation(cls.name, "readwrite", (store) => {
+          const request = store.add(item);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item added to ${cls.name}:`, item);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
         });
-      };
-      request.onsuccess = () => {
-        this.db = request.result;
-        console.log(`Database initialized with object stores for: ${this.classes.map((cls) => cls.name).join(", ")}`);
-        resolve();
-      };
-      request.onerror = () => {
-        console.error("Error initializing database:", request.error);
-        reject(request.error);
-      };
-    });
+      }),
+      read: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          const request = store.get(key);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item read from ${cls.name}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      update: (item) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readwrite", (store) => {
+          const request = store.put(item);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item updated in ${cls.name}:`, item);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      delete: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readwrite", (store) => {
+          const request = store.delete(key);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item deleted from ${cls.name}:`, key);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      list: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          const request = store.getAll();
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`All items from ${cls.name}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      listPaginated: (page, pageSize) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          const request = store.getAll();
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              const items = request.result;
+              const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+              console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
+              resolve(paginatedItems);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      findByIndex: (indexName, value) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          if (!store.indexNames.contains(indexName)) {
+            throw new Error(`Index '${indexName}' does not exist on ${cls.name}`);
+          }
+          const index = store.index(indexName);
+          const request = index.getAll(value);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Items found by index ${indexName} with value ${value}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      findOneByIndex: (indexName, value) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          if (!store.indexNames.contains(indexName)) {
+            throw new Error(`Index '${indexName}' does not exist on ${cls.name}`);
+          }
+          const index = store.index(indexName);
+          const request = index.get(value);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Item found by index ${indexName} with value ${value}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      count: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          const request = store.count();
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Count for ${cls.name}:`, request.result);
+              resolve(request.result);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      exists: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readonly", (store) => {
+          const request = store.count(key);
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              const exists = request.result > 0;
+              console.debug(`Exists check for ${cls.name} with key ${key}:`, exists);
+              resolve(exists);
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      }),
+      clear: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return this.performOperation(cls.name, "readwrite", (store) => {
+          const request = store.clear();
+          return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+              console.debug(`Cleared all items from ${cls.name}`);
+              resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      })
+    };
   }
-  getObjectStore(className, mode) {
-    if (!this.db) {
-      throw new Error("Database not initialized.");
-    }
-    const storeName = className.toLowerCase() + "s";
-    const transaction = this.db.transaction(storeName, mode);
-    return transaction.objectStore(storeName);
-  }
-  async create(cls, item) {
-    return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.add(item);
-        request.onsuccess = () => {
-          console.log(`Item added to ${cls.name}:`, item);
-          resolve();
-        };
-        request.onerror = () => {
-          console.error(`Error adding item to ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
+  performOperation(className, mode, operation) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      if (!this.db) {
+        throw new Error("Database not initialized.");
       }
+      const storeName = className.toLowerCase();
+      const transaction = this.db.transaction(storeName, mode);
+      const store = transaction.objectStore(storeName);
+      return operation(store);
     });
   }
-  async read(cls, key) {
-    return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readonly");
-        const request = store.get(key);
-        request.onsuccess = () => {
-          console.log(`Item read from ${cls.name}:`, request.result);
-          resolve(request.result);
-        };
-        request.onerror = () => {
-          console.error(`Error reading item from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
+  getAvailableEntities() {
+    return Array.from(this.entityRepositories.keys());
   }
-  async update(cls, item) {
-    return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.put(item);
-        request.onsuccess = () => {
-          console.log(`Item updated in ${cls.name}:`, item);
-          resolve();
-        };
-        request.onerror = () => {
-          console.error(`Error updating item in ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
+  getDatabaseVersion() {
+    return this.dbVersion;
   }
-  async delete(cls, key) {
-    return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readwrite");
-        const request = store.delete(key);
-        request.onsuccess = () => {
-          console.log(`Item deleted from ${cls.name}:`, key);
-          resolve();
-        };
-        request.onerror = () => {
-          console.error(`Error deleting item from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
+  getEntityVersions() {
+    const versions = /* @__PURE__ */ new Map();
+    this.classes.forEach((cls) => {
+      const version = Reflect.getMetadata("version", cls) || 1;
+      versions.set(cls.name, version);
     });
+    return versions;
   }
-  async list(cls) {
-    return new Promise((resolve, reject) => {
-      try {
-        const store = this.getObjectStore(cls.name, "readonly");
-        const request = store.getAll();
-        request.onsuccess = () => {
-          console.log(`All items from ${cls.name}:`, request.result);
-          resolve(request.result);
-        };
-        request.onerror = () => {
-          console.error(`Error listing items from ${cls.name}:`, request.error);
-          reject(request.error);
-        };
-      } catch (error) {
-        reject(error);
-      }
-    });
+  getEntityVersion(entityName) {
+    const cls = this.classes.find((c) => c.name === entityName);
+    return cls ? Reflect.getMetadata("version", cls) || 1 : void 0;
   }
 };
+exports.Database = Database;
 
 // index.ts
 var User = class {
-  constructor(name, age, address, cell) {
+  constructor(name, email, age, address, cell) {
+    this.status = "active";
+    this.createdAt = /* @__PURE__ */ new Date();
     this.name = name;
+    this.email = email;
     this.age = age;
     this.address = address;
     this.cell = cell;
   }
 };
 __decorateClass([
-  KeyPath()
-], User.prototype, "name", 2);
+  (void 0)("id", { autoIncrement: true })
+], User.prototype, "id", 2);
+__decorateClass([
+  (void 0)("email", { unique: true })
+], User.prototype, "email", 2);
+__decorateClass([
+  (void 0)("age")
+], User.prototype, "age", 2);
 User = __decorateClass([
-  DataClass()
+  (void 0)({ version: 1 })
 ], User);
-var Location = class {
-  constructor(id, city, country) {
-    this.id = id;
-    this.city = city;
-    this.country = country;
+var Post = class {
+  constructor(title, content, authorEmail, category = "general") {
+    this.tags = [];
+    this.publishedAt = /* @__PURE__ */ new Date();
+    this.likes = 0;
+    this.title = title;
+    this.content = content;
+    this.authorEmail = authorEmail;
+    this.category = category;
   }
 };
 __decorateClass([
-  KeyPath()
-], Location.prototype, "id", 2);
-Location = __decorateClass([
-  DataClass()
-], Location);
-async function main() {
-  const db = await Database.build("idb-crud-typescript", [User, Location]);
-  const alice = new User("Alice", 25, "123 Main St");
-  const nyc = new Location("1", "New York", "USA");
-  await db.create(User, alice);
-  await db.create(Location, nyc);
-  const readAlice = await db.read(User, "Alice");
-  console.log("Read user:", readAlice);
-  alice.age = 26;
-  alice.address = "789 Maple St";
-  await db.update(User, alice);
-  const users = await db.list(User);
-  console.log("All users:", users);
-  await db.delete(User, "Alice");
-  console.log("User Alice deleted.");
-  const remainingUsers = await db.list(User);
-  console.log("Remaining users:", remainingUsers);
-  const locations = await db.list(Location);
-  console.log("All locations:", locations);
+  (void 0)("uuid", { generator: (void 0).uuid })
+], Post.prototype, "uuid", 2);
+__decorateClass([
+  (void 0)("authorEmail")
+], Post.prototype, "authorEmail", 2);
+__decorateClass([
+  (void 0)("category")
+], Post.prototype, "category", 2);
+Post = __decorateClass([
+  (void 0)({ version: 2 })
+], Post);
+var UserProject = class {
+  constructor(userId, projectId, role = "member") {
+    this.joinedAt = /* @__PURE__ */ new Date();
+    this.permissions = [];
+    this.userId = userId;
+    this.projectId = projectId;
+    this.role = role;
+  }
+};
+__decorateClass([
+  (void 0)("role")
+], UserProject.prototype, "role", 2);
+UserProject = __decorateClass([
+  (void 0)({ version: 1 }),
+  (void 0)(["userId", "projectId"])
+], UserProject);
+var Activity = class {
+  constructor(userId, type, metadata = {}) {
+    this.timestamp = Date.now();
+    this.metadata = {};
+    this.userId = userId;
+    this.type = type;
+    this.metadata = metadata;
+  }
+};
+__decorateClass([
+  (void 0)("activityId", {
+    generator: (item) => `${item.type}_${item.userId}_${Date.now()}`
+  })
+], Activity.prototype, "activityId", 2);
+__decorateClass([
+  (void 0)("userId")
+], Activity.prototype, "userId", 2);
+__decorateClass([
+  (void 0)("type")
+], Activity.prototype, "type", 2);
+__decorateClass([
+  (void 0)("timestamp")
+], Activity.prototype, "timestamp", 2);
+Activity = __decorateClass([
+  (void 0)({ version: 1 })
+], Activity);
+async function demonstrateFeatures() {
+  console.log("\u{1F680} Starting idb-ts v3.7.0 Feature Demonstration");
+  const db = new (void 0)("idb-demo-v3", [User, Post, UserProject, Activity]);
+  await db.initialize();
+  console.log(`\u{1F4CA} Database initialized with version: ${db.getDatabaseVersion()}`);
+  console.log(`\u{1F4CB} Available entities: ${db.getAvailableEntities().join(", ")}`);
+  console.log("\n=== CRUD Operations Demo ===");
+  const alice = new User("Alice Johnson", "alice@example.com", 28, "123 Main St", "+1234567890");
+  const bob = new User("Bob Smith", "bob@example.com", 32, "456 Oak Ave");
+  const charlie = new User("Charlie Brown", "charlie@example.com", 25, "789 Pine Rd");
+  await db.User.create(alice);
+  await db.User.create(bob);
+  await db.User.create(charlie);
+  console.log("\u2705 Created 3 users with auto-increment IDs");
+  const post1 = new Post("Getting Started with idb-ts", "This is a comprehensive guide to using idb-ts...", "alice@example.com", "tutorial");
+  post1.tags = ["typescript", "indexeddb", "tutorial"];
+  const post2 = new Post("Advanced Database Patterns", "Let's explore advanced patterns in IndexedDB...", "bob@example.com", "advanced");
+  post2.tags = ["database", "patterns", "advanced"];
+  await db.Post.create(post1);
+  await db.Post.create(post2);
+  console.log("\u2705 Created 2 posts with UUID keys");
+  const project1 = new UserProject("alice@example.com", "project-alpha", "admin");
+  project1.permissions = ["read", "write", "delete", "manage"];
+  const project2 = new UserProject("bob@example.com", "project-alpha", "member");
+  project2.permissions = ["read", "write"];
+  const project3 = new UserProject("alice@example.com", "project-beta", "admin");
+  project3.permissions = ["read", "write", "delete", "manage"];
+  await db.UserProject.create(project1);
+  await db.UserProject.create(project2);
+  await db.UserProject.create(project3);
+  console.log("\u2705 Created user-project relationships with composite keys");
+  const activity1 = new Activity("alice@example.com", "login", { ip: "192.168.1.100", browser: "Chrome" });
+  const activity2 = new Activity("alice@example.com", "post_created", { postId: post1.uuid, title: post1.title });
+  const activity3 = new Activity("bob@example.com", "post_liked", { postId: post1.uuid, likedBy: "bob@example.com" });
+  await db.Activity.create(activity1);
+  await db.Activity.create(activity2);
+  await db.Activity.create(activity3);
+  console.log("\u2705 Created activities with custom key generation");
+  console.log("\n=== Advanced Query Builder Demo ===");
+  const activeUsers = await db.User.query().where("status").equals("active").and("age").gt(25).orderBy("age", "asc").execute();
+  console.log(
+    `\u{1F50D} Found ${activeUsers.length} active users older than 25:`,
+    activeUsers.map((u) => ({ name: u.name, age: u.age, email: u.email }))
+  );
+  const tutorialPosts = await db.Post.query().where("category").equals("tutorial").orderBy("publishedAt", "desc").limit(10).execute();
+  console.log(
+    `\u{1F4DA} Found ${tutorialPosts.length} tutorial posts:`,
+    tutorialPosts.map((p) => ({ title: p.title, author: p.authorEmail }))
+  );
+  const recentLogins = await db.Activity.query().where("type").equals("login").and("timestamp").gte(Date.now() - 24 * 60 * 60 * 1e3).orderBy("timestamp", "desc").execute();
+  console.log(
+    `\u{1F6AA} Found ${recentLogins.length} recent logins:`,
+    recentLogins.map((a) => ({ userId: a.userId, timestamp: new Date(a.timestamp).toLocaleString() }))
+  );
+  console.log("\n=== Index-based Queries Demo ===");
+  const userByEmail = await db.User.findByIndex("email", "alice@example.com");
+  console.log("\u{1F464} User found by email:", userByEmail ? { name: userByEmail.name, email: userByEmail.email } : "Not found");
+  const adminProjects = await db.UserProject.findAllByIndex("role", "admin");
+  console.log(
+    `\u{1F451} Found ${adminProjects.length} admin relationships:`,
+    adminProjects.map((p) => ({ userId: p.userId, projectId: p.projectId }))
+  );
+  console.log("\n=== Composite Key Operations Demo ===");
+  const specificProject = await db.UserProject.read(["alice@example.com", "project-alpha"]);
+  console.log("\u{1F4C1} Project relationship:", specificProject ? { user: specificProject.userId, project: specificProject.projectId, role: specificProject.role } : "Not found");
+  if (specificProject) {
+    specificProject.permissions.push("deploy");
+    await db.UserProject.update(specificProject);
+    console.log("\u270F\uFE0F Updated project permissions");
+  }
+  console.log("\n=== Pagination Demo ===");
+  const firstPage = await db.User.query().orderBy("name", "asc").limit(2).execute();
+  const secondPage = await db.User.query().orderBy("name", "asc").offset(2).limit(2).execute();
+  console.log("\u{1F4C4} First page users:", firstPage.map((u) => u.name));
+  console.log("\u{1F4C4} Second page users:", secondPage.map((u) => u.name));
+  console.log("\n=== Database Statistics ===");
+  const allUsers = await db.User.list();
+  const allPosts = await db.Post.list();
+  const allProjects = await db.UserProject.list();
+  const allActivities = await db.Activity.list();
+  console.log(`\u{1F4CA} Database contains:`);
+  console.log(`   Users: ${allUsers.length}`);
+  console.log(`   Posts: ${allPosts.length}`);
+  console.log(`   User-Project relationships: ${allProjects.length}`);
+  console.log(`   Activities: ${allActivities.length}`);
+  const entityVersions = db.getEntityVersions();
+  console.log("\u{1F3F7}\uFE0F Entity versions:");
+  entityVersions.forEach((version, entity) => {
+    console.log(`   ${entity}: v${version}`);
+  });
+  console.log("\n\u{1F389} idb-ts v3.7.0 Feature Demonstration Complete!");
 }
-main();
+demonstrateFeatures().catch(console.error);
 /*! Bundled license information:
 
 reflect-metadata/Reflect.js:
