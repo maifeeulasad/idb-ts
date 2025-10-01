@@ -41,8 +41,8 @@ const { initializeDB, createItem, readItem, updateItem, deleteItem, listItems } 
 
 const users = ref<User[]>([]);
 const locations = ref<Location[]>([]);
-const selectedUser = ref<User | null>(null);
-const selectedLocation = ref<Location | null>(null);
+const selectedUser = ref<User | null | undefined>(null);
+const selectedLocation = ref<Location | null | undefined>(null);
 const isUserModalVisible = ref(false);
 const isLocationModalVisible = ref(false);
 const newUser = ref<User>({ name: '', age: 0, address: '', cell: '' });
