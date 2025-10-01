@@ -3,3 +3,4 @@ lib
 coverage
 
 examples/vue/build/vue/
+examples/typescript/build/typescript/
