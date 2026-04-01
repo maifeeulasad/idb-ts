@@ -22,10 +22,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: ${{ matrix.registry-url }}
+      - name: Install build tools
+        run: npm i -g pnpm
       - name: 'Installing prod deps'
-        run: npm ci
+        run: pnpm install
       - name: 'Build'
-        run: npm run build
+        run: pnpm run build
       - name: 'Publish'
         run: npm publish --provenance
         env:
