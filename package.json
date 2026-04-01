@@ -14,8 +14,8 @@
     }
   },
   "scripts": {
-    "prepare": "npm run build",
-    "build": "npm run build:tsc && npm run build:rollup",
+    "prepare": "pnpm run build",
+    "build": "pnpm run build:tsc && pnpm run build:rollup",
     "build:tsc": "tsc",
     "build:rollup": "rollup -c",
     "test": "jest --runInBand --detectOpenHandles",
