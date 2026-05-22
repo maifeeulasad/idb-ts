@@ -348,7 +348,7 @@ describe('Coverage Improvement Tests', () => {
   describe('Database Error Handling Coverage', () => {
     it('should test database initialization error (lines 365-366)', async () => {
       // Try to trigger database initialization errors
-      const DatabaseClass = require('../index').Database;
+      require('../index').Database;
       
       try {
         // Create database with invalid name to potentially trigger error paths
