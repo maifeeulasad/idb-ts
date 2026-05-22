@@ -90,7 +90,7 @@ class QueryBuilder<T> {
   async execute(): Promise<T[]> {
     return new Promise<T[]>((resolve, reject) => {
       const tx = this.db.transaction(this.storeName, 'readonly');
-      let store = tx.objectStore(this.storeName);
+      const store = tx.objectStore(this.storeName);
       let request: IDBRequest;
   let results: T[] = [];
 
