@@ -18,6 +18,8 @@
     "build": "pnpm run build:tsc && pnpm run build:rollup",
     "build:tsc": "tsc",
     "build:rollup": "rollup -c",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "jest --runInBand --detectOpenHandles",
     "test:watch": "jest --watchAll --runInBand --detectOpenHandles",
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
