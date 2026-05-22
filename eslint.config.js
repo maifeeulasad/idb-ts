@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import globals from "globals";
 
 export default [
   {
@@ -15,6 +16,12 @@ export default [
         ecmaVersion: "latest",
         sourceType: "module",
       },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        IDBObjectStoreParameters: "readonly",
+        IDBTransactionMode: "readonly",
+      },
     },
     plugins: {
       "@typescript-eslint": tseslint,
@@ -23,7 +30,6 @@ export default [
       "eqeqeq": ["error", "always"],
       "no-duplicate-imports": "error",
       "no-console": "off",
-      "no-undef": "off",
       "no-redeclare": "off",
       "no-unused-vars": "off",
       "prefer-const": "error",
@@ -48,13 +54,18 @@ export default [
         ecmaVersion: "latest",
         sourceType: "module",
       },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+        fail: "readonly",
+      },
     },
     plugins: {
       "@typescript-eslint": tseslint,
     },
     rules: {
       "@typescript-eslint/consistent-type-imports": "off",
-      "no-undef": "off",
     },
   },
 ];
