@@ -1,4 +1,4 @@
-import { Database, KeyPath, DataClass, Index, EntityRepository } from '../index';
+import { Database, KeyPath, DataClass, Index } from '../index';
 
 // Test entities with different versions
 @DataClass({ version: 1 })
