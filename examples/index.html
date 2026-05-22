@@ -38,6 +38,18 @@
         a:hover {
             color: #2980b9;
         }
+        /* Highlight style for the Coverage Report row */
+        .highlight {
+            background: linear-gradient(90deg, #fff7e6, #fff1cc);
+            box-shadow: inset 4px 0 0 0 #ffd166;
+            font-weight: 600;
+        }
+        .highlight a {
+            color: #b36000;
+        }
+        .highlight:hover {
+            background: linear-gradient(90deg, #fff3d6, #ffe7b3);
+        }
     </style>
 </head>
 <body>
@@ -61,7 +73,7 @@
                 <td>Vue with TypeScript</td>
                 <td><a href="./vue">Go to Vue</a></td>
             </tr>
-            <tr>
+            <tr class="highlight">
                 <td>Coverage Report</td>
                 <td><a href="./coverage/lcov-report/index.html">Go to Coverage Report</a></td>
             </tr>
