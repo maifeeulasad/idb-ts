@@ -1,4 +1,4 @@
-import { Database, KeyPath, DataClass, Index, EntityRepository, KeyGenerators, CompositeKeyPath } from '../index';
+import { Database, KeyPath, DataClass, Index, KeyGenerators, CompositeKeyPath } from '../index';
 
 // Test entities with different key configurations
 
