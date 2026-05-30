@@ -420,8 +420,6 @@ const userVersion = db.getEntityVersion('User');
 // v1.2: User(v1), Post(v2), Comment(v3) → Database v3
 ```
 
-📖 **[Complete Schema Versioning Guide](./SCHEMA_VERSIONING.md)** - Detailed documentation with examples and best practices.
-
 ---
 
 ## 🔗 Useful Links
