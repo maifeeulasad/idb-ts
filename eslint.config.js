@@ -33,7 +33,14 @@ export default [
       "no-redeclare": "off",
       "no-unused-vars": "off",
       "prefer-const": "error",
-      "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "separate-type-imports",
+          disallowTypeAnnotations: false
+        }
+      ],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-redeclare": "error",
       "@typescript-eslint/no-unused-vars": [
@@ -65,7 +72,14 @@ export default [
       "@typescript-eslint": tseslint,
     },
     rules: {
-      "@typescript-eslint/consistent-type-imports": "off",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "separate-type-imports",
+          disallowTypeAnnotations: false
+        }
+      ]
     },
   },
 ];
