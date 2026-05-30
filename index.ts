@@ -158,6 +158,18 @@ interface KeyPathOptions {
   generator?: 'uuid' | 'timestamp' | 'random' | ((item?: any) => string | number);
 }
 
+interface RetentionPolicyOptions {
+  seconds: number;
+  enabled?: boolean;
+  field?: 'createdAt' | 'updatedAt';
+}
+
+interface RetentionPolicyMetadata {
+  seconds: number;
+  enabled: boolean;
+  field: 'createdAt' | 'updatedAt';
+}
+
 interface KeyPathMetadata {
   fields: string | string[];
   options?: KeyPathOptions;
@@ -220,6 +232,22 @@ function Index(): PropertyDecorator {
   };
 }
 
+function RetentionPolicy(options: RetentionPolicyOptions): ClassDecorator {
+  return (target: Function) => {
+    if (!Number.isInteger(options.seconds) || options.seconds <= 0) {
+      throw new Error('RetentionPolicy.seconds must be a positive integer.');
+    }
+
+    const metadata: RetentionPolicyMetadata = {
+      seconds: options.seconds,
+      enabled: options.enabled ?? true,
+      field: options.field ?? 'createdAt'
+    };
+
+    Reflect.defineMetadata('retention_policy', metadata, target);
+  };
+}
+
 interface DataClassOptions {
   version?: number;
 }
@@ -267,6 +295,9 @@ class Database {
   private db: IDBDatabase | null = null;
   private entityRepositories: Map<string, any> = new Map();
   private dbVersion: number;
+  private retentionTimer: ReturnType<typeof setInterval> | null = null;
+  private retentionCleanupRunning = false;
+  private retentionPolicies: Array<{ className: string; storeName: string; policy: RetentionPolicyMetadata }>;
 
   private constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
@@ -275,6 +306,20 @@ class Database {
     }
     this.classes = classes;
     this.dbVersion = this.calculateDatabaseVersion();
+    this.retentionPolicies = this.classes
+      .map((cls) => {
+        const policy = Reflect.getMetadata('retention_policy', cls) as RetentionPolicyMetadata | undefined;
+        if (!policy?.enabled) {
+          return null;
+        }
+
+        return {
+          className: cls.name,
+          storeName: cls.name.toLowerCase(),
+          policy
+        };
+      })
+      .filter((policy): policy is { className: string; storeName: string; policy: RetentionPolicyMetadata } => policy !== null);
   }
 
   private calculateDatabaseVersion(): number {
@@ -358,6 +403,7 @@ class Database {
       request.onsuccess = () => {
         this.db = request.result;
         console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map(cls => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
+        this.startRetentionCleanup();
         resolve();
       };
 
@@ -383,6 +429,103 @@ class Database {
         enumerable: true,
         configurable: false
       });
+    });
+  }
+
+  private calculateRetentionCleanupIntervalMs(): number | undefined {
+    if (!this.retentionPolicies.length) {
+      return undefined;
+    }
+
+    const gcd = (left: number, right: number): number => {
+      let a = left;
+      let b = right;
+      while (b !== 0) {
+        const remainder = a % b;
+        a = b;
+        b = remainder;
+      }
+      return Math.abs(a);
+    };
+
+    const seconds = this.retentionPolicies.map(({ policy }) => policy.seconds);
+    return seconds.reduce((accumulator, value) => gcd(accumulator, value)) * 1000;
+  }
+
+  private startRetentionCleanup(): void {
+    const cleanupIntervalMs = this.calculateRetentionCleanupIntervalMs();
+    if (!cleanupIntervalMs || !this.db || this.retentionTimer) {
+      return;
+    }
+
+    console.debug(`Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`);
+    void this.runRetentionCleanup();
+    this.retentionTimer = setInterval(() => {
+      void this.runRetentionCleanup();
+    }, cleanupIntervalMs);
+  }
+
+  private async runRetentionCleanup(): Promise<void> {
+    if (!this.db || this.retentionCleanupRunning || !this.retentionPolicies.length) {
+      return;
+    }
+
+    this.retentionCleanupRunning = true;
+    try {
+      console.debug('Retention cleanup tick started');
+      for (const { storeName, className, policy } of this.retentionPolicies) {
+        await this.cleanupExpiredRecords(storeName, className, policy);
+      }
+      console.debug('Retention cleanup tick finished');
+    } finally {
+      this.retentionCleanupRunning = false;
+    }
+  }
+
+  private cleanupExpiredRecords(
+    storeName: string,
+    className: string,
+    policy: RetentionPolicyMetadata
+  ): Promise<void> {
+    if (!this.db) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db!.transaction(storeName, 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const cutoff = Date.now() - (policy.seconds * 1000);
+        const request = store.openCursor();
+
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor) {
+            return;
+          }
+
+          const value = cursor.value as Record<string, any>;
+          const timestamp = value?.[policy.field];
+          console.debug(`Retention cleanup inspecting ${className}.${policy.field}:`, timestamp, 'cutoff:', cutoff);
+          if (typeof timestamp === 'number' && timestamp <= cutoff) {
+            const deleteRequest = cursor.delete();
+            deleteRequest.onsuccess = () => {
+              console.debug(`Retention cleanup removed expired record from ${className}`);
+              cursor.continue();
+            };
+            deleteRequest.onerror = () => reject(deleteRequest.error ?? new Error(`Retention cleanup delete failed for ${className}`));
+            return;
+          }
+
+          cursor.continue();
+        };
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error ?? new Error(`Retention cleanup failed for ${className}`));
+        transaction.onabort = () => reject(transaction.error ?? new Error(`Retention cleanup aborted for ${className}`));
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
@@ -665,6 +808,18 @@ class Database {
     return operation(store);
   }
 
+  close(): void {
+    if (this.retentionTimer) {
+      clearInterval(this.retentionTimer);
+      this.retentionTimer = null;
+    }
+
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
+  }
+
   getAvailableEntities(): string[] {
     return Array.from(this.entityRepositories.keys());
   }
@@ -688,5 +843,5 @@ class Database {
   }
 }
 
-export { Database, KeyPath, CompositeKeyPath, DataClass, Index, EntityRepository, KeyGenerators };
-export type { DatabaseWithRepositories, DataClassOptions, KeyPathOptions, KeyPathMetadata };
+export { Database, KeyPath, CompositeKeyPath, DataClass, Index, RetentionPolicy, EntityRepository, KeyGenerators };
+export type { DatabaseWithRepositories, DataClassOptions, KeyPathOptions, KeyPathMetadata, RetentionPolicyOptions, RetentionPolicyMetadata };
