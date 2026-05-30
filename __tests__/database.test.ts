@@ -1,4 +1,5 @@
-import { Database, KeyPath, DataClass, Index, EntityRepository } from '../index';
+import type { EntityRepository } from '../index';
+import { Database, KeyPath, DataClass, Index } from '../index';
 
 @DataClass()
 class User {
