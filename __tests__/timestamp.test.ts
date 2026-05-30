@@ -15,6 +15,8 @@ class AuditRecord {
 
 describe('Internal timestamp fields', () => {
   let db: any;
+  const createdField = '__idb_createdAt';
+  const updatedField = '__idb_updatedAt';
 
   beforeAll(async () => {
     const deleteRequest = indexedDB.deleteDatabase('TimestampAnnotationDB');
@@ -33,8 +35,8 @@ describe('Internal timestamp fields', () => {
     await db.AuditRecord.create(record);
 
     const afterCreate = Date.now();
-    const createdAt = (record as any).createdAt;
-    const updatedAt = (record as any).updatedAt;
+    const createdAt = (record as any)[createdField];
+    const updatedAt = (record as any)[updatedField];
 
     expect(createdAt).toBeGreaterThanOrEqual(beforeCreate);
     expect(createdAt).toBeLessThanOrEqual(afterCreate);
@@ -48,8 +50,8 @@ describe('Internal timestamp fields', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 2));
 
-    (record as any).createdAt = 999999;
-    (record as any).updatedAt = 888888;
+    (record as any)[createdField] = 999999;
+    (record as any)[updatedField] = 888888;
     const beforeUpdate = Date.now();
 
     await db.AuditRecord.update(record);
@@ -57,10 +59,10 @@ describe('Internal timestamp fields', () => {
     const afterUpdate = Date.now();
     const storedAfterUpdate = await db.AuditRecord.read('audit-1');
 
-    expect((storedAfterUpdate as any)?.createdAt).toBe(createdAt);
-    expect((storedAfterUpdate as any)?.createdAt).not.toBe(999999);
-    expect((storedAfterUpdate as any)?.updatedAt).toBeGreaterThanOrEqual(beforeUpdate);
-    expect((storedAfterUpdate as any)?.updatedAt).toBeLessThanOrEqual(afterUpdate);
-    expect((storedAfterUpdate as any)?.updatedAt).not.toBe(888888);
+    expect((storedAfterUpdate as any)?.[createdField]).toBe(createdAt);
+    expect((storedAfterUpdate as any)?.[createdField]).not.toBe(999999);
+    expect((storedAfterUpdate as any)?.[updatedField]).toBeGreaterThanOrEqual(beforeUpdate);
+    expect((storedAfterUpdate as any)?.[updatedField]).toBeLessThanOrEqual(afterUpdate);
+    expect((storedAfterUpdate as any)?.[updatedField]).not.toBe(888888);
   });
 });
