@@ -33,6 +33,14 @@ Install via npm and start using IndexedDB like a pro! ⚡
 ```sh
 npm i idb-ts
 ```
+or
+```sh
+pnpm add idb-ts
+```
+or
+```sh
+yarn add idb-ts
+```
 
 ## ✨ Features
 - ✅ **Declarative & Type-Safe** - Define your data models with decorators.
