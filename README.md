@@ -415,9 +415,9 @@ const entityVersions = db.getEntityVersions();
 const userVersion = db.getEntityVersion('User');
 
 // Version upgrade flow:
-// v1.0: User(v1) → Database v1
-// v1.1: User(v1), Post(v2) → Database v2  
-// v1.2: User(v1), Post(v2), Comment(v3) → Database v3
+// v1.0: User(v1) -> Database v1
+// v1.1: User(v1), Post(v2) -> Database v2  
+// v1.2: User(v1), Post(v2), Comment(v3) -> Database v3
 ```
 
 ---
