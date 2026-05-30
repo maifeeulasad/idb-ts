@@ -161,14 +161,17 @@ interface KeyPathOptions {
 interface RetentionPolicyOptions {
   seconds: number;
   enabled?: boolean;
-  field?: 'createdAt' | 'updatedAt';
+  field?: string;
 }
 
 interface RetentionPolicyMetadata {
   seconds: number;
   enabled: boolean;
-  field: 'createdAt' | 'updatedAt';
+  field: string;
 }
+
+const INTERNAL_CREATED_AT_FIELD = '__idb_createdAt';
+const INTERNAL_UPDATED_AT_FIELD = '__idb_updatedAt';
 
 interface KeyPathMetadata {
   fields: string | string[];
@@ -241,7 +244,7 @@ function RetentionPolicy(options: RetentionPolicyOptions): ClassDecorator {
     const metadata: RetentionPolicyMetadata = {
       seconds: options.seconds,
       enabled: options.enabled ?? true,
-      field: options.field ?? 'createdAt'
+      field: options.field ?? INTERNAL_CREATED_AT_FIELD
     };
 
     Reflect.defineMetadata('retention_policy', metadata, target);
@@ -531,8 +534,8 @@ class Database {
 
   private createEntityRepository<T>(cls: Function): EntityRepository<T> {
   const self = this;
-  const creationTimestampField = 'createdAt';
-  const updateTimestampField = 'updatedAt';
+  const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
+  const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
   
   // Helper function to generate keys
   const generateKey = (item: T): string | number | undefined => {
