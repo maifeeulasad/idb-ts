@@ -388,6 +388,8 @@ class Database {
 
   private createEntityRepository<T>(cls: Function): EntityRepository<T> {
   const self = this;
+  const creationTimestampField = 'createdAt';
+  const updateTimestampField = 'updatedAt';
   
   // Helper function to generate keys
   const generateKey = (item: T): string | number | undefined => {
@@ -410,6 +412,22 @@ class Database {
       default:
         return undefined;
     }
+  };
+
+  const applyTimestampFields = (item: T, existingItem?: T): void => {
+    const now = Date.now();
+    const existingCreationValue = existingItem ? (existingItem as any)[creationTimestampField] : undefined;
+
+    (item as any)[creationTimestampField] = existingCreationValue !== undefined ? existingCreationValue : now;
+    (item as any)[updateTimestampField] = now;
+  };
+
+  const readExistingItem = (store: IDBObjectStore, key: string | string[] | number): Promise<T | undefined> => {
+    return new Promise<T | undefined>((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result as T | undefined);
+      request.onerror = () => reject(request.error);
+    });
   };
   
   // Helper function to extract key from item
@@ -460,6 +478,8 @@ class Database {
             }
           }
         }
+
+        applyTimestampFields(item);
         
         return this.performOperation(cls.name, 'readwrite', (store) => {
           const request = store.add(item);
@@ -488,14 +508,25 @@ class Database {
 
       update: async (item: T): Promise<void> => {
         return this.performOperation(cls.name, 'readwrite', (store) => {
-          const request = store.put(item);
-          return new Promise<void>((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item updated in ${cls.name}:`, item);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
-          });
+          const key = extractKey(item);
+
+          return (async () => {
+            let existingItem: T | undefined;
+            if (key !== undefined && key !== null) {
+              existingItem = await readExistingItem(store, key);
+            }
+
+            applyTimestampFields(item, existingItem);
+
+            const request = store.put(item);
+            return new Promise<void>((resolve, reject) => {
+              request.onsuccess = () => {
+                console.debug(`Item updated in ${cls.name}:`, item);
+                resolve();
+              };
+              request.onerror = () => reject(request.error);
+            });
+          })();
         });
       },
 
