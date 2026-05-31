@@ -90,7 +90,7 @@ describe('Transaction API', () => {
         await tx.User.create(user);
         await tx.Order.create(order);
         throw new Error('abort this transaction');
-      })
+      }),
     ).rejects.toThrow('abort this transaction');
 
     expect(await db.User.read('u2')).toBeUndefined();
@@ -112,7 +112,10 @@ describe('Transaction API', () => {
     const rolledBackUser = new User('u4', 'Dave');
     const rolledBackOrder = new Order('o4', 'u4', 99);
 
-    const rollbackTx = await db.beginTransaction(['User', 'Order'], 'readwrite');
+    const rollbackTx = await db.beginTransaction(
+      ['User', 'Order'],
+      'readwrite',
+    );
     await rollbackTx.User.create(rolledBackUser);
     await rollbackTx.Order.create(rolledBackOrder);
     await rollbackTx.rollback();
