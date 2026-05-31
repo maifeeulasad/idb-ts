@@ -31,15 +31,9 @@
 ## 📦 Installation
 Install via npm and start using IndexedDB like a pro! ⚡
 ```sh
-npm i idb-ts
-```
-or
-```sh
-pnpm add idb-ts
-```
-or
-```sh
-yarn add idb-ts
+npm i idb-ts     # for pure npm users
+pnpm add idb-ts  # for pnpm users
+yarn add idb-ts  # for yarn users
 ```
 
 ## ✨ Features
