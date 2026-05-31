@@ -11,6 +11,7 @@ interface QueryCondition {
 class QueryBuilder<T> {
   private db: IDBDatabase;
   private storeName: string;
+  private transaction?: IDBTransaction;
   private conditions: QueryCondition[] = [];
   private orderField?: Extract<keyof T, string>;
   private orderDirection: QueryDirection = 'asc';
@@ -21,9 +22,10 @@ class QueryBuilder<T> {
   private rangeEnd?: any;
   private currentField?: string;
 
-  constructor(db: IDBDatabase, storeName: string) {
+  constructor(db: IDBDatabase, storeName: string, transaction?: IDBTransaction) {
     this.db = db;
     this.storeName = storeName;
+    this.transaction = transaction;
   }
 
   where(field: Extract<keyof T, string>) {
@@ -89,10 +91,9 @@ class QueryBuilder<T> {
 
   async execute(): Promise<T[]> {
     return new Promise<T[]>((resolve, reject) => {
-      const tx = this.db.transaction(this.storeName, 'readonly');
-      const store = tx.objectStore(this.storeName);
+      const store = this.transaction ? this.transaction.objectStore(this.storeName) : this.db.transaction(this.storeName, 'readonly').objectStore(this.storeName);
       let request: IDBRequest;
-  let results: T[] = [];
+      let results: T[] = [];
 
       // Index-based query
       if (this.indexName) {
@@ -314,6 +315,13 @@ interface EntityRepository<T> {
   clear(): Promise<void>;
   query(): QueryBuilder<T>;
 }
+
+interface TransactionController {
+  commit(): Promise<void>;
+  rollback(): Promise<void>;
+}
+
+type TransactionalDatabase<T extends Record<string, EntityRepository<any>>> = T & TransactionController;
 
 type DatabaseWithRepositories<T extends Record<string, any>> = Database & T;
 
@@ -567,143 +575,142 @@ class Database {
     });
   }
 
-  private createEntityRepository<T>(cls: Function): EntityRepository<T> {
-  const self = this;
-  const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
-  const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
-  const validators = (Reflect.getMetadata('validators', cls) || []) as ValidationRule<T>[];
+  private createEntityRepository<T>(cls: Function, transaction?: IDBTransaction): EntityRepository<T> {
+    const self = this;
+    const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
+    const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
+    const validators = (Reflect.getMetadata('validators', cls) || []) as ValidationRule<T>[];
 
-  const validateItem = (item: T): void => {
-    const failures: string[] = [];
+    const validateItem = (item: T): void => {
+      const failures: string[] = [];
 
-    validators.forEach((rule) => {
-      const value = (item as any)[rule.field];
-      let valid = false;
+      validators.forEach((rule) => {
+        const value = (item as any)[rule.field];
+        let valid = false;
 
-      try {
-        valid = rule.predicate(value, item);
-      } catch {
-        valid = false;
+        try {
+          valid = rule.predicate(value, item);
+        } catch {
+          valid = false;
+        }
+
+        if (!valid) {
+          failures.push(`${rule.field}: ${rule.message}`);
+        }
+      });
+
+      if (failures.length) {
+        throw new Error(`Validation failed for ${cls.name}: ${failures.join('; ')}`);
+      }
+    };
+
+    const generateKey = (item: T): string | number | undefined => {
+      const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
+      if (!keyPathMetadata?.options?.generator) return undefined;
+
+      const generator = keyPathMetadata.options.generator;
+
+      if (typeof generator === 'function') {
+        return generator(item);
       }
 
-      if (!valid) {
-        failures.push(`${rule.field}: ${rule.message}`);
+      switch (generator) {
+        case 'uuid':
+          return KeyGenerators.uuid();
+        case 'timestamp':
+          return KeyGenerators.timestamp();
+        case 'random':
+          return KeyGenerators.random();
+        default:
+          return undefined;
       }
-    });
+    };
 
-    if (failures.length) {
-      throw new Error(`Validation failed for ${cls.name}: ${failures.join('; ')}`);
-    }
-  };
-  
-  // Helper function to generate keys
-  const generateKey = (item: T): string | number | undefined => {
-    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
-    if (!keyPathMetadata?.options?.generator) return undefined;
-    
-    const generator = keyPathMetadata.options.generator;
-    
-    if (typeof generator === 'function') {
-      return generator(item);
-    }
-    
-    switch (generator) {
-      case 'uuid':
-        return KeyGenerators.uuid();
-      case 'timestamp':
-        return KeyGenerators.timestamp();
-      case 'random':
-        return KeyGenerators.random();
-      default:
-        return undefined;
-    }
-  };
+    const applyTimestampFields = (item: T, existingItem?: T): void => {
+      const now = Date.now();
+      const existingCreationValue = existingItem ? (existingItem as any)[creationTimestampField] : undefined;
 
-  const applyTimestampFields = (item: T, existingItem?: T): void => {
-    const now = Date.now();
-    const existingCreationValue = existingItem ? (existingItem as any)[creationTimestampField] : undefined;
+      (item as any)[creationTimestampField] = existingCreationValue !== undefined ? existingCreationValue : now;
+      (item as any)[updateTimestampField] = now;
+    };
 
-    (item as any)[creationTimestampField] = existingCreationValue !== undefined ? existingCreationValue : now;
-    (item as any)[updateTimestampField] = now;
-  };
+    const readExistingItem = (store: IDBObjectStore, key: string | string[] | number): Promise<T | undefined> => {
+      return new Promise<T | undefined>((resolve, reject) => {
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result as T | undefined);
+        request.onerror = () => reject(request.error);
+      });
+    };
 
-  const readExistingItem = (store: IDBObjectStore, key: string | string[] | number): Promise<T | undefined> => {
-    return new Promise<T | undefined>((resolve, reject) => {
-      const request = store.get(key);
-      request.onsuccess = () => resolve(request.result as T | undefined);
-      request.onerror = () => reject(request.error);
-    });
-  };
+    const createStoredItem = (store: IDBObjectStore, item: T): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const request = store.add(item);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    };
 
-  const createStoredItem = (store: IDBObjectStore, item: T): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-      const request = store.add(item);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  };
+    const updateStoredItem = async (store: IDBObjectStore, item: T): Promise<void> => {
+      const key = extractKey(item);
 
-  const updateStoredItem = async (store: IDBObjectStore, item: T): Promise<void> => {
-    const key = extractKey(item);
+      let existingItem: T | undefined;
+      if (key !== undefined && key !== null) {
+        existingItem = await readExistingItem(store, key);
+      }
 
-    let existingItem: T | undefined;
-    if (key !== undefined && key !== null) {
-      existingItem = await readExistingItem(store, key);
-    }
+      applyTimestampFields(item, existingItem);
 
-    applyTimestampFields(item, existingItem);
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(item);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    };
 
-    await new Promise<void>((resolve, reject) => {
-      const request = store.put(item);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  };
+    const deleteStoredItem = (store: IDBObjectStore, key: string | string[] | number): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const request = store.delete(key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    };
 
-  const deleteStoredItem = (store: IDBObjectStore, key: string | string[] | number): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-      const request = store.delete(key);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  };
-  
   // Helper function to extract key from item
-  const extractKey = (item: T): any => {
-    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
-    if (!keyPathMetadata) return undefined;
-    
-    const fields = keyPathMetadata.fields;
-    
-    if (Array.isArray(fields)) {
+    const extractKey = (item: T): any => {
+      const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+      if (!keyPathMetadata) return undefined;
+
+      const fields = keyPathMetadata.fields;
+
+      if (Array.isArray(fields)) {
       // Composite key
-      return fields.map(field => (item as any)[field]);
-    } else {
+        return fields.map(field => (item as any)[field]);
+      } else {
       // Single field key
       return (item as any)[fields];
     }
-  };
-  
+    };
+
   // Helper function to set key on item
-  const setKey = (item: T, key: string | number): void => {
-    const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
-    if (!keyPathMetadata) return;
-    
-    const fields = keyPathMetadata.fields;
-    
-    if (typeof fields === 'string') {
-      (item as any)[fields] = key;
-    }
+    const setKey = (item: T, key: string | number): void => {
+      const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+      if (!keyPathMetadata) return;
+
+      const fields = keyPathMetadata.fields;
+
+      if (typeof fields === 'string') {
+        (item as any)[fields] = key;
+      }
     // Note: Composite keys cannot be auto-generated in this simple implementation
-  };
-  
-  return {
+    };
+
+    return {
       query(): QueryBuilder<T> {
         if (!self.db) throw new Error('Database not initialized.');
         const storeName = cls.name.toLowerCase();
-        return new QueryBuilder<T>(self.db, storeName);
+        return new QueryBuilder<T>(self.db, storeName, transaction);
       },
-      
+
       create: async (item: T): Promise<void> => {
         // Generate key if needed
         const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
@@ -719,16 +726,16 @@ class Database {
 
         validateItem(item);
         applyTimestampFields(item);
-        
+
         return this.performOperation(cls.name, 'readwrite', (store) => {
           return createStoredItem(store, item).then(() => {
             console.debug(`Item added to ${cls.name}:`, item);
           });
-        });
+        }, transaction);
       },
 
       createMany: async (items: T[]): Promise<void> => {
-        const repository = this.createEntityRepository<T>(cls);
+        const repository = this.createEntityRepository<T>(cls, transaction);
         for (const item of items) {
           await repository.create(item);
         }
@@ -744,7 +751,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       update: async (item: T): Promise<void> => {
@@ -754,11 +761,11 @@ class Database {
           return updateStoredItem(store, item).then(() => {
             console.debug(`Item updated in ${cls.name}:`, item);
           });
-        });
+        }, transaction);
       },
 
       updateMany: async (items: T[]): Promise<void> => {
-        const repository = this.createEntityRepository<T>(cls);
+        const repository = this.createEntityRepository<T>(cls, transaction);
         for (const item of items) {
           await repository.update(item);
         }
@@ -769,18 +776,18 @@ class Database {
           return deleteStoredItem(store, key).then(() => {
             console.debug(`Item deleted from ${cls.name}:`, key);
           });
-        });
+        }, transaction);
       },
 
       deleteMany: async (keys: Array<string | string[] | number>): Promise<void> => {
-        const repository = this.createEntityRepository<T>(cls);
+        const repository = this.createEntityRepository<T>(cls, transaction);
         for (const key of keys) {
           await repository.delete(key);
         }
       },
 
       deleteWhere: async (predicate: (query: QueryBuilder<T>) => QueryBuilder<T> | void): Promise<void> => {
-        const repository = this.createEntityRepository<T>(cls);
+        const repository = this.createEntityRepository<T>(cls, transaction);
         const query = repository.query();
         const resolvedQuery = predicate(query) ?? query;
         const matches = await resolvedQuery.execute();
@@ -801,7 +808,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       listPaginated: async (page: number, pageSize: number): Promise<T[]> => {
@@ -816,7 +823,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       findByIndex: async (indexName: string, value: any): Promise<T[]> => {
@@ -834,7 +841,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       findOneByIndex: async (indexName: string, value: any): Promise<T | undefined> => {
@@ -852,7 +859,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       count: async (): Promise<number> => {
@@ -865,7 +872,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       exists: async (key: string): Promise<boolean> => {
@@ -879,7 +886,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       },
 
       clear: async (): Promise<void> => {
@@ -892,7 +899,7 @@ class Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }
     };
   }
@@ -900,17 +907,103 @@ class Database {
   private async performOperation<R>(
     className: string,
     mode: IDBTransactionMode,
-    operation: (store: IDBObjectStore) => Promise<R>
+    operation: (store: IDBObjectStore) => Promise<R>,
+    transaction?: IDBTransaction
   ): Promise<R> {
-    if (!this.db) {
+    if (!this.db && !transaction) {
       throw new Error("Database not initialized.");
     }
 
     const storeName = className.toLowerCase();
-    const transaction = this.db.transaction(storeName, mode);
-    const store = transaction.objectStore(storeName);
+    const activeTransaction = transaction ?? this.db!.transaction(storeName, mode);
+    const store = activeTransaction.objectStore(storeName);
 
     return operation(store);
+  }
+
+  private createTransactionHandle(entityNames: string[], mode: IDBTransactionMode): TransactionalDatabase<Record<string, EntityRepository<any>>> {
+    if (!this.db) {
+      throw new Error("Database not initialized.");
+    }
+
+    const uniqueEntityNames = [...new Set(entityNames)];
+    const storeNames = uniqueEntityNames.map((entityName) => {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (!entityClass) {
+        throw new Error(`Entity '${entityName}' is not registered in ${this.dbName}.`);
+      }
+
+      return entityClass.name.toLowerCase();
+    });
+
+    const nativeTransaction = this.db.transaction(storeNames, mode);
+    let rollbackRequested = false;
+
+    const completion = new Promise<void>((resolve, reject) => {
+      nativeTransaction.oncomplete = () => resolve();
+      nativeTransaction.onabort = () => {
+        if (rollbackRequested) {
+          resolve();
+          return;
+        }
+
+        reject(nativeTransaction.error ?? new Error('Transaction aborted.'));
+      };
+      nativeTransaction.onerror = () => {
+        if (rollbackRequested) {
+          resolve();
+          return;
+        }
+
+        reject(nativeTransaction.error ?? new Error('Transaction failed.'));
+      };
+    });
+
+    const handle = {} as TransactionalDatabase<Record<string, EntityRepository<any>>>;
+    uniqueEntityNames.forEach((entityName) => {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (entityClass) {
+        handle[entityName] = this.createEntityRepository(entityClass, nativeTransaction);
+      }
+    });
+
+    handle.commit = async () => {
+      if (typeof nativeTransaction.commit === 'function') {
+        nativeTransaction.commit();
+      }
+
+      await completion;
+    };
+
+    handle.rollback = async () => {
+      rollbackRequested = true;
+      try {
+        nativeTransaction.abort();
+      } catch {
+        // Ignore abort errors after the transaction has already settled.
+      }
+
+      await completion.catch(() => undefined);
+    };
+
+    return handle;
+  }
+
+  public async beginTransaction(entityNames: string[], mode: IDBTransactionMode = 'readwrite'): Promise<TransactionalDatabase<Record<string, EntityRepository<any>>>> {
+    return this.createTransactionHandle(entityNames, mode);
+  }
+
+  public async transaction<T>(callback: (tx: TransactionalDatabase<Record<string, EntityRepository<any>>>) => Promise<T> | T): Promise<T> {
+    const tx = this.createTransactionHandle(this.classes.map((cls) => cls.name), 'readwrite');
+
+    try {
+      const result = await callback(tx);
+      await tx.commit();
+      return result;
+    } catch (error) {
+      await tx.rollback();
+      throw error;
+    }
   }
 
   close(): void {
