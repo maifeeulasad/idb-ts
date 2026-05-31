@@ -216,15 +216,15 @@ function KeyPath(options?: KeyPathOptions): PropertyDecorator {
     const constructor = target.constructor as Function;
     
     // Track individual property keypaths for validation
-    const existingKeypaths = Reflect.getMetadata("individual_keypaths", constructor) || [];
+    const existingKeypaths = Reflect.getMetadata('individual_keypaths', constructor) || [];
     existingKeypaths.push(propertyKey as string);
-    Reflect.defineMetadata("individual_keypaths", existingKeypaths, constructor);
+    Reflect.defineMetadata('individual_keypaths', existingKeypaths, constructor);
     
     const metadata: KeyPathMetadata = {
       fields: propertyKey as string,
       options: options
     };
-    Reflect.defineMetadata("keypath", metadata, constructor);
+    Reflect.defineMetadata('keypath', metadata, constructor);
   };
 }
 
@@ -235,16 +235,16 @@ function CompositeKeyPath(fields: string[], options?: KeyPathOptions): ClassDeco
       fields: fields,
       options: options
     };
-    Reflect.defineMetadata("keypath", metadata, target);
+    Reflect.defineMetadata('keypath', metadata, target);
   };
 }
 
 function Index(options?: IDBIndexParameters): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
-    const existing = Reflect.getMetadata("indexes", constructor) || [];
+    const existing = Reflect.getMetadata('indexes', constructor) || [];
     const nextIndexes = [...existing, { field: propertyKey as string, options } as IndexMetadata];
-    Reflect.defineMetadata("indexes", nextIndexes, constructor);
+    Reflect.defineMetadata('indexes', nextIndexes, constructor);
   };
 }
 
@@ -279,21 +279,21 @@ interface DataClassOptions {
 
 function DataClass(options: DataClassOptions = {}): ClassDecorator {
   return (target: Function) => {
-    const keyPathMetadata = Reflect.getMetadata("keypath", target) as KeyPathMetadata;
+    const keyPathMetadata = Reflect.getMetadata('keypath', target) as KeyPathMetadata;
     if (!keyPathMetadata) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
     }
     
     // Check for multiple property-level @KeyPath decorators (which is invalid)
     // This is different from composite keys which are defined at class level
-    const individualKeypaths = Reflect.getMetadata("individual_keypaths", target) || [];
+    const individualKeypaths = Reflect.getMetadata('individual_keypaths', target) || [];
     if (individualKeypaths.length > 1) {
       throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
     }
     
     const version = options.version || 1;
-    Reflect.defineMetadata("dataclass", true, target);
-    Reflect.defineMetadata("version", version, target);
+    Reflect.defineMetadata('dataclass', true, target);
+    Reflect.defineMetadata('version', version, target);
   };
 }
 
@@ -337,8 +337,8 @@ class Database {
 
   private constructor(dbName: string, classes: Function[]) {
     this.dbName = dbName;
-    if (!classes.every(cls => Reflect.getMetadata("dataclass", cls))) {
-      throw new Error("All classes should be decorated with @DataClass.");
+    if (!classes.every(cls => Reflect.getMetadata('dataclass', cls))) {
+      throw new Error('All classes should be decorated with @DataClass.');
     }
     this.classes = classes;
     this.dbVersion = this.calculateDatabaseVersion();
@@ -360,7 +360,7 @@ class Database {
 
   private calculateDatabaseVersion(): number {
     // Calculate the database version based on the highest schema version
-    const versions = this.classes.map(cls => Reflect.getMetadata("version", cls) || 1);
+    const versions = this.classes.map(cls => Reflect.getMetadata('version', cls) || 1);
     return Math.max(...versions);
   }
 
@@ -387,9 +387,9 @@ class Database {
 
         // Handle schema evolution based on versions
         this.classes.forEach((cls) => {
-          const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
-          const indexFields = Reflect.getMetadata("indexes", cls) || [];
-          const classVersion = Reflect.getMetadata("version", cls) || 1;
+          const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
+          const indexFields = Reflect.getMetadata('indexes', cls) || [];
+          const classVersion = Reflect.getMetadata('version', cls) || 1;
 
           const storeName = cls.name.toLowerCase();
 
@@ -448,13 +448,13 @@ class Database {
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map(cls => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
+        console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map(cls => `${cls.name}(v${Reflect.getMetadata('version', cls) || 1})`).join(', ')}`);
         this.startRetentionCleanup();
         resolve();
       };
 
       request.onerror = () => {
-        console.error("Error initializing database:", request.error);
+        console.error('Error initializing database:', request.error);
         reject(request.error);
       };
     });
@@ -677,7 +677,7 @@ class Database {
 
   // Helper function to extract key from item
     const extractKey = (item: T): any => {
-      const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+      const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
       if (!keyPathMetadata) return undefined;
 
       const fields = keyPathMetadata.fields;
@@ -693,7 +693,7 @@ class Database {
 
   // Helper function to set key on item
     const setKey = (item: T, key: string | number): void => {
-      const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+      const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
       if (!keyPathMetadata) return;
 
       const fields = keyPathMetadata.fields;
@@ -713,7 +713,7 @@ class Database {
 
       create: async (item: T): Promise<void> => {
         // Generate key if needed
-        const keyPathMetadata = Reflect.getMetadata("keypath", cls) as KeyPathMetadata;
+        const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
         if (keyPathMetadata?.options?.generator && !keyPathMetadata.options.autoIncrement) {
           const currentKey = extractKey(item);
           if (currentKey === undefined || currentKey === null || currentKey === '') {
@@ -911,7 +911,7 @@ class Database {
     transaction?: IDBTransaction
   ): Promise<R> {
     if (!this.db && !transaction) {
-      throw new Error("Database not initialized.");
+      throw new Error('Database not initialized.');
     }
 
     const storeName = className.toLowerCase();
@@ -923,7 +923,7 @@ class Database {
 
   private createTransactionHandle(entityNames: string[], mode: IDBTransactionMode): TransactionalDatabase<Record<string, EntityRepository<any>>> {
     if (!this.db) {
-      throw new Error("Database not initialized.");
+      throw new Error('Database not initialized.');
     }
 
     const uniqueEntityNames = [...new Set(entityNames)];
@@ -1029,7 +1029,7 @@ class Database {
   getEntityVersions(): Map<string, number> {
     const versions = new Map<string, number>();
     this.classes.forEach(cls => {
-      const version = Reflect.getMetadata("version", cls) || 1;
+      const version = Reflect.getMetadata('version', cls) || 1;
       versions.set(cls.name, version);
     });
     return versions;
@@ -1037,7 +1037,7 @@ class Database {
 
   getEntityVersion(entityName: string): number | undefined {
     const cls = this.classes.find(c => c.name === entityName);
-    return cls ? (Reflect.getMetadata("version", cls) || 1) : undefined;
+    return cls ? (Reflect.getMetadata('version', cls) || 1) : undefined;
   }
 }
 
