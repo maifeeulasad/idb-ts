@@ -41,7 +41,10 @@ export default function useIDBOperations() {
     }
   };
 
-  const readItem = async <T>(entityClass: Function, key: any): Promise<T | undefined> => {
+  const readItem = async <T>(
+    entityClass: Function,
+    key: any,
+  ): Promise<T | undefined> => {
     if (!db.value) {
       error.value = 'Database not initialized';
       return;
@@ -128,7 +131,10 @@ export default function useIDBOperations() {
     }
   };
 
-  const queryItems = async <T>(entityClass: Function, queryFn: (query: any) => any): Promise<T[]> => {
+  const queryItems = async <T>(
+    entityClass: Function,
+    queryFn: (query: any) => any,
+  ): Promise<T[]> => {
     if (!db.value) {
       error.value = 'Database not initialized';
       return [];
@@ -152,7 +158,11 @@ export default function useIDBOperations() {
     }
   };
 
-  const findByIndex = async <T>(entityClass: Function, indexName: string, value: any): Promise<T | undefined> => {
+  const findByIndex = async <T>(
+    entityClass: Function,
+    indexName: string,
+    value: any,
+  ): Promise<T | undefined> => {
     if (!db.value) {
       error.value = 'Database not initialized';
       return;
@@ -174,7 +184,11 @@ export default function useIDBOperations() {
     }
   };
 
-  const findAllByIndex = async <T>(entityClass: Function, indexName: string, value: any): Promise<T[]> => {
+  const findAllByIndex = async <T>(
+    entityClass: Function,
+    indexName: string,
+    value: any,
+  ): Promise<T[]> => {
     if (!db.value) {
       error.value = 'Database not initialized';
       return [];
