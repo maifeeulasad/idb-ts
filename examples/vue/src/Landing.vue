@@ -1,19 +1,32 @@
 <template>
   <div>
-    <div style="display: flex; justify-content: space-between; align-items: center">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center"
+    >
       <h1>Users</h1>
-      <a-button type="primary" @click="isUserModalVisible = true">Add User</a-button>
+      <a-button type="primary" @click="isUserModalVisible = true"
+        >Add User</a-button
+      >
     </div>
     <a-table :dataSource="users" :columns="userColumns" rowKey="name" />
 
-    <div style="display: flex; justify-content: space-between; align-items: center">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center"
+    >
       <h1>Locations</h1>
-      <a-button type="primary" @click="isLocationModalVisible = true">Add Location</a-button>
+      <a-button type="primary" @click="isLocationModalVisible = true"
+        >Add Location</a-button
+      >
     </div>
     <a-table :dataSource="locations" :columns="locationColumns" rowKey="id" />
 
     <!-- User Modal -->
-    <a-modal v-model:open="isUserModalVisible" :title="selectedUser ? 'Edit User' : 'Add User'" @ok="handleAddUser" @cancel="handleUserModalCancel">
+    <a-modal
+      v-model:open="isUserModalVisible"
+      :title="selectedUser ? 'Edit User' : 'Add User'"
+      @ok="handleAddUser"
+      @cancel="handleUserModalCancel"
+    >
       <a-input placeholder="Name" v-model:value="newUser.name" />
       <a-input placeholder="Age" type="number" v-model:value="newUser.age" />
       <a-input placeholder="Cell" v-model:value="newUser.cell" />
@@ -21,7 +34,12 @@
     </a-modal>
 
     <!-- Location Modal -->
-    <a-modal v-model:open="isLocationModalVisible" :title="selectedLocation ? 'Edit Location' : 'Add Location'" @ok="handleAddLocation" @cancel="handleLocationModalCancel">
+    <a-modal
+      v-model:open="isLocationModalVisible"
+      :title="selectedLocation ? 'Edit Location' : 'Add Location'"
+      @ok="handleAddLocation"
+      @cancel="handleLocationModalCancel"
+    >
       <a-input placeholder="ID" v-model:value="newLocation.id" />
       <a-input placeholder="City" v-model:value="newLocation.city" />
       <a-input placeholder="Country" v-model:value="newLocation.country" />
@@ -37,7 +55,14 @@ import { Table, Button, Modal, Input, Space } from 'ant-design-vue';
 import useIDBOperations from './useIDBOperations';
 import { User, Location } from './IDBOperations';
 
-const { initializeDB, createItem, readItem, updateItem, deleteItem, listItems } = useIDBOperations();
+const {
+  initializeDB,
+  createItem,
+  readItem,
+  updateItem,
+  deleteItem,
+  listItems,
+} = useIDBOperations();
 
 const users = ref<User[]>([]);
 const locations = ref<Location[]>([]);
@@ -50,8 +75,8 @@ const newLocation = ref<Location>({ id: '', city: '', country: '' });
 
 onMounted(async () => {
   await initializeDB('idb-crud-vue', [User, Location]);
-  users.value = await listItems(User) || [];
-  locations.value = await listItems(Location) || [];
+  users.value = (await listItems(User)) || [];
+  locations.value = (await listItems(Location)) || [];
 });
 
 const userColumns = [
@@ -62,17 +87,25 @@ const userColumns = [
   {
     title: 'Action',
     key: 'action',
-    render: (text: any, record: User) => 
+    render: (text: any, record: User) =>
       h(Space, { size: 'middle' }, [
-        h(Button, { 
-          type: 'primary', 
-          onClick: () => handleEditUser(record.name) 
-        }, 'Edit'),
-        h(Button, { 
-          type: 'primary', 
-          onClick: () => handleDeleteUser(record.name) 
-        }, 'Delete')
-      ])
+        h(
+          Button,
+          {
+            type: 'primary',
+            onClick: () => handleEditUser(record.name),
+          },
+          'Edit',
+        ),
+        h(
+          Button,
+          {
+            type: 'primary',
+            onClick: () => handleDeleteUser(record.name),
+          },
+          'Delete',
+        ),
+      ]),
   },
 ];
 
@@ -85,15 +118,23 @@ const locationColumns = [
     key: 'action',
     render: (text: any, record: Location) =>
       h(Space, { size: 'middle' }, [
-        h(Button, { 
-          type: 'primary', 
-          onClick: () => handleEditLocation(record.id) 
-        }, 'Edit'),
-        h(Button, { 
-          type: 'primary', 
-          onClick: () => handleDeleteLocation(record.id) 
-        }, 'Delete')
-      ])
+        h(
+          Button,
+          {
+            type: 'primary',
+            onClick: () => handleEditLocation(record.id),
+          },
+          'Edit',
+        ),
+        h(
+          Button,
+          {
+            type: 'primary',
+            onClick: () => handleDeleteLocation(record.id),
+          },
+          'Delete',
+        ),
+      ]),
   },
 ];
 
@@ -120,7 +161,7 @@ const handleDeleteLocation = async (id: string) => {
 const handleAddUser = async () => {
   if (selectedUser.value) await updateItem(User, newUser.value);
   else await createItem(User, newUser.value);
-  users.value = await listItems(User) || [];
+  users.value = (await listItems(User)) || [];
   isUserModalVisible.value = false;
   newUser.value = { name: '', age: 0, address: '', cell: '' };
   selectedUser.value = null;
@@ -129,7 +170,7 @@ const handleAddUser = async () => {
 const handleAddLocation = async () => {
   if (selectedLocation.value) await updateItem(Location, newLocation.value);
   else await createItem(Location, newLocation.value);
-  locations.value = await listItems(Location) || [];
+  locations.value = (await listItems(Location)) || [];
   isLocationModalVisible.value = false;
   newLocation.value = { id: '', city: '', country: '' };
   selectedLocation.value = null;
