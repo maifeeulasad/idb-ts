@@ -41,7 +41,9 @@ describe('Validation decorator', () => {
   });
 
   it('should allow valid records to be created', async () => {
-    await db.ValidatedUser.create(new ValidatedUser('u1', 'user@example.com', 34));
+    await db.ValidatedUser.create(
+      new ValidatedUser('u1', 'user@example.com', 34),
+    );
 
     const items = await db.ValidatedUser.list();
     expect(items).toHaveLength(1);
@@ -49,8 +51,10 @@ describe('Validation decorator', () => {
   });
 
   it('should reject invalid values on create', async () => {
-    await expect(db.ValidatedUser.create(new ValidatedUser('', 'invalid', 999))).rejects.toThrow(
-      /Validation failed for ValidatedUser: id: ID cannot be empty; email: Invalid email; age: Age must be 0-150/
+    await expect(
+      db.ValidatedUser.create(new ValidatedUser('', 'invalid', 999)),
+    ).rejects.toThrow(
+      /Validation failed for ValidatedUser: id: ID cannot be empty; email: Invalid email; age: Age must be 0-150/,
     );
 
     const items = await db.ValidatedUser.list();
@@ -64,7 +68,7 @@ describe('Validation decorator', () => {
     user.email = 'broken-email';
 
     await expect(db.ValidatedUser.update(user)).rejects.toThrow(
-      /Validation failed for ValidatedUser: email: Invalid email/
+      /Validation failed for ValidatedUser: email: Invalid email/,
     );
 
     const stored = await db.ValidatedUser.read('u2');
