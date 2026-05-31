@@ -128,7 +128,13 @@ const databaseName = 'idb-playground-v1';
 
 const seedData = {
   users: [
-    new User('Alice Johnson', 'alice@example.com', 28, '123 Main St', '+1234567890'),
+    new User(
+      'Alice Johnson',
+      'alice@example.com',
+      28,
+      '123 Main St',
+      '+1234567890',
+    ),
     new User('Bob Smith', 'bob@example.com', 32, '456 Oak Ave'),
     new User('Charlie Brown', 'charlie@example.com', 25, '789 Pine Rd'),
   ],
@@ -604,37 +610,39 @@ function escapeHtml(value: string): string {
 
 function safeStringify(value: unknown): string {
   const seen = new WeakSet<object>();
-  return JSON.stringify(
-    value,
-    (_key, currentValue) => {
-      if (currentValue instanceof Date) {
-        return currentValue.toISOString();
-      }
-
-      if (typeof currentValue === 'bigint') {
-        return currentValue.toString();
-      }
-
-      if (currentValue instanceof Map) {
-        return Object.fromEntries(currentValue.entries());
-      }
-
-      if (currentValue instanceof Set) {
-        return Array.from(currentValue.values());
-      }
-
-      if (typeof currentValue === 'object' && currentValue !== null) {
-        if (seen.has(currentValue)) {
-          return '[Circular]';
+  return (
+    JSON.stringify(
+      value,
+      (_key, currentValue) => {
+        if (currentValue instanceof Date) {
+          return currentValue.toISOString();
         }
 
-        seen.add(currentValue);
-      }
+        if (typeof currentValue === 'bigint') {
+          return currentValue.toString();
+        }
 
-      return currentValue;
-    },
-    2,
-  ) ?? 'null';
+        if (currentValue instanceof Map) {
+          return Object.fromEntries(currentValue.entries());
+        }
+
+        if (currentValue instanceof Set) {
+          return Array.from(currentValue.values());
+        }
+
+        if (typeof currentValue === 'object' && currentValue !== null) {
+          if (seen.has(currentValue)) {
+            return '[Circular]';
+          }
+
+          seen.add(currentValue);
+        }
+
+        return currentValue;
+      },
+      2,
+    ) ?? 'null'
+  );
 }
 
 function formatValue(value: unknown): string {
@@ -657,7 +665,9 @@ function renderTable(rows: Array<Record<string, unknown>>): string {
     }, new Set<string>()),
   );
 
-  const head = columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('');
+  const head = columns
+    .map((column) => `<th>${escapeHtml(column)}</th>`)
+    .join('');
   const body = rows
     .map((row) => {
       const cells = columns
@@ -671,7 +681,12 @@ function renderTable(rows: Array<Record<string, unknown>>): string {
 }
 
 function renderValue(value: unknown): string {
-  if (Array.isArray(value) && value.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
+  if (
+    Array.isArray(value) &&
+    value.every(
+      (item) => item && typeof item === 'object' && !Array.isArray(item),
+    )
+  ) {
     return renderTable(value as Array<Record<string, unknown>>);
   }
 
@@ -700,7 +715,12 @@ function logMessage(
   output.prepend(entry);
 }
 
-function logText(output: HTMLElement, kind: LogKind, label: string, text: string): void {
+function logText(
+  output: HTMLElement,
+  kind: LogKind,
+  label: string,
+  text: string,
+): void {
   const entry = document.createElement('section');
   entry.className = 'entry';
   entry.innerHTML = `
@@ -713,7 +733,10 @@ function logText(output: HTMLElement, kind: LogKind, label: string, text: string
   output.prepend(entry);
 }
 
-function updateStats(stats: HTMLElement, database: PlaygroundDatabase | null): void {
+function updateStats(
+  stats: HTMLElement,
+  database: PlaygroundDatabase | null,
+): void {
   if (!database) {
     stats.innerHTML = `
       <div class="stat"><span class="stat-label">Database</span><span class="stat-value">not ready</span></div>
@@ -786,7 +809,12 @@ async function seedDatabase(database: PlaygroundDatabase): Promise<void> {
 function createShellHelpers(output: HTMLElement) {
   return {
     log: (...parts: unknown[]) => {
-      logText(output, 'info', 'log', parts.map((part) => formatValue(part)).join(' '));
+      logText(
+        output,
+        'info',
+        'log',
+        parts.map((part) => formatValue(part)).join(' '),
+      );
     },
     inspect: (value: unknown) => logMessage(output, 'info', 'result', value),
     clear: () => {
@@ -981,7 +1009,9 @@ async function main(): Promise<void> {
     ui.resetButton.disabled = !ready;
     ui.loadButton.disabled = !ready;
     updateStats(ui.stats, database);
-    ui.entityList.textContent = database ? database.getAvailableEntities().join(', ') : 'Loading...';
+    ui.entityList.textContent = database
+      ? database.getAvailableEntities().join(', ')
+      : 'Loading...';
   };
 
   setReadyState(false, 'building database');
@@ -1027,7 +1057,12 @@ async function main(): Promise<void> {
       if (typeof result !== 'undefined') {
         logMessage(ui.output, 'success', 'result', result);
       } else {
-        logText(ui.output, 'success', 'done', 'snippet completed without an explicit return value');
+        logText(
+          ui.output,
+          'success',
+          'done',
+          'snippet completed without an explicit return value',
+        );
       }
     } catch (error) {
       logMessage(ui.output, 'error', 'runtime error', error);
@@ -1049,7 +1084,12 @@ async function main(): Promise<void> {
     ui.resetButton.disabled = true;
     ui.runButton.disabled = true;
     setReadyState(false, 'resetting database');
-    logText(ui.output, 'warn', 'reset', 'dropping database and rebuilding seed data');
+    logText(
+      ui.output,
+      'warn',
+      'reset',
+      'dropping database and rebuilding seed data',
+    );
 
     try {
       await clearDatabase();
@@ -1068,14 +1108,18 @@ async function main(): Promise<void> {
     }
   });
 
-  appRoot.querySelectorAll<HTMLButtonElement>('[data-snippet]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const snippetName = button.dataset.snippet as keyof ReturnType<typeof sampleSnippets>;
-      const snippets = sampleSnippets();
-      ui.editor.value = snippets[snippetName] ?? snippets.starter;
-      ui.editor.focus();
+  appRoot
+    .querySelectorAll<HTMLButtonElement>('[data-snippet]')
+    .forEach((button) => {
+      button.addEventListener('click', () => {
+        const snippetName = button.dataset.snippet as keyof ReturnType<
+          typeof sampleSnippets
+        >;
+        const snippets = sampleSnippets();
+        ui.editor.value = snippets[snippetName] ?? snippets.starter;
+        ui.editor.focus();
+      });
     });
-  });
 
   ui.editor.addEventListener('keydown', (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
