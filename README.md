@@ -531,6 +531,56 @@ Example patterns:
 
 The Transaction API is covered by the test suite in `__tests__/transaction.test.ts` which demonstrates both the callback and explicit modes.
 
+### Advanced Querying
+
+`idb-ts` includes a typed query builder for field-level filtering, logical grouping, and basic aggregations. The available operators are constrained by the field type, so string-only and array-only operations are only exposed where they make sense.
+
+```ts
+const users = await db.User.query()
+  .where('name').startsWith('John')
+  .and('email').endsWith('@gmail.com')
+  .and('description').contains('important')
+  .execute();
+
+const activeOrTrial = await db.User.query()
+  .where('age').gte(18)
+  .or()
+  .where('hasParentalConsent').equals(true)
+  .execute();
+
+const premiumUsers = await db.User.query()
+  .where((qb) =>
+    qb.where('type').equals('premium').and('status').equals('active'),
+  )
+  .or()
+  .where('isTrial').equals(true)
+  .execute();
+```
+
+Supported operators include:
+
+- String operations: `startsWith`, `endsWith`, `contains`, `matches`
+- Range operations: `between`, `notBetween`
+- Collection operations: `contains`, `containsAny`, `containsAll`, `in`, `notIn`
+- Logical chaining: `and()`, `or()`, and grouped predicates via `where((qb) => ...)`
+
+Aggregations are available directly on the query builder:
+
+```ts
+await db.Order.query().sum('amount');
+await db.Order.query().avg('price');
+await db.Order.query().min('date');
+await db.Order.query().max('date');
+await db.Order.query().groupBy('status').count();
+```
+
+Notes:
+
+- `sum()` and `avg()` are numeric-only.
+- `min()` and `max()` are available for comparable scalar fields.
+- `groupBy(...).count()` returns grouped counts by the selected field.
+- TypeScript will reject unsupported operator/field combinations at compile time.
+
 ---
 
 ## 🔄 Schema Versioning
