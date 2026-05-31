@@ -20,6 +20,7 @@ export default [
         ...globals.browser,
         ...globals.node,
         IDBObjectStoreParameters: "readonly",
+        IDBIndexParameters: "readonly",
         IDBTransactionMode: "readonly",
       },
     },
