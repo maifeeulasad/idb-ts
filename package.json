@@ -49,6 +49,11 @@
     "lib"
   ],
   "homepage": "https://github.com/maifeeulasad/idb-ts#readme",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "unrs-resolver"
+    ]
+  },
   "peerDependencies": {
     "reflect-metadata": "^0.2.2",
     "tslib": "^2.8.1"
