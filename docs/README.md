@@ -1,4 +1,4 @@
-# 🚀 idb-ts
+# idb-ts
 
 <p align="center">
   <a href="https://www.npmjs.com/package/idb-ts">
@@ -20,414 +20,400 @@
     <img src="https://img.shields.io/github/watchers/maifeeulasad/idb-ts" alt="GitHub watchers">
   </a>
   <a href="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases">
-    <img src="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases" alt="Commits after release">
+    <img src="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases" alt="Commits since release">
   </a>
 </p>
 
-## 📌 Introduction
+---
 
-**idb-ts** is a lightweight, declarative, and type-safe way to work with IndexedDB using TypeScript. Effortlessly perform CRUD operations on your database with clean, structured code! 🔥
+## Introduction
 
-## 📦 Installation
-
-Install via npm and start using IndexedDB like a pro! ⚡
-
-```sh
-npm i idb-ts     # for pure npm users
-pnpm add idb-ts  # for pnpm users
-yarn add idb-ts  # for yarn users
-```
-
-## ✨ Features
-
-- ✅ **Declarative & Type-Safe** - Define your data models with decorators.
-- ⚡ **Easy CRUD Operations** - Perform create, read, update, and delete seamlessly.
-- 🚀 **Fully Typed API** - Benefit from TypeScript’s powerful type system.
-- 🏎️ **Performance Optimized** - Minimal overhead with IndexedDB's native capabilities.
-- 🔄 **Schema Versioning** - Manage database schema evolution with automatic migration support.
-- 🔑 **Advanced Key Management** - Auto-increment, UUID, timestamp, custom generators, and composite keys.
+**idb-ts** is a declarative, type-safe ORM layer for [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API). Define your data models with TypeScript decorators, and the library handles schema creation, key generation, validation, querying, transactions, and data retention automatically - with no external runtime dependencies.
 
 ---
 
-## 📖 Example Usage
+## Installation
 
-### 🏗️ Declaring Entities
+```sh
+npm install idb-ts
+pnpm add idb-ts
+yarn add idb-ts
+```
 
-Use decorators to define your data models. Each class must have exactly one `@KeyPath()` and be decorated with `@DataClass()`.
+> **Requirement:** `reflect-metadata` must be imported once at your application entry point, and `experimentalDecorators` and `emitDecoratorMetadata` must be enabled in your `tsconfig.json`.
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+---
+
+## Feature Overview
+
+| Feature | Description |
+|---|---|
+| **Declarative entity definition** | Define stores, keys, and indexes with class decorators |
+| **Full CRUD API** | Create, read, update, delete, list, paginate, and count |
+| **Typed query builder** | Chainable, type-checked filter, sort, and aggregation DSL |
+| **Key generation** | Auto-increment, UUID v4, timestamp, random, or custom function |
+| **Composite keys** | Multi-field primary keys for relational associations |
+| **Field validation** | Per-property predicate rules enforced on write |
+| **Schema versioning** | Automatic `onupgradeneeded` migration based on entity versions |
+| **Transaction API** | Callback-based and explicit commit/rollback patterns |
+| **Data retention** | Periodic background cleanup of expired records |
+| **Automatic timestamps** | `__idb_createdAt` / `__idb_updatedAt` injected on every write |
+
+---
+
+## Quick Start
 
 ```typescript
+import 'reflect-metadata';
 import { Database, DataClass, KeyPath, Index } from 'idb-ts';
 
 @DataClass()
 class User {
-  @KeyPath()
+  @KeyPath({ generator: 'uuid' })
   id!: string;
 
-  @Index()
+  @Index({ unique: true })
   email!: string;
 
   name!: string;
   age!: number;
-
-  constructor(id: string, name: string, age: number, email?: string) {
-    this.id = id;
-    this.name = name;
-    this.age = age;
-    this.email = email || `${name.toLowerCase()}@example.com`;
-  }
 }
 
-@DataClass()
-class Location {
-  @KeyPath()
-  id!: string;
+const db = await Database.build<{ User: EntityRepository<User> }>('mydb', [User]);
 
-  @Index()
-  city!: string;
-
-  country!: string;
-
-  constructor(id: string, city: string, country: string) {
-    this.id = id;
-    this.city = city;
-    this.country = country;
-  }
-}
+await db.User.create({ id: '', name: 'Alice', age: 30, email: 'alice@example.com' });
+const alice = await db.User.findOneByIndex('email', 'alice@example.com');
 ```
-
-### 🔄 CRUD Operations
-
-Perform database operations using the repository API:
-
-```typescript
-const db = await Database.build('idb-crud', [User, Location]);
-
-const alice = new User('u1', 'Alice', 25);
-const bob = new User('u2', 'Bob', 30);
-const nyc = new Location('1', 'New York', 'USA');
-const sf = new Location('2', 'San Francisco', 'USA');
-
-await db.User.create(alice);
-await db.User.create(bob);
-await db.Location.create(nyc);
-await db.Location.create(sf);
-
-const readAlice = await db.User.read('u1');
-console.log('👤 Read user:', readAlice);
-
-alice.age = 26;
-await db.User.update(alice);
-
-const users = await db.User.list();
-console.log('📋 All users:', users);
-
-// Pagination
-const page1 = await db.User.listPaginated(1, 2); // page 1, 2 users per page
-console.log('📄 Page 1:', page1);
-
-await db.User.delete('u1');
-console.log('❌ User Alice deleted.');
-
-const remainingUsers = await db.User.list();
-console.log('🔍 Remaining users:', remainingUsers);
-
-const locations = await db.Location.list();
-console.log('🌍 All locations:', locations);
-```
-
-### 🔍 Indexing Support
-
-Create indexes on fields for fast querying. Query indexes using the repository API:
-
-```typescript
-@DataClass()
-class Product {
-  @KeyPath()
-  id!: string;
-
-  @Index()
-  category!: string;
-
-  @Index()
-  price!: number;
-
-  name!: string;
-  description!: string;
-
-  constructor(
-    id: string,
-    category: string,
-    price: number,
-    name: string,
-    description: string,
-  ) {
-    this.id = id;
-    this.category = category;
-    this.price = price;
-    this.name = name;
-    this.description = description;
-  }
-}
-
-const db = await Database.build('products-db', [Product]);
-
-const electronics = await db.Product.findByIndex('category', 'Electronics');
-const expensiveItems = await db.Product.findByIndex('price', 999.99);
-const firstElectronic = await db.Product.findOneByIndex(
-  'category',
-  'Electronics',
-);
-```
-
-#### Index Methods:
-
-- `findByIndex(indexName, value): Promise<T[]>` - Find all records matching the index value
-- `findOneByIndex(indexName, value): Promise<T | undefined>` - Find the first record matching the index value
-
-### Creation & Update Timestamps
-
-Each entity managed by `idb-ts` automatically gets two internal timestamp fields:
-
-- `__idb_createdAt`: numeric epoch milliseconds set when the record is first created.
-- `__idb_updatedAt`: numeric epoch milliseconds updated on each successful update.
-
-These fields are applied automatically during `create` and `update` operations and can be used for auditing, sorting, or retention policies. They are stored as numbers (milliseconds since Unix epoch).
-
-Example usage (reading timestamps):
-
-```ts
-const item = await db.MyEntity.read('key');
-console.log(item.__idb_createdAt, item.__idb_updatedAt);
-```
-
-### Retention Policy & Cleanup Job
-
-`idb-ts` supports per-entity data retention via the `@RetentionPolicy()` class decorator. It accepts the following options:
-
-- `seconds` (required): number of seconds after which records are considered expired.
-- `enabled` (optional, default `true`): whether cleanup is active for this entity.
-- `field` (optional, default `__idb_createdAt`): the numeric field to use for age calculation (usually creation timestamp).
-
-When one or more entities register retention policies, the library computes a single cleanup interval equal to the greatest common divisor (GCD) of all configured `seconds` values and runs a background cleanup job at that interval. On each tick the job scans the configured entity stores and deletes records whose `field` value is older than the configured retention window.
-
-Example:
-
-```ts
-@RetentionPolicy({ seconds: 60 * 60 * 24 * 30 }) // 30 days
-@DataClass()
-class Session {
-  /* ... */
-}
-
-// Database will run a periodic cleanup that removes sessions older than 30 days
-```
-
-Notes:
-
-- Cleanup runs with readwrite transactions and deletes records one-by-one via cursors. It runs at startup and then periodically. Logs are emitted for inspection when debug logging is enabled.
-- To temporarily disable cleanup for an entity, set `enabled: false` on the decorator.
-
-### Field Validation
-
-You can declare validation rules for individual properties using the `@Validate(predicate, message)` property decorator. Each rule must provide a predicate function that receives the property value and the full item and returns `true` when valid.
-
-Validation is enforced on `create` and `update` operations. If any rule fails, the repository operation throws an error with a concise message describing the failing fields.
-
-Example:
-
-```ts
-@DataClass()
-class User {
-  @KeyPath()
-  id!: string;
-
-  @Validate(
-    (v) => typeof v === 'string' && v.includes('@'),
-    'must be a valid email',
-  )
-  email!: string;
-
-  @Validate((v) => typeof v === 'number' && v >= 0, 'age must be >= 0')
-  age!: number;
-}
-
-await db.User.create(new User('u1', 'alice@example.com', 30));
-```
-
-The thrown error contains all failing rules in the format `field: message` joined by `; `.
-
-### Bulk Operations
-
-Repositories include convenience bulk helpers for common batch operations:
-
-- `createMany(items: T[])`: creates multiple items (runs validators and generators for each item).
-- `updateMany(items: T[])`: updates multiple items.
-- `deleteMany(keys: Array<string | string[] | number>)`: deletes multiple keys.
-
-These helpers are implemented by iterating the corresponding single-item operations. They are convenient for simple bulk workloads but are not currently implemented as a single atomic transaction across all items. For high-throughput or atomic requirements, consider batching items into a single transaction or performing multiple operations inside a custom `performOperation` call.
-
-Example:
-
-```ts
-await db.User.createMany([alice, bob, charlie]);
-await db.User.deleteMany(['u1', 'u2']);
-```
-
-Performance note: `createMany` will trigger validation and key generation per item. If you need large batch inserts frequently, batching these into a single transaction or adding a dedicated bulk API may improve throughput.
-
-#### Error Handling
-
-- If you query a non-existent index, an error is thrown:
-  ```typescript
-  await db.Product.findByIndex('nonexistent', 'value'); // throws
-  ```
 
 ---
 
-## 🔑 Multi-Field & Composite Key Support
+## Defining Entities
 
-idb-ts provides flexible key management options including auto-increment keys, key generators, and composite keys for complex data relationships.
+Every entity class must declare exactly one primary key field and be annotated with `@DataClass()`. Apply decorators in the order shown - TypeScript executes decorators bottom-up, so `@DataClass` must appear last (i.e., closest to the `class` keyword).
 
-### Auto-Increment Keys
+```typescript
+import { Database, DataClass, KeyPath, Index, Validate } from 'idb-ts';
 
-Perfect for entities where you want the database to automatically generate sequential IDs:
+@DataClass({ version: 1 })
+class User {
+  @KeyPath({ generator: 'uuid' })
+  id!: string;
+
+  @Index({ unique: true })
+  @Validate((v) => typeof v === 'string' && v.includes('@'), 'must be a valid email')
+  email!: string;
+
+  @Validate((v) => typeof v === 'number' && v >= 0, 'age must be non-negative')
+  age!: number;
+
+  name!: string;
+}
+```
+
+### Decorator reference
+
+#### `@DataClass(options?)`
+
+Marks a class as a managed entity. Must be applied exactly once per class, after all other idb-ts decorators.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `version` | `number` | `1` | Schema version. Increment when the entity's store or indexes change. |
+
+#### `@KeyPath(options?)`
+
+Designates the decorated property as the primary key of the object store. Exactly one property per class may carry this decorator. For multi-field keys, use `@CompositeKeyPath` at the class level instead.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `autoIncrement` | `boolean` | `false` | Delegate key assignment to IndexedDB's auto-increment mechanism. |
+| `generator` | `'uuid'` \| `'timestamp'` \| `'random'` \| `(item) => string \| number` | - | Automatic key generator invoked when the key field is absent or empty on `create`. |
+
+#### `@CompositeKeyPath(fields, options?)`
+
+Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`.
+
+```typescript
+@CompositeKeyPath(['userId', 'projectId'])
+@DataClass()
+class UserProject {
+  userId!: string;
+  projectId!: string;
+  role!: string;
+}
+```
+
+#### `@Index(options?)`
+
+Creates an IDB index on the decorated field, enabling efficient lookups via `findByIndex` and `findOneByIndex`.
+
+| Option | Type | Description |
+|---|---|---|
+| `unique` | `boolean` | Enforce uniqueness on the indexed field. |
+
+#### `@Validate(predicate, message)`
+
+Attaches a validation rule to the decorated property. Rules are enforced on every `create` and `update` call. If any rule fails, the operation throws with a message listing all failing fields.
+
+#### `@RetentionPolicy(options)`
+
+Class-level decorator that configures automatic expiry and deletion of records. See [Data Retention](#data-retention) for full details.
+
+---
+
+## Database Initialisation
+
+```typescript
+const db = await Database.build<{
+  User:  EntityRepository<User>;
+  Order: EntityRepository<Order>;
+}>('shop', [User, Order]);
+```
+
+`Database.build` opens (or upgrades) the IDB database, creates object stores and indexes for any entity whose version exceeds the stored database version, starts background retention jobs if applicable, and attaches typed repository properties to the returned object.
+
+The effective database version is the highest `version` value declared across all registered entities.
+
+### Inspecting database metadata
+
+```typescript
+db.getDatabaseVersion();         // number - current IDB version
+db.getEntityVersions();          // Map<string, number>
+db.getEntityVersion('User');     // number | undefined
+db.getAvailableEntities();       // string[]
+```
+
+### Closing the connection
+
+```typescript
+db.close(); // Stops the retention cleanup timer and closes the IDB connection.
+```
+
+---
+
+## CRUD Operations
+
+Each entity is accessible as a named property on the database object. All methods return `Promise`.
+
+```typescript
+// Create
+await db.User.create(user);
+await db.User.createMany([alice, bob, charlie]);
+
+// Read
+const user = await db.User.read('u1');           // by primary key
+const page = await db.User.listPaginated(1, 20); // 1-based pagination
+const all  = await db.User.list();
+
+// Update
+await db.User.update(updatedUser);
+await db.User.updateMany([user1, user2]);
+
+// Delete
+await db.User.delete('u1');
+await db.User.deleteMany(['u1', 'u2']);
+await db.User.deleteWhere((q) => q.where('age').lt(18));
+
+// Utilities
+const count  = await db.User.count();
+const exists = await db.User.exists('u1');
+await db.User.clear();
+```
+
+### Index lookups
+
+```typescript
+const allAdmins  = await db.User.findByIndex('role', 'admin');
+const firstAdmin = await db.User.findOneByIndex('role', 'admin');
+```
+
+Querying a non-existent index throws immediately.
+
+---
+
+## Automatic Timestamps
+
+Every record written through a repository automatically receives two internal fields:
+
+| Field | Type | Set on |
+|---|---|---|
+| `__idb_createdAt` | `number` (ms since epoch) | `create` only |
+| `__idb_updatedAt` | `number` (ms since epoch) | `create` and `update` |
+
+`__idb_createdAt` is preserved across updates; `__idb_updatedAt` is refreshed on every write.
+
+```typescript
+const item = await db.Session.read(key);
+console.log(item.__idb_createdAt, item.__idb_updatedAt);
+```
+
+---
+
+## Query Builder
+
+`EntityRepository.query()` returns a typed `QueryBuilder<T>` for constructing complex filter expressions, sorting, pagination, and aggregations.
+
+### Filtering
+
+```typescript
+const results = await db.User.query()
+  .where('age').gte(18)
+  .and('status').equals('active')
+  .execute();
+```
+
+#### Available operators
+
+| Operator | Field types | Description |
+|---|---|---|
+| `equals` | any | Strict equality (`===`) |
+| `gt` / `gte` / `lt` / `lte` | `ComparableValue` | Comparison |
+| `between(start, end)` | `ComparableValue` | Inclusive range |
+| `notBetween(start, end)` | `ComparableValue` | Outside range |
+| `startsWith` / `endsWith` | `string` | Prefix / suffix match |
+| `contains` | `string` \| array | Substring or element membership |
+| `matches` | `string` | Regular expression test |
+| `in(values)` / `notIn(values)` | any | Membership test |
+| `containsAny(values)` | array | At least one element matches |
+| `containsAll(values)` | array | All elements present |
+
+TypeScript enforces operator/type compatibility at compile time - string-only operators are not exposed on numeric fields, and so on.
+
+### Logical grouping
+
+```typescript
+// OR connector
+const results = await db.User.query()
+  .where('age').gte(18)
+  .or()
+  .where('hasParentalConsent').equals(true)
+  .execute();
+
+// Grouped sub-expression
+const premiumOrTrial = await db.User.query()
+  .where((qb) =>
+    qb.where('type').equals('premium').and('status').equals('active'),
+  )
+  .or()
+  .where('isTrial').equals(true)
+  .execute();
+```
+
+### Sorting and pagination
+
+```typescript
+await db.User.query()
+  .where('status').equals('active')
+  .orderBy('createdAt', 'desc')
+  .offset(20)
+  .limit(10)
+  .execute();
+```
+
+### Index and range acceleration
+
+When a field is indexed, you can constrain the initial IDB candidate set at the storage layer before in-memory filtering begins:
+
+```typescript
+await db.Product.query()
+  .useIndex('price')
+  .range(10, 100)
+  .execute();
+```
+
+### Aggregations
+
+```typescript
+await db.Order.query().where('status').equals('paid').count();
+await db.Order.query().sum('amount');
+await db.Order.query().avg('price');
+await db.Order.query().min('createdAt');
+await db.Order.query().max('createdAt');
+
+// Grouped count
+const byStatus = await db.Order.query().groupBy('status').count();
+// [{ status: 'paid', count: 42 }, { status: 'pending', count: 7 }]
+```
+
+`sum` and `avg` are restricted to numeric fields. `min` and `max` accept any comparable field. `groupBy(...).count()` returns results sorted by group key.
+
+---
+
+## Key Management
+
+### Auto-increment
 
 ```typescript
 @DataClass()
 class Task {
   @KeyPath({ autoIncrement: true })
-  id!: number;
+  id!: number;   // Assigned by IndexedDB: 1, 2, 3, …
 
   title!: string;
-  completed!: boolean;
-
-  constructor(title: string, completed = false) {
-    this.title = title;
-    this.completed = completed;
-  }
 }
-
-const db = await Database.build('tasks-db', [Task]);
-
-// IDs are automatically generated: 1, 2, 3, etc.
-const task1 = await db.Task.create(new Task('Learn TypeScript'));
-const task2 = await db.Task.create(new Task('Build amazing apps'));
-console.log(task1.id); // 1
-console.log(task2.id); // 2
 ```
 
-### Key Generators
-
-Generate keys automatically using built-in generators:
-
-#### UUID Keys
+### Built-in generators
 
 ```typescript
 @DataClass()
 class Document {
-  @KeyPath({ generator: 'uuid' })
-  uuid!: string;
-
-  @Index()
-  category!: string;
-
-  title!: string;
-  content!: string;
-
-  constructor(category: string, title: string, content: string) {
-    this.category = category;
-    this.title = title;
-    this.content = content;
-  }
+  @KeyPath({ generator: 'uuid' })      // RFC 4122 v4
+  id!: string;
 }
 
-const db = await Database.build('docs-db', [Document]);
-
-const doc = await db.Document.create(
-  new Document('tutorial', 'Getting Started', 'Welcome...'),
-);
-console.log(doc.uuid); // e.g., "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-```
-
-#### Timestamp Keys
-
-```typescript
 @DataClass()
 class Event {
-  @KeyPath({ generator: 'timestamp' })
-  timestamp!: number;
-
-  @Index()
-  type!: string;
-
-  data!: any;
-
-  constructor(type: string, data: any) {
-    this.type = type;
-    this.data = data;
-  }
+  @KeyPath({ generator: 'timestamp' }) // Date.now()
+  id!: number;
 }
 
-const event = await db.Event.create(new Event('user_login', { userId: '123' }));
-console.log(event.timestamp); // e.g., 1696118400000
-```
-
-#### Random Keys
-
-```typescript
 @DataClass()
 class Session {
-  @KeyPath({ generator: 'random' })
-  sessionId!: string;
-
-  userId!: string;
-  expiresAt!: Date;
-
-  constructor(userId: string, expiresAt: Date) {
-    this.userId = userId;
-    this.expiresAt = expiresAt;
-  }
+  @KeyPath({ generator: 'random' })    // Base-36 random string
+  id!: string;
 }
-
-const session = await db.Session.create(new Session('user123', new Date()));
-console.log(session.sessionId); // e.g., "xyz789abc123"
 ```
 
-### Custom Key Generators
-
-Create your own key generation logic:
+### Custom generator
 
 ```typescript
 @DataClass()
 class Invoice {
   @KeyPath({
-    generator: (entity: any) =>
+    generator: (entity) =>
       `INV-${entity.year}-${String(entity.number).padStart(4, '0')}`,
   })
   invoiceId!: string;
 
   year!: number;
   number!: number;
-  amount!: number;
-
-  constructor(year: number, number: number, amount: number) {
-    this.year = year;
-    this.number = number;
-    this.amount = amount;
-  }
 }
-
-const invoice = await db.Invoice.create(new Invoice(2024, 1, 1500.0));
-console.log(invoice.invoiceId); // "INV-2024-0001"
+// invoiceId → "INV-2024-0001"
 ```
 
-### Composite Keys
-
-Handle many-to-many relationships with composite keys using the `@CompositeKeyPath` decorator:
+### Using generators directly
 
 ```typescript
-import { CompositeKeyPath } from 'idb-ts';
+import { KeyGenerators } from 'idb-ts';
 
+KeyGenerators.uuid();      // "a1b2c3d4-..."
+KeyGenerators.timestamp(); // 1696118400000
+KeyGenerators.random();    // "xyz789abc"
+```
+
+### Composite keys
+
+```typescript
 @CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
 class UserProject {
@@ -438,216 +424,144 @@ class UserProject {
   role!: string;
 
   joinedAt!: Date;
-
-  constructor(userId: string, projectId: string, role: string) {
-    this.userId = userId;
-    this.projectId = projectId;
-    this.role = role;
-    this.joinedAt = new Date();
-  }
 }
 
-const db = await Database.build('collaboration-db', [UserProject]);
+// Create
+await db.UserProject.create(new UserProject('u1', 'p1', 'developer'));
 
-// Create relationships
-await db.UserProject.create(
-  new UserProject('user123', 'project456', 'developer'),
-);
-await db.UserProject.create(new UserProject('user123', 'project789', 'admin'));
-await db.UserProject.create(new UserProject('user456', 'project456', 'viewer'));
-
-// Read with composite key
-const relationship = await db.UserProject.read(['user123', 'project456']);
-console.log(relationship?.role); // "developer"
-
-// Update relationship
-if (relationship) {
-  relationship.role = 'maintainer';
-  await db.UserProject.update(relationship);
-}
-
-// Delete with composite key
-await db.UserProject.delete(['user123', 'project789']);
-
-// Query by role index
-const developers = await db.UserProject.findByIndex('role', 'developer');
+// Read / update / delete with composite key tuple
+const rel = await db.UserProject.read(['u1', 'p1']);
+await db.UserProject.delete(['u1', 'p1']);
 ```
 
-### Key Generation Utilities
+---
 
-Access key generators directly for your custom logic:
+## Field Validation
+
+Validation rules are declared per-property with `@Validate`. All rules for an entity are evaluated before any write; a single thrown error enumerates every failing rule.
 
 ```typescript
-import { KeyGenerators } from 'idb-ts';
+@DataClass()
+class User {
+  @KeyPath()
+  id!: string;
 
-const uuid = KeyGenerators.uuid(); // Generate UUID
-const timestamp = KeyGenerators.timestamp(); // Current timestamp
-const random = KeyGenerators.random(); // Random string
+  @Validate(
+    (v) => typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+    'must be a valid email address',
+  )
+  email!: string;
+
+  @Validate((v) => Number.isInteger(v) && v >= 0, 'must be a non-negative integer')
+  age!: number;
+}
 ```
 
-### Transaction API
+Error format on failure:
 
-idb-ts provides a simple, atomic Transaction API that lets you group multiple repository operations into a single native IndexedDB transaction. Operations performed inside a transaction are committed together or discarded together on failure.
+```
+Validation failed for User: email: must be a valid email address; age: must be a non-negative integer
+```
 
-Usage — callback form (automatic commit/rollback):
+---
 
-```ts
+## Transactions
+
+### Callback form (recommended)
+
+The callback receives a `TransactionalDatabase` handle. On successful return the transaction is committed automatically. Any thrown error triggers an automatic rollback before rethrowing.
+
+```typescript
 await db.transaction(async (tx) => {
   await tx.User.create(user);
   await tx.Order.create(order);
   await tx.OrderItem.create(item);
-  // If the callback returns successfully, the transaction is committed.
-  // If an exception is thrown, the transaction is aborted and all writes are rolled back.
 });
 ```
 
-Usage — explicit control:
+### Explicit form
 
-```ts
+```typescript
 const tx = await db.beginTransaction(['User', 'Order'], 'readwrite');
 try {
   await tx.User.create(user);
   await tx.Order.create(order);
-  await tx.commit(); // explicitly commit, but optional
-} catch (e) {
-  await tx.rollback(); // abort and rollback
+  await tx.commit();
+} catch (error) {
+  await tx.rollback();
+  throw error;
 }
 ```
 
-Key notes and behavior:
+### Transaction semantics
 
-- Atomicity: all repository writes that use the transaction handle (`tx.Entity.*`) share the same native `IDBTransaction` and are atomic — either all succeed (commit) or none persist (abort/rollback).
-- Scope: `beginTransaction` accepts an array of entity names (e.g., `['User','Order']`) and opens a native transaction over those object stores. The callback form uses a transaction covering all registered entities.
-- Querying inside transactions: use `tx.Entity.query()` or other `tx.Entity.*` repository methods to ensure those reads/writes are performed on the same underlying transaction.
-- Modes: transactions support standard IndexedDB modes (`'readonly'` or `'readwrite'`). The default for `beginTransaction` and the callback wrapper is `'readwrite'`.
-- Commit/abort semantics: modern browsers may perform implicit commit when the transaction's event loop completes; `commit()` is called when available. `rollback()` triggers `transaction.abort()`.
-- Error handling: if an error is thrown in the callback form the library will call `rollback()` and rethrow the error to the caller.
-- Limitations: composite operations that span many stores still must list all involved entity names when using `beginTransaction`. Long-running synchronous work inside a transaction can increase the risk of versionchange or blocked events — keep transaction work asynchronous and short.
-
-Example patterns:
-
-- Batch inserts in one transaction for performance and atomic safety.
-- Run a read-modify-write sequence in a single transaction to avoid lost updates.
-
-The Transaction API is covered by the test suite in `__tests__/transaction.test.ts` which demonstrates both the callback and explicit modes.
-
-### Advanced Querying
-
-`idb-ts` includes a typed query builder for field-level filtering, logical grouping, and basic aggregations. The available operators are constrained by the field type, so string-only and array-only operations are only exposed where they make sense.
-
-```ts
-const users = await db.User.query()
-  .where('name').startsWith('John')
-  .and('email').endsWith('@gmail.com')
-  .and('description').contains('important')
-  .execute();
-
-const activeOrTrial = await db.User.query()
-  .where('age').gte(18)
-  .or()
-  .where('hasParentalConsent').equals(true)
-  .execute();
-
-const premiumUsers = await db.User.query()
-  .where((qb) =>
-    qb.where('type').equals('premium').and('status').equals('active'),
-  )
-  .or()
-  .where('isTrial').equals(true)
-  .execute();
-```
-
-Supported operators include:
-
-- String operations: `startsWith`, `endsWith`, `contains`, `matches`
-- Range operations: `between`, `notBetween`
-- Collection operations: `contains`, `containsAny`, `containsAll`, `in`, `notIn`
-- Logical chaining: `and()`, `or()`, and grouped predicates via `where((qb) => ...)`
-
-Aggregations are available directly on the query builder:
-
-```ts
-await db.Order.query().sum('amount');
-await db.Order.query().avg('price');
-await db.Order.query().min('date');
-await db.Order.query().max('date');
-await db.Order.query().groupBy('status').count();
-```
-
-Notes:
-
-- `sum()` and `avg()` are numeric-only.
-- `min()` and `max()` are available for comparable scalar fields.
-- `groupBy(...).count()` returns grouped counts by the selected field.
-- TypeScript will reject unsupported operator/field combinations at compile time.
+All repository operations performed through the `tx` handle share the same native `IDBTransaction`, ensuring atomicity. `beginTransaction` accepts an array of entity names that determines the transaction scope; the callback form spans all registered entities. The default mode is `'readwrite'`; pass `'readonly'` for read-only workloads. Use `tx.Entity.query()` to run queries within the same transaction boundary.
 
 ---
 
-## 🔄 Schema Versioning
+## Data Retention
 
-idb-ts supports schema versioning to manage database evolution over time. Version your entities and let the library handle automatic migration!
-
-### Basic Usage
+`@RetentionPolicy` triggers a background cleanup job that deletes records whose age exceeds the configured threshold.
 
 ```typescript
-@DataClass({ version: 1 })
-class User {
-  @KeyPath() id!: string;
-  @Index() email!: string;
-  name!: string;
-}
+@RetentionPolicy({ seconds: 60 * 60 * 24 * 30 }) // 30-day retention
+@DataClass()
+class Session {
+  @KeyPath({ generator: 'uuid' })
+  id!: string;
 
-@DataClass({ version: 2 })
-class Post {
-  @KeyPath() id!: string;
-  @Index() authorId!: string;
-  title!: string;
-  content!: string;
+  userId!: string;
 }
+```
 
-@DataClass({ version: 3 })
-class Comment {
-  @KeyPath() id!: string;
-  @Index() postId!: string;
-  @Index() authorId!: string;
-  text!: string;
-}
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `seconds` | `number` | - | **(Required)** Retention window in seconds. Must be a positive integer. |
+| `enabled` | `boolean` | `true` | Set to `false` to suspend cleanup without removing the policy. |
+| `field` | `string` | `'__idb_createdAt'` | Numeric timestamp field used to compute record age. |
 
-// Database version will be 3 (highest entity version)
+When multiple entities define retention policies, the cleanup interval is set to the GCD of all configured `seconds` values in milliseconds, so a single timer satisfies every policy efficiently. The job runs immediately on database open and then on each interval tick, using cursor-based `readwrite` transactions.
+
+---
+
+## Schema Versioning
+
+Increment an entity's `version` to trigger `onupgradeneeded` and update its object store on the user's next visit. The effective database version is the maximum across all registered entities, so adding a new high-version entity is sufficient to initiate a migration.
+
+```typescript
+@DataClass({ version: 1 }) class User   { /* ... */ }
+@DataClass({ version: 2 }) class Post   { /* ... */ }
+@DataClass({ version: 3 }) class Comment { /* ... */ }
+
+// Database opens at version 3.
+// If a user was on version 1, only Post (v2) and Comment (v3) stores are
+// created or updated during onupgradeneeded.
 const db = await Database.build('blog', [User, Post, Comment]);
 
 console.log(db.getDatabaseVersion()); // 3
-console.log(db.getEntityVersions()); // Map with entity versions
-```
-
-### Key Features
-
-- **Automatic Version Calculation**: Database version = highest entity version
-- **Seamless Migration**: Only new/updated entities are processed during upgrades
-- **Backward Compatibility**: Entities without version default to version 1
-- **Index Evolution**: New indexes are automatically created during migration
-
-### Version Management
-
-```typescript
-// Check versions
-const dbVersion = db.getDatabaseVersion();
-const entityVersions = db.getEntityVersions();
-const userVersion = db.getEntityVersion('User');
-
-// Version upgrade flow:
-// v1.0: User(v1) -> Database v1
-// v1.1: User(v1), Post(v2) -> Database v2
-// v1.2: User(v1), Post(v2), Comment(v3) -> Database v3
 ```
 
 ---
 
-## 🔗 Useful Links
+## Bulk Operations
 
-- 📂 **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
-- 📦 **NPM**: [idb-ts](https://www.npmjs.com/package/idb-ts)
-- Demo: https://maifeeulasad.github.io/idb-ts/
-- Code Coverage report: https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/
+All repository bulk helpers iterate the corresponding single-item operation and therefore enforce validation and key generation per item. They are not issued as a single atomic transaction. For atomic batch writes, use the [Transaction API](#transactions).
+
+```typescript
+await db.User.createMany([alice, bob, charlie]);
+await db.User.updateMany([alice, bob]);
+await db.User.deleteMany(['u1', 'u2', 'u3']);
+```
+
+---
+
+## Useful Links
+
+- **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
+- **NPM**: [idb-ts](https://www.npmjs.com/package/idb-ts)
+- **Demo**: https://maifeeulasad.github.io/idb-ts/
+- **Code Coverage report**: https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
+
+Made by [Maifee Ulasad](https://github.com/maifeeulasad) with :love: and :tea:. Licensed under [MIT](./LICENSE). 
