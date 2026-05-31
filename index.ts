@@ -194,7 +194,7 @@ interface KeyPathMetadata {
 class KeyGenerators {
   static uuid(): string {
     // Simple UUID v4 implementation without external dependencies
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
       const r = Math.random() * 16 | 0;
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
@@ -214,12 +214,12 @@ class KeyGenerators {
 function KeyPath(options?: KeyPathOptions): PropertyDecorator {
   return (target: any, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
-    
+
     // Track individual property keypaths for validation
     const existingKeypaths = Reflect.getMetadata('individual_keypaths', constructor) || [];
     existingKeypaths.push(propertyKey as string);
     Reflect.defineMetadata('individual_keypaths', existingKeypaths, constructor);
-    
+
     const metadata: KeyPathMetadata = {
       fields: propertyKey as string,
       options: options
@@ -283,14 +283,14 @@ function DataClass(options: DataClassOptions = {}): ClassDecorator {
     if (!keyPathMetadata) {
       throw new Error(`No keypath field defined for the class ${target.name}.`);
     }
-    
+
     // Check for multiple property-level @KeyPath decorators (which is invalid)
     // This is different from composite keys which are defined at class level
     const individualKeypaths = Reflect.getMetadata('individual_keypaths', target) || [];
     if (individualKeypaths.length > 1) {
       throw new Error(`Only one keypath field can be defined for the class ${target.name}.`);
     }
-    
+
     const version = options.version || 1;
     Reflect.defineMetadata('dataclass', true, target);
     Reflect.defineMetadata('version', version, target);
@@ -397,19 +397,19 @@ class Database {
           if (classVersion > oldVersion) {
             if (!db.objectStoreNames.contains(storeName)) {
               console.debug(`Creating object store: ${storeName} (version ${classVersion})`);
-              
+
               // Determine store options based on keypath metadata
               const storeOptions: IDBObjectStoreParameters = {};
-              
+
               if (keyPathMetadata) {
                 storeOptions.keyPath = keyPathMetadata.fields;
-                
+
                 // Handle auto-increment option
                 if (keyPathMetadata.options?.autoIncrement) {
                   storeOptions.autoIncrement = true;
                 }
               }
-              
+
               const store = db.createObjectStore(storeName, storeOptions);
 
               indexFields.forEach((indexField: string | IndexMetadata) => {
@@ -428,7 +428,7 @@ class Database {
               const transaction = request.transaction;
               if (transaction) {
                 const store = transaction.objectStore(storeName);
-                
+
                 indexFields.forEach((indexField: string | IndexMetadata) => {
                   const indexName = typeof indexField === 'string' ? indexField : indexField.field;
                   const indexOptions = typeof indexField === 'string'
@@ -675,7 +675,7 @@ class Database {
       });
     };
 
-  // Helper function to extract key from item
+    // Helper function to extract key from item
     const extractKey = (item: T): any => {
       const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
       if (!keyPathMetadata) return undefined;
@@ -683,15 +683,15 @@ class Database {
       const fields = keyPathMetadata.fields;
 
       if (Array.isArray(fields)) {
-      // Composite key
+        // Composite key
         return fields.map(field => (item as any)[field]);
       } else {
-      // Single field key
-      return (item as any)[fields];
-    }
+        // Single field key
+        return (item as any)[fields];
+      }
     };
 
-  // Helper function to set key on item
+    // Helper function to set key on item
     const setKey = (item: T, key: string | number): void => {
       const keyPathMetadata = Reflect.getMetadata('keypath', cls) as KeyPathMetadata;
       if (!keyPathMetadata) return;
@@ -701,7 +701,7 @@ class Database {
       if (typeof fields === 'string') {
         (item as any)[fields] = key;
       }
-    // Note: Composite keys cannot be auto-generated in this simple implementation
+      // Note: Composite keys cannot be auto-generated in this simple implementation
     };
 
     return {
