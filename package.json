@@ -19,7 +19,7 @@
     "build:tsc": "tsc",
     "build:rollup": "rollup -c",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint:fix": "prettier --write . && eslint . --fix",
     "test": "jest --runInBand --detectOpenHandles",
     "test:watch": "jest --watchAll --runInBand --detectOpenHandles",
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
