@@ -448,6 +448,52 @@ const timestamp = KeyGenerators.timestamp(); // Current timestamp
 const random = KeyGenerators.random();    // Random string
 ```
 
+### Transaction API
+
+idb-ts provides a simple, atomic Transaction API that lets you group multiple repository operations into a single native IndexedDB transaction. Operations performed inside a transaction are committed together or discarded together on failure.
+
+Usage — callback form (automatic commit/rollback):
+
+```ts
+await db.transaction(async (tx) => {
+  await tx.User.create(user);
+  await tx.Order.create(order);
+  await tx.OrderItem.create(item);
+  // If the callback returns successfully, the transaction is committed.
+  // If an exception is thrown, the transaction is aborted and all writes are rolled back.
+});
+```
+
+Usage — explicit control:
+
+```ts
+const tx = await db.beginTransaction(['User', 'Order'], 'readwrite');
+try {
+  await tx.User.create(user);
+  await tx.Order.create(order);
+  await tx.commit(); // explicitly commit, but optional
+} catch (e) {
+  await tx.rollback(); // abort and rollback
+}
+```
+
+Key notes and behavior:
+
+- Atomicity: all repository writes that use the transaction handle (`tx.Entity.*`) share the same native `IDBTransaction` and are atomic — either all succeed (commit) or none persist (abort/rollback).
+- Scope: `beginTransaction` accepts an array of entity names (e.g., `['User','Order']`) and opens a native transaction over those object stores. The callback form uses a transaction covering all registered entities.
+- Querying inside transactions: use `tx.Entity.query()` or other `tx.Entity.*` repository methods to ensure those reads/writes are performed on the same underlying transaction.
+- Modes: transactions support standard IndexedDB modes (`'readonly'` or `'readwrite'`). The default for `beginTransaction` and the callback wrapper is `'readwrite'`.
+- Commit/abort semantics: modern browsers may perform implicit commit when the transaction's event loop completes; `commit()` is called when available. `rollback()` triggers `transaction.abort()`.
+- Error handling: if an error is thrown in the callback form the library will call `rollback()` and rethrow the error to the caller.
+- Limitations: composite operations that span many stores still must list all involved entity names when using `beginTransaction`. Long-running synchronous work inside a transaction can increase the risk of versionchange or blocked events — keep transaction work asynchronous and short.
+
+Example patterns:
+
+- Batch inserts in one transaction for performance and atomic safety.
+- Run a read-modify-write sequence in a single transaction to avoid lost updates.
+
+The Transaction API is covered by the test suite in `__tests__/transaction.test.ts` which demonstrates both the callback and explicit modes.
+
 ---
 
 ## 🔄 Schema Versioning
