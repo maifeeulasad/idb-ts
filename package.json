@@ -20,7 +20,9 @@
     "build:rollup": "rollup -c",
     "lint": "eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
-    "test": "jest --runInBand --detectOpenHandles",
+    "test": "pnpm test:feat && pnpm test:types",
+    "test:feat": "pnpm run test:types && jest --runInBand --detectOpenHandles",
+    "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:watch": "jest --watchAll --runInBand --detectOpenHandles",
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
     "test:coverage:watch": "jest --coverage --watchAll --runInBand --detectOpenHandles"

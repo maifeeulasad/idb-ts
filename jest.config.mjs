@@ -1,6 +1,7 @@
 export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
+  testPathIgnorePatterns: ['<rootDir>/__tests__/.*\\.compile\\.ts$'],
   setupFiles: ['reflect-metadata', './jest.setup.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   globals: {

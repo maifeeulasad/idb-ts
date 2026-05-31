@@ -2,17 +2,213 @@ import 'reflect-metadata';
 
 type QueryDirection = 'asc' | 'desc';
 
-interface QueryCondition {
+type QueryConnector = 'and' | 'or';
+
+type QueryFieldKey<T> = Extract<keyof T, string>;
+
+type ComparableValue = string | number | bigint | Date;
+
+type ComparableFieldKey<T> = {
+  [K in QueryFieldKey<T>]-?: T[K] extends ComparableValue ? K : never;
+}[QueryFieldKey<T>];
+
+type NumericFieldKey<T> = {
+  [K in QueryFieldKey<T>]-?: T[K] extends number ? K : never;
+}[QueryFieldKey<T>];
+
+type StringFieldKey<T> = {
+  [K in QueryFieldKey<T>]-?: T[K] extends string ? K : never;
+}[QueryFieldKey<T>];
+
+type ArrayFieldKey<T> = {
+  [K in QueryFieldKey<T>]-?: T[K] extends readonly any[] ? K : never;
+}[QueryFieldKey<T>];
+
+type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
+
+type ContainsValue<T> = T extends string
+  ? string
+  : T extends readonly (infer U)[]
+    ? U
+    : never;
+
+type QueryOperator =
+  | 'equals'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'startsWith'
+  | 'endsWith'
+  | 'contains'
+  | 'matches'
+  | 'between'
+  | 'notBetween'
+  | 'in'
+  | 'notIn'
+  | 'containsAny'
+  | 'containsAll';
+
+interface QueryClauseBase {
+  connector: QueryConnector | null;
+}
+
+interface QueryCondition extends QueryClauseBase {
+  kind: 'condition';
   field: string;
-  op: 'equals' | 'gt' | 'gte' | 'lt' | 'lte';
+  op: QueryOperator;
   value: any;
+}
+
+interface QueryGroup extends QueryClauseBase {
+  kind: 'group';
+  clauses: QueryClause[];
+}
+
+type QueryClause = QueryCondition | QueryGroup;
+
+type GroupCountResult<T, K extends Extract<keyof T, string>> = Array<
+  Record<K, T[K]> & { count: number }
+>;
+
+class FieldQueryBuilder<T, K extends QueryFieldKey<T>> {
+  constructor(
+    private parent: QueryBuilder<T>,
+    private field: K,
+  ) {}
+
+  equals(value: T[K]): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'equals', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  gt(value: T[K] extends ComparableValue ? T[K] : never): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'gt', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  gte(value: T[K] extends ComparableValue ? T[K] : never): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'gte', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  lt(value: T[K] extends ComparableValue ? T[K] : never): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'lt', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  lte(value: T[K] extends ComparableValue ? T[K] : never): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'lte', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  startsWith(
+    this: FieldQueryBuilder<T, StringFieldKey<T>>,
+    value: string,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'startsWith', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  endsWith(
+    this: FieldQueryBuilder<T, StringFieldKey<T>>,
+    value: string,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'endsWith', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  contains(
+    this:
+      | FieldQueryBuilder<T, StringFieldKey<T>>
+      | FieldQueryBuilder<T, ArrayFieldKey<T>>,
+    value: ContainsValue<T[K]>,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'contains', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  matches(
+    this: FieldQueryBuilder<T, StringFieldKey<T>>,
+    value: RegExp | string,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'matches', value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  between(
+    start: T[K] extends ComparableValue ? T[K] : never,
+    end: T[K] extends ComparableValue ? T[K] : never,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'between', [start, end]);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  notBetween(
+    start: T[K] extends ComparableValue ? T[K] : never,
+    end: T[K] extends ComparableValue ? T[K] : never,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'notBetween', [start, end]);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  in(values: Array<T[K]>): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'in', values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  notIn(values: Array<T[K]>): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'notIn', values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  containsAny(
+    this: FieldQueryBuilder<T, ArrayFieldKey<T>>,
+    values: Array<ArrayElement<T[K]>>,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'containsAny', values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  containsAll(
+    this: FieldQueryBuilder<T, ArrayFieldKey<T>>,
+    values: Array<ArrayElement<T[K]>>,
+  ): QueryBuilder<T> {
+    this.parent.appendCondition(this.field, 'containsAll', values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+
+  and<K2 extends QueryFieldKey<T>>(field: K2): FieldQueryBuilder<T, K2> {
+    this.parent.clearCurrentField();
+    return this.parent.and(field);
+  }
+
+  or(): QueryBuilder<T> {
+    this.parent.clearCurrentField();
+    return this.parent.or();
+  }
 }
 
 class QueryBuilder<T> {
   private db: IDBDatabase;
   private storeName: string;
   private transaction?: IDBTransaction;
-  private conditions: QueryCondition[] = [];
+  private clauses: QueryClause[] = [];
   private orderField?: Extract<keyof T, string>;
   private orderDirection: QueryDirection = 'asc';
   private limitCount?: number;
@@ -21,6 +217,8 @@ class QueryBuilder<T> {
   private rangeStart?: any;
   private rangeEnd?: any;
   private currentField?: string;
+  private groupField?: Extract<keyof T, string>;
+  private pendingConnector: QueryConnector = 'and';
 
   constructor(
     db: IDBDatabase,
@@ -32,43 +230,128 @@ class QueryBuilder<T> {
     this.transaction = transaction;
   }
 
-  where(field: Extract<keyof T, string>) {
-    this.currentField = field;
+  where<K extends QueryFieldKey<T>>(field: K): FieldQueryBuilder<T, K>;
+  where(builder: (query: QueryBuilder<T>) => QueryBuilder<T> | void): this;
+  where(
+    fieldOrBuilder:
+      | QueryFieldKey<T>
+      | ((query: QueryBuilder<T>) => QueryBuilder<T> | void),
+  ): this | FieldQueryBuilder<T, any> {
+    if (typeof fieldOrBuilder === 'function') {
+      this.clearCurrentField();
+      return this.addNestedGroup(fieldOrBuilder);
+    }
+
+    this.currentField = fieldOrBuilder;
+    return new FieldQueryBuilder<T, any>(this, fieldOrBuilder);
+  }
+
+  and<K extends QueryFieldKey<T>>(field: K): FieldQueryBuilder<T, K>;
+  and(builder: (query: QueryBuilder<T>) => QueryBuilder<T> | void): this;
+  and(
+    fieldOrBuilder:
+      | QueryFieldKey<T>
+      | ((query: QueryBuilder<T>) => QueryBuilder<T> | void),
+  ): this | FieldQueryBuilder<T, any> {
+    return this.where(fieldOrBuilder as any);
+  }
+
+  or(): this {
+    this.pendingConnector = 'or';
     return this;
   }
-  and(field: Extract<keyof T, string>) {
-    this.currentField = field;
+
+  private addNestedGroup(
+    builder: (query: QueryBuilder<T>) => QueryBuilder<T> | void,
+  ): this {
+    const nested = new QueryBuilder<T>(
+      this.db,
+      this.storeName,
+      this.transaction,
+    );
+    const returned = builder(nested) ?? nested;
+    const clauses =
+      returned instanceof QueryBuilder ? returned.clauses : nested.clauses;
+    this.appendClause({ kind: 'group', clauses });
     return this;
   }
-  equals(value: any) {
-    if (!this.currentField) throw new Error('No field specified for equals');
-    this.conditions.push({ field: this.currentField, op: 'equals', value });
+
+  clearCurrentField(): void {
     this.currentField = undefined;
+  }
+
+  appendCondition(field: string, op: QueryOperator, value: any): void {
+    this.appendClause({ kind: 'condition', field, op, value });
+  }
+
+  private appendClause(
+    clause: Omit<QueryCondition, 'connector'> | Omit<QueryGroup, 'connector'>,
+  ): void {
+    const connector = this.clauses.length === 0 ? null : this.pendingConnector;
+    this.clauses.push({ ...clause, connector } as QueryClause);
+    this.pendingConnector = 'and';
+  }
+
+  private requireCurrentField(operation: string): string {
+    if (!this.currentField) {
+      throw new Error(`No field specified for ${operation}`);
+    }
+
+    const field = this.currentField;
+    this.currentField = undefined;
+    return field;
+  }
+
+  private addCondition(op: QueryOperator, value: any): this {
+    const field = this.requireCurrentField(op);
+    this.appendCondition(field, op, value);
     return this;
+  }
+
+  equals(value: any) {
+    return this.addCondition('equals', value);
   }
   gt(value: any) {
-    if (!this.currentField) throw new Error('No field specified for gt');
-    this.conditions.push({ field: this.currentField, op: 'gt', value });
-    this.currentField = undefined;
-    return this;
+    return this.addCondition('gt', value);
   }
   gte(value: any) {
-    if (!this.currentField) throw new Error('No field specified for gte');
-    this.conditions.push({ field: this.currentField, op: 'gte', value });
-    this.currentField = undefined;
-    return this;
+    return this.addCondition('gte', value);
   }
   lt(value: any) {
-    if (!this.currentField) throw new Error('No field specified for lt');
-    this.conditions.push({ field: this.currentField, op: 'lt', value });
-    this.currentField = undefined;
-    return this;
+    return this.addCondition('lt', value);
   }
   lte(value: any) {
-    if (!this.currentField) throw new Error('No field specified for lte');
-    this.conditions.push({ field: this.currentField, op: 'lte', value });
-    this.currentField = undefined;
-    return this;
+    return this.addCondition('lte', value);
+  }
+  startsWith(value: string) {
+    return this.addCondition('startsWith', value);
+  }
+  endsWith(value: string) {
+    return this.addCondition('endsWith', value);
+  }
+  contains(value: any) {
+    return this.addCondition('contains', value);
+  }
+  matches(value: RegExp | string) {
+    return this.addCondition('matches', value);
+  }
+  between(start: any, end: any) {
+    return this.addCondition('between', [start, end]);
+  }
+  notBetween(start: any, end: any) {
+    return this.addCondition('notBetween', [start, end]);
+  }
+  ['in'](values: any[]) {
+    return this.addCondition('in', values);
+  }
+  notIn(values: any[]) {
+    return this.addCondition('notIn', values);
+  }
+  containsAny(values: any[]) {
+    return this.addCondition('containsAny', values);
+  }
+  containsAll(values: any[]) {
+    return this.addCondition('containsAll', values);
   }
   orderBy(field: Extract<keyof T, string>, direction: QueryDirection = 'asc') {
     this.orderField = field;
@@ -93,88 +376,258 @@ class QueryBuilder<T> {
     return this;
   }
 
-  async execute(): Promise<T[]> {
+  groupBy<K extends QueryFieldKey<T>>(field: K) {
+    this.groupField = field;
+    return this as unknown as QueryBuilder<T> & {
+      count(): Promise<GroupCountResult<T, K>>;
+    };
+  }
+
+  private async loadCandidates(): Promise<T[]> {
+    const store = this.transaction
+      ? this.transaction.objectStore(this.storeName)
+      : this.db
+          .transaction(this.storeName, 'readonly')
+          .objectStore(this.storeName);
+
+    const request = this.createReadRequest(store);
     return new Promise<T[]>((resolve, reject) => {
-      const store = this.transaction
-        ? this.transaction.objectStore(this.storeName)
-        : this.db
-            .transaction(this.storeName, 'readonly')
-            .objectStore(this.storeName);
-      let request: IDBRequest;
-      let results: T[] = [];
-
-      // Index-based query
-      if (this.indexName) {
-        if (!store.indexNames.contains(this.indexName)) {
-          reject(
-            new Error(
-              `Index '${this.indexName}' does not exist on ${this.storeName}`,
-            ),
-          );
-          return;
-        }
-        const index = store.index(this.indexName);
-        let keyRange: IDBKeyRange | undefined;
-        if (this.rangeStart !== undefined && this.rangeEnd !== undefined) {
-          keyRange = IDBKeyRange.bound(this.rangeStart, this.rangeEnd);
-        } else if (this.rangeStart !== undefined) {
-          keyRange = IDBKeyRange.lowerBound(this.rangeStart);
-        } else if (this.rangeEnd !== undefined) {
-          keyRange = IDBKeyRange.upperBound(this.rangeEnd);
-        }
-        request = index.openCursor(keyRange);
-      } else {
-        request = store.openCursor();
-      }
-
-      request.onsuccess = () => {
-        const cursor = request.result;
-        if (cursor) {
-          let match = true;
-          const value = cursor.value as T;
-          for (const cond of this.conditions) {
-            const val = (value as any)[cond.field];
-            switch (cond.op) {
-              case 'equals':
-                match = match && val === cond.value;
-                break;
-              case 'gt':
-                match = match && val > cond.value;
-                break;
-              case 'gte':
-                match = match && val >= cond.value;
-                break;
-              case 'lt':
-                match = match && val < cond.value;
-                break;
-              case 'lte':
-                match = match && val <= cond.value;
-                break;
-            }
-          }
-          if (match) results.push(value);
-          cursor.continue();
-        } else {
-          // Sorting
-          if (this.orderField) {
-            results.sort((a, b) => {
-              const va = (a as any)[this.orderField!];
-              const vb = (b as any)[this.orderField!];
-              if (va < vb) return this.orderDirection === 'asc' ? -1 : 1;
-              if (va > vb) return this.orderDirection === 'asc' ? 1 : -1;
-              return 0;
-            });
-          }
-          // Offset & limit
-          if (this.offsetCount !== undefined)
-            results = results.slice(this.offsetCount);
-          if (this.limitCount !== undefined)
-            results = results.slice(0, this.limitCount);
-          resolve(results);
-        }
-      };
+      request.onsuccess = () => resolve((request.result as T[]) ?? []);
       request.onerror = () => reject(request.error);
     });
+  }
+
+  private createReadRequest(store: IDBObjectStore): IDBRequest {
+    if (!this.indexName) {
+      return store.getAll();
+    }
+
+    if (!store.indexNames.contains(this.indexName)) {
+      throw new Error(
+        `Index '${this.indexName}' does not exist on ${this.storeName}`,
+      );
+    }
+
+    const index = store.index(this.indexName);
+    let keyRange: IDBKeyRange | undefined;
+    if (this.rangeStart !== undefined && this.rangeEnd !== undefined) {
+      keyRange = IDBKeyRange.bound(this.rangeStart, this.rangeEnd);
+    } else if (this.rangeStart !== undefined) {
+      keyRange = IDBKeyRange.lowerBound(this.rangeStart);
+    } else if (this.rangeEnd !== undefined) {
+      keyRange = IDBKeyRange.upperBound(this.rangeEnd);
+    }
+
+    return keyRange ? index.getAll(keyRange) : index.getAll();
+  }
+
+  private matchesClause(item: T, clause: QueryClause): boolean {
+    if (clause.kind === 'group') {
+      return this.evaluateClauses(item, clause.clauses);
+    }
+
+    const value = (item as any)[clause.field];
+    switch (clause.op) {
+      case 'equals':
+        return value === clause.value;
+      case 'gt':
+        return value > clause.value;
+      case 'gte':
+        return value >= clause.value;
+      case 'lt':
+        return value < clause.value;
+      case 'lte':
+        return value <= clause.value;
+      case 'startsWith':
+        return (
+          typeof value === 'string' && value.startsWith(String(clause.value))
+        );
+      case 'endsWith':
+        return (
+          typeof value === 'string' && value.endsWith(String(clause.value))
+        );
+      case 'contains':
+        if (typeof value === 'string') {
+          return value.includes(String(clause.value));
+        }
+
+        return Array.isArray(value) && value.includes(clause.value);
+      case 'matches': {
+        const pattern =
+          clause.value instanceof RegExp
+            ? new RegExp(clause.value.source, clause.value.flags)
+            : new RegExp(String(clause.value));
+        return typeof value === 'string' && pattern.test(value);
+      }
+      case 'between': {
+        const [start, end] = clause.value as [any, any];
+        return value >= start && value <= end;
+      }
+      case 'notBetween': {
+        const [start, end] = clause.value as [any, any];
+        return value < start || value > end;
+      }
+      case 'in':
+        return Array.isArray(clause.value) && clause.value.includes(value);
+      case 'notIn':
+        return Array.isArray(clause.value) && !clause.value.includes(value);
+      case 'containsAny':
+        return (
+          Array.isArray(value) &&
+          Array.isArray(clause.value) &&
+          clause.value.some((entry: any) => value.includes(entry))
+        );
+      case 'containsAll':
+        return (
+          Array.isArray(value) &&
+          Array.isArray(clause.value) &&
+          clause.value.every((entry: any) => value.includes(entry))
+        );
+    }
+  }
+
+  private evaluateClauses(item: T, clauses: QueryClause[]): boolean {
+    if (!clauses.length) {
+      return true;
+    }
+
+    let result = this.matchesClause(item, clauses[0]);
+
+    for (let index = 1; index < clauses.length; index += 1) {
+      const clause = clauses[index];
+      const matches = this.matchesClause(item, clause);
+      result =
+        clause.connector === 'or' ? result || matches : result && matches;
+    }
+
+    return result;
+  }
+
+  private async collectMatches(): Promise<T[]> {
+    const candidates = await this.loadCandidates();
+    return candidates.filter((item) =>
+      this.evaluateClauses(item, this.clauses),
+    );
+  }
+
+  private sortResults(results: T[]): T[] {
+    if (!this.orderField) {
+      return results;
+    }
+
+    return [...results].sort((left, right) => {
+      const leftValue = (left as any)[this.orderField!];
+      const rightValue = (right as any)[this.orderField!];
+      if (leftValue < rightValue) return this.orderDirection === 'asc' ? -1 : 1;
+      if (leftValue > rightValue) return this.orderDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  private applyPagination(results: T[]): T[] {
+    let nextResults = results;
+    if (this.offsetCount !== undefined) {
+      nextResults = nextResults.slice(this.offsetCount);
+    }
+    if (this.limitCount !== undefined) {
+      nextResults = nextResults.slice(0, this.limitCount);
+    }
+    return nextResults;
+  }
+
+  private async aggregateValues<R>(
+    field: Extract<keyof T, string> | undefined,
+    reducer: (values: Array<any>) => R,
+  ): Promise<R> {
+    const results = await this.collectMatches();
+    const values = field
+      ? results.map((item) => (item as any)[field])
+      : results;
+    return reducer(values);
+  }
+
+  private async aggregateGroupedCount<K extends Extract<keyof T, string>>(
+    field: K,
+  ): Promise<GroupCountResult<T, K>> {
+    const results = await this.collectMatches();
+    const groups = new Map<any, number>();
+
+    for (const item of results) {
+      const key = (item as any)[field];
+      groups.set(key, (groups.get(key) ?? 0) + 1);
+    }
+
+    return Array.from(groups.entries())
+      .sort(([left], [right]) => {
+        if (left < right) return -1;
+        if (left > right) return 1;
+        return 0;
+      })
+      .map(
+        ([key, count]) =>
+          ({ [field]: key, count }) as Record<K, T[K]> & { count: number },
+      );
+  }
+
+  async execute(): Promise<T[]> {
+    const results = await this.collectMatches();
+    return this.applyPagination(this.sortResults(results));
+  }
+
+  async count(): Promise<
+    number | GroupCountResult<T, Extract<keyof T, string>>
+  > {
+    if (this.groupField) {
+      return this.aggregateGroupedCount(this.groupField);
+    }
+
+    const results = await this.collectMatches();
+    return results.length;
+  }
+
+  async sum(field: NumericFieldKey<T>): Promise<number> {
+    const total = await this.aggregateValues(field, (values) =>
+      values.reduce(
+        (accumulator, value) => accumulator + (Number(value) || 0),
+        0,
+      ),
+    );
+    return total;
+  }
+
+  async avg(field: NumericFieldKey<T>): Promise<number> {
+    const values = await this.aggregateValues(field, (items) => items);
+    if (!values.length) {
+      return 0;
+    }
+
+    const total = values.reduce(
+      (accumulator, value) => accumulator + (Number(value) || 0),
+      0,
+    );
+    return total / values.length;
+  }
+
+  async min(field: ComparableFieldKey<T>): Promise<T[typeof field] | null> {
+    const values = await this.aggregateValues(field, (items) => items);
+    if (!values.length) {
+      return null;
+    }
+
+    return values.reduce((currentMin, value) =>
+      value < currentMin ? value : currentMin,
+    );
+  }
+
+  async max(field: ComparableFieldKey<T>): Promise<T[typeof field] | null> {
+    const values = await this.aggregateValues(field, (items) => items);
+    if (!values.length) {
+      return null;
+    }
+
+    return values.reduce((currentMax, value) =>
+      value > currentMax ? value : currentMax,
+    );
   }
 }
 
