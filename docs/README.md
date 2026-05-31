@@ -24,12 +24,14 @@
   </a>
 </p>
 
-
 ## 📌 Introduction
+
 **idb-ts** is a lightweight, declarative, and type-safe way to work with IndexedDB using TypeScript. Effortlessly perform CRUD operations on your database with clean, structured code! 🔥
 
 ## 📦 Installation
+
 Install via npm and start using IndexedDB like a pro! ⚡
+
 ```sh
 npm i idb-ts     # for pure npm users
 pnpm add idb-ts  # for pnpm users
@@ -37,6 +39,7 @@ yarn add idb-ts  # for yarn users
 ```
 
 ## ✨ Features
+
 - ✅ **Declarative & Type-Safe** - Define your data models with decorators.
 - ⚡ **Easy CRUD Operations** - Perform create, read, update, and delete seamlessly.
 - 🚀 **Fully Typed API** - Benefit from TypeScript’s powerful type system.
@@ -49,10 +52,11 @@ yarn add idb-ts  # for yarn users
 ## 📖 Example Usage
 
 ### 🏗️ Declaring Entities
+
 Use decorators to define your data models. Each class must have exactly one `@KeyPath()` and be decorated with `@DataClass()`.
 
 ```typescript
-import { Database, DataClass, KeyPath, Index } from "idb-ts";
+import { Database, DataClass, KeyPath, Index } from 'idb-ts';
 
 @DataClass()
 class User {
@@ -92,45 +96,47 @@ class Location {
 ```
 
 ### 🔄 CRUD Operations
+
 Perform database operations using the repository API:
 
 ```typescript
-const db = await Database.build("idb-crud", [User, Location]);
+const db = await Database.build('idb-crud', [User, Location]);
 
-const alice = new User("u1", "Alice", 25);
-const bob = new User("u2", "Bob", 30);
-const nyc = new Location("1", "New York", "USA");
-const sf = new Location("2", "San Francisco", "USA");
+const alice = new User('u1', 'Alice', 25);
+const bob = new User('u2', 'Bob', 30);
+const nyc = new Location('1', 'New York', 'USA');
+const sf = new Location('2', 'San Francisco', 'USA');
 
 await db.User.create(alice);
 await db.User.create(bob);
 await db.Location.create(nyc);
 await db.Location.create(sf);
 
-const readAlice = await db.User.read("u1");
-console.log("👤 Read user:", readAlice);
+const readAlice = await db.User.read('u1');
+console.log('👤 Read user:', readAlice);
 
 alice.age = 26;
 await db.User.update(alice);
 
 const users = await db.User.list();
-console.log("📋 All users:", users);
+console.log('📋 All users:', users);
 
 // Pagination
 const page1 = await db.User.listPaginated(1, 2); // page 1, 2 users per page
-console.log("📄 Page 1:", page1);
+console.log('📄 Page 1:', page1);
 
-await db.User.delete("u1");
-console.log("❌ User Alice deleted.");
+await db.User.delete('u1');
+console.log('❌ User Alice deleted.');
 
 const remainingUsers = await db.User.list();
-console.log("🔍 Remaining users:", remainingUsers);
+console.log('🔍 Remaining users:', remainingUsers);
 
 const locations = await db.Location.list();
-console.log("🌍 All locations:", locations);
+console.log('🌍 All locations:', locations);
 ```
 
 ### 🔍 Indexing Support
+
 Create indexes on fields for fast querying. Query indexes using the repository API:
 
 ```typescript
@@ -148,7 +154,13 @@ class Product {
   name!: string;
   description!: string;
 
-  constructor(id: string, category: string, price: number, name: string, description: string) {
+  constructor(
+    id: string,
+    category: string,
+    price: number,
+    name: string,
+    description: string,
+  ) {
     this.id = id;
     this.category = category;
     this.price = price;
@@ -157,14 +169,18 @@ class Product {
   }
 }
 
-const db = await Database.build("products-db", [Product]);
+const db = await Database.build('products-db', [Product]);
 
 const electronics = await db.Product.findByIndex('category', 'Electronics');
 const expensiveItems = await db.Product.findByIndex('price', 999.99);
-const firstElectronic = await db.Product.findOneByIndex('category', 'Electronics');
+const firstElectronic = await db.Product.findOneByIndex(
+  'category',
+  'Electronics',
+);
 ```
 
 #### Index Methods:
+
 - `findByIndex(indexName, value): Promise<T[]>` - Find all records matching the index value
 - `findOneByIndex(indexName, value): Promise<T | undefined>` - Find the first record matching the index value
 
@@ -199,7 +215,9 @@ Example:
 ```ts
 @RetentionPolicy({ seconds: 60 * 60 * 24 * 30 }) // 30 days
 @DataClass()
-class Session { /* ... */ }
+class Session {
+  /* ... */
+}
 
 // Database will run a periodic cleanup that removes sessions older than 30 days
 ```
@@ -223,7 +241,10 @@ class User {
   @KeyPath()
   id!: string;
 
-  @Validate((v) => typeof v === 'string' && v.includes('@'), 'must be a valid email')
+  @Validate(
+    (v) => typeof v === 'string' && v.includes('@'),
+    'must be a valid email',
+  )
   email!: string;
 
   @Validate((v) => typeof v === 'number' && v >= 0, 'age must be >= 0')
@@ -255,6 +276,7 @@ await db.User.deleteMany(['u1', 'u2']);
 Performance note: `createMany` will trigger validation and key generation per item. If you need large batch inserts frequently, batching these into a single transaction or adding a dedicated bulk API may improve throughput.
 
 #### Error Handling
+
 - If you query a non-existent index, an error is thrown:
   ```typescript
   await db.Product.findByIndex('nonexistent', 'value'); // throws
@@ -267,6 +289,7 @@ Performance note: `createMany` will trigger validation and key generation per it
 idb-ts provides flexible key management options including auto-increment keys, key generators, and composite keys for complex data relationships.
 
 ### Auto-Increment Keys
+
 Perfect for entities where you want the database to automatically generate sequential IDs:
 
 ```typescript
@@ -284,19 +307,21 @@ class Task {
   }
 }
 
-const db = await Database.build("tasks-db", [Task]);
+const db = await Database.build('tasks-db', [Task]);
 
 // IDs are automatically generated: 1, 2, 3, etc.
-const task1 = await db.Task.create(new Task("Learn TypeScript"));
-const task2 = await db.Task.create(new Task("Build amazing apps"));
+const task1 = await db.Task.create(new Task('Learn TypeScript'));
+const task2 = await db.Task.create(new Task('Build amazing apps'));
 console.log(task1.id); // 1
 console.log(task2.id); // 2
 ```
 
 ### Key Generators
+
 Generate keys automatically using built-in generators:
 
 #### UUID Keys
+
 ```typescript
 @DataClass()
 class Document {
@@ -316,13 +341,16 @@ class Document {
   }
 }
 
-const db = await Database.build("docs-db", [Document]);
+const db = await Database.build('docs-db', [Document]);
 
-const doc = await db.Document.create(new Document("tutorial", "Getting Started", "Welcome..."));
+const doc = await db.Document.create(
+  new Document('tutorial', 'Getting Started', 'Welcome...'),
+);
 console.log(doc.uuid); // e.g., "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
 
 #### Timestamp Keys
+
 ```typescript
 @DataClass()
 class Event {
@@ -340,11 +368,12 @@ class Event {
   }
 }
 
-const event = await db.Event.create(new Event("user_login", { userId: "123" }));
+const event = await db.Event.create(new Event('user_login', { userId: '123' }));
 console.log(event.timestamp); // e.g., 1696118400000
 ```
 
 #### Random Keys
+
 ```typescript
 @DataClass()
 class Session {
@@ -360,17 +389,21 @@ class Session {
   }
 }
 
-const session = await db.Session.create(new Session("user123", new Date()));
+const session = await db.Session.create(new Session('user123', new Date()));
 console.log(session.sessionId); // e.g., "xyz789abc123"
 ```
 
 ### Custom Key Generators
+
 Create your own key generation logic:
 
 ```typescript
 @DataClass()
 class Invoice {
-  @KeyPath({ generator: (entity: any) => `INV-${entity.year}-${String(entity.number).padStart(4, '0')}` })
+  @KeyPath({
+    generator: (entity: any) =>
+      `INV-${entity.year}-${String(entity.number).padStart(4, '0')}`,
+  })
   invoiceId!: string;
 
   year!: number;
@@ -384,15 +417,16 @@ class Invoice {
   }
 }
 
-const invoice = await db.Invoice.create(new Invoice(2024, 1, 1500.00));
+const invoice = await db.Invoice.create(new Invoice(2024, 1, 1500.0));
 console.log(invoice.invoiceId); // "INV-2024-0001"
 ```
 
 ### Composite Keys
+
 Handle many-to-many relationships with composite keys using the `@CompositeKeyPath` decorator:
 
 ```typescript
-import { CompositeKeyPath } from "idb-ts";
+import { CompositeKeyPath } from 'idb-ts';
 
 @CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
@@ -413,12 +447,14 @@ class UserProject {
   }
 }
 
-const db = await Database.build("collaboration-db", [UserProject]);
+const db = await Database.build('collaboration-db', [UserProject]);
 
 // Create relationships
-await db.UserProject.create(new UserProject("user123", "project456", "developer"));
-await db.UserProject.create(new UserProject("user123", "project789", "admin"));
-await db.UserProject.create(new UserProject("user456", "project456", "viewer"));
+await db.UserProject.create(
+  new UserProject('user123', 'project456', 'developer'),
+);
+await db.UserProject.create(new UserProject('user123', 'project789', 'admin'));
+await db.UserProject.create(new UserProject('user456', 'project456', 'viewer'));
 
 // Read with composite key
 const relationship = await db.UserProject.read(['user123', 'project456']);
@@ -426,7 +462,7 @@ console.log(relationship?.role); // "developer"
 
 // Update relationship
 if (relationship) {
-  relationship.role = "maintainer";
+  relationship.role = 'maintainer';
   await db.UserProject.update(relationship);
 }
 
@@ -438,14 +474,15 @@ const developers = await db.UserProject.findByIndex('role', 'developer');
 ```
 
 ### Key Generation Utilities
+
 Access key generators directly for your custom logic:
 
 ```typescript
-import { KeyGenerators } from "idb-ts";
+import { KeyGenerators } from 'idb-ts';
 
-const uuid = KeyGenerators.uuid();        // Generate UUID
+const uuid = KeyGenerators.uuid(); // Generate UUID
 const timestamp = KeyGenerators.timestamp(); // Current timestamp
-const random = KeyGenerators.random();    // Random string
+const random = KeyGenerators.random(); // Random string
 ```
 
 ### Transaction API
@@ -527,7 +564,7 @@ class Comment {
 }
 
 // Database version will be 3 (highest entity version)
-const db = await Database.build("blog", [User, Post, Comment]);
+const db = await Database.build('blog', [User, Post, Comment]);
 
 console.log(db.getDatabaseVersion()); // 3
 console.log(db.getEntityVersions()); // Map with entity versions
@@ -550,17 +587,17 @@ const userVersion = db.getEntityVersion('User');
 
 // Version upgrade flow:
 // v1.0: User(v1) -> Database v1
-// v1.1: User(v1), Post(v2) -> Database v2  
+// v1.1: User(v1), Post(v2) -> Database v2
 // v1.2: User(v1), Post(v2), Comment(v3) -> Database v3
 ```
 
 ---
 
 ## 🔗 Useful Links
+
 - 📂 **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
 - 📦 **NPM**: [idb-ts](https://www.npmjs.com/package/idb-ts)
 - Demo: https://maifeeulasad.github.io/idb-ts/
 - Code Coverage report: https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
-

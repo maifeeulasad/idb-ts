@@ -1747,36 +1747,80 @@ async function demonstrateFeatures() {
   console.log("\u{1F680} Starting idb-ts v3.7.0 Feature Demonstration");
   const db = new (void 0)("idb-demo-v3", [User, Post, UserProject, Activity]);
   await db.initialize();
-  console.log(`\u{1F4CA} Database initialized with version: ${db.getDatabaseVersion()}`);
+  console.log(
+    `\u{1F4CA} Database initialized with version: ${db.getDatabaseVersion()}`
+  );
   console.log(`\u{1F4CB} Available entities: ${db.getAvailableEntities().join(", ")}`);
   console.log("\n=== CRUD Operations Demo ===");
-  const alice = new User("Alice Johnson", "alice@example.com", 28, "123 Main St", "+1234567890");
+  const alice = new User(
+    "Alice Johnson",
+    "alice@example.com",
+    28,
+    "123 Main St",
+    "+1234567890"
+  );
   const bob = new User("Bob Smith", "bob@example.com", 32, "456 Oak Ave");
-  const charlie = new User("Charlie Brown", "charlie@example.com", 25, "789 Pine Rd");
+  const charlie = new User(
+    "Charlie Brown",
+    "charlie@example.com",
+    25,
+    "789 Pine Rd"
+  );
   await db.User.create(alice);
   await db.User.create(bob);
   await db.User.create(charlie);
   console.log("\u2705 Created 3 users with auto-increment IDs");
-  const post1 = new Post("Getting Started with idb-ts", "This is a comprehensive guide to using idb-ts...", "alice@example.com", "tutorial");
+  const post1 = new Post(
+    "Getting Started with idb-ts",
+    "This is a comprehensive guide to using idb-ts...",
+    "alice@example.com",
+    "tutorial"
+  );
   post1.tags = ["typescript", "indexeddb", "tutorial"];
-  const post2 = new Post("Advanced Database Patterns", "Let's explore advanced patterns in IndexedDB...", "bob@example.com", "advanced");
+  const post2 = new Post(
+    "Advanced Database Patterns",
+    "Let's explore advanced patterns in IndexedDB...",
+    "bob@example.com",
+    "advanced"
+  );
   post2.tags = ["database", "patterns", "advanced"];
   await db.Post.create(post1);
   await db.Post.create(post2);
   console.log("\u2705 Created 2 posts with UUID keys");
-  const project1 = new UserProject("alice@example.com", "project-alpha", "admin");
+  const project1 = new UserProject(
+    "alice@example.com",
+    "project-alpha",
+    "admin"
+  );
   project1.permissions = ["read", "write", "delete", "manage"];
-  const project2 = new UserProject("bob@example.com", "project-alpha", "member");
+  const project2 = new UserProject(
+    "bob@example.com",
+    "project-alpha",
+    "member"
+  );
   project2.permissions = ["read", "write"];
-  const project3 = new UserProject("alice@example.com", "project-beta", "admin");
+  const project3 = new UserProject(
+    "alice@example.com",
+    "project-beta",
+    "admin"
+  );
   project3.permissions = ["read", "write", "delete", "manage"];
   await db.UserProject.create(project1);
   await db.UserProject.create(project2);
   await db.UserProject.create(project3);
   console.log("\u2705 Created user-project relationships with composite keys");
-  const activity1 = new Activity("alice@example.com", "login", { ip: "192.168.1.100", browser: "Chrome" });
-  const activity2 = new Activity("alice@example.com", "post_created", { postId: post1.uuid, title: post1.title });
-  const activity3 = new Activity("bob@example.com", "post_liked", { postId: post1.uuid, likedBy: "bob@example.com" });
+  const activity1 = new Activity("alice@example.com", "login", {
+    ip: "192.168.1.100",
+    browser: "Chrome"
+  });
+  const activity2 = new Activity("alice@example.com", "post_created", {
+    postId: post1.uuid,
+    title: post1.title
+  });
+  const activity3 = new Activity("bob@example.com", "post_liked", {
+    postId: post1.uuid,
+    likedBy: "bob@example.com"
+  });
   await db.Activity.create(activity1);
   await db.Activity.create(activity2);
   await db.Activity.create(activity3);
@@ -1795,19 +1839,35 @@ async function demonstrateFeatures() {
   const recentLogins = await db.Activity.query().where("type").equals("login").and("timestamp").gte(Date.now() - 24 * 60 * 60 * 1e3).orderBy("timestamp", "desc").execute();
   console.log(
     `\u{1F6AA} Found ${recentLogins.length} recent logins:`,
-    recentLogins.map((a) => ({ userId: a.userId, timestamp: new Date(a.timestamp).toLocaleString() }))
+    recentLogins.map((a) => ({
+      userId: a.userId,
+      timestamp: new Date(a.timestamp).toLocaleString()
+    }))
   );
   console.log("\n=== Index-based Queries Demo ===");
   const userByEmail = await db.User.findByIndex("email", "alice@example.com");
-  console.log("\u{1F464} User found by email:", userByEmail ? { name: userByEmail.name, email: userByEmail.email } : "Not found");
+  console.log(
+    "\u{1F464} User found by email:",
+    userByEmail ? { name: userByEmail.name, email: userByEmail.email } : "Not found"
+  );
   const adminProjects = await db.UserProject.findAllByIndex("role", "admin");
   console.log(
     `\u{1F451} Found ${adminProjects.length} admin relationships:`,
     adminProjects.map((p) => ({ userId: p.userId, projectId: p.projectId }))
   );
   console.log("\n=== Composite Key Operations Demo ===");
-  const specificProject = await db.UserProject.read(["alice@example.com", "project-alpha"]);
-  console.log("\u{1F4C1} Project relationship:", specificProject ? { user: specificProject.userId, project: specificProject.projectId, role: specificProject.role } : "Not found");
+  const specificProject = await db.UserProject.read([
+    "alice@example.com",
+    "project-alpha"
+  ]);
+  console.log(
+    "\u{1F4C1} Project relationship:",
+    specificProject ? {
+      user: specificProject.userId,
+      project: specificProject.projectId,
+      role: specificProject.role
+    } : "Not found"
+  );
   if (specificProject) {
     specificProject.permissions.push("deploy");
     await db.UserProject.update(specificProject);
@@ -1816,8 +1876,14 @@ async function demonstrateFeatures() {
   console.log("\n=== Pagination Demo ===");
   const firstPage = await db.User.query().orderBy("name", "asc").limit(2).execute();
   const secondPage = await db.User.query().orderBy("name", "asc").offset(2).limit(2).execute();
-  console.log("\u{1F4C4} First page users:", firstPage.map((u) => u.name));
-  console.log("\u{1F4C4} Second page users:", secondPage.map((u) => u.name));
+  console.log(
+    "\u{1F4C4} First page users:",
+    firstPage.map((u) => u.name)
+  );
+  console.log(
+    "\u{1F4C4} Second page users:",
+    secondPage.map((u) => u.name)
+  );
   console.log("\n=== Database Statistics ===");
   const allUsers = await db.User.list();
   const allPosts = await db.Post.list();
