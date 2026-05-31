@@ -174,6 +174,22 @@ const firstElectronic = await db.Product.findOneByIndex('category', 'Electronics
 - `findByIndex(indexName, value): Promise<T[]>` - Find all records matching the index value
 - `findOneByIndex(indexName, value): Promise<T | undefined>` - Find the first record matching the index value
 
+### Creation & Update Timestamps
+
+Each entity managed by `idb-ts` automatically gets two internal timestamp fields:
+
+- `__idb_createdAt`: numeric epoch milliseconds set when the record is first created.
+- `__idb_updatedAt`: numeric epoch milliseconds updated on each successful update.
+
+These fields are applied automatically during `create` and `update` operations and can be used for auditing, sorting, or retention policies. They are stored as numbers (milliseconds since Unix epoch).
+
+Example usage (reading timestamps):
+
+```ts
+const item = await db.MyEntity.read('key');
+console.log(item.__idb_createdAt, item.__idb_updatedAt);
+```
+
 #### Error Handling
 - If you query a non-existent index, an error is thrown:
   ```typescript
