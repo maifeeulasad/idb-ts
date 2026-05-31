@@ -2320,7 +2320,13 @@
   var databaseName = "idb-playground-v1";
   var seedData = {
     users: [
-      new User("Alice Johnson", "alice@example.com", 28, "123 Main St", "+1234567890"),
+      new User(
+        "Alice Johnson",
+        "alice@example.com",
+        28,
+        "123 Main St",
+        "+1234567890"
+      ),
       new User("Bob Smith", "bob@example.com", 32, "456 Oak Ave"),
       new User("Charlie Brown", "charlie@example.com", 25, "789 Pine Rd")
     ],
@@ -2832,7 +2838,9 @@
     return `<table class="table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
   }
   function renderValue(value) {
-    if (Array.isArray(value) && value.every((item) => item && typeof item === "object" && !Array.isArray(item))) {
+    if (Array.isArray(value) && value.every(
+      (item) => item && typeof item === "object" && !Array.isArray(item)
+    )) {
       return renderTable(value);
     }
     if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -2927,7 +2935,12 @@
   function createShellHelpers(output) {
     return {
       log: (...parts) => {
-        logText(output, "info", "log", parts.map((part) => formatValue(part)).join(" "));
+        logText(
+          output,
+          "info",
+          "log",
+          parts.map((part) => formatValue(part)).join(" ")
+        );
       },
       inspect: (value) => logMessage(output, "info", "result", value),
       clear: () => {
@@ -3132,7 +3145,12 @@ return {
         if (typeof result !== "undefined") {
           logMessage(ui.output, "success", "result", result);
         } else {
-          logText(ui.output, "success", "done", "snippet completed without an explicit return value");
+          logText(
+            ui.output,
+            "success",
+            "done",
+            "snippet completed without an explicit return value"
+          );
         }
       } catch (error) {
         logMessage(ui.output, "error", "runtime error", error);
@@ -3151,7 +3169,12 @@ return {
       ui.resetButton.disabled = true;
       ui.runButton.disabled = true;
       setReadyState(false, "resetting database");
-      logText(ui.output, "warn", "reset", "dropping database and rebuilding seed data");
+      logText(
+        ui.output,
+        "warn",
+        "reset",
+        "dropping database and rebuilding seed data"
+      );
       try {
         await clearDatabase();
         database = await createDatabase();

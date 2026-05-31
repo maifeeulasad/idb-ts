@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1780245236324" clover="3.2.0">
-  <project timestamp="1780245236325" name="All files">
+<coverage generated="1780247929057" clover="3.2.0">
+  <project timestamp="1780247929057" name="All files">
     <metrics statements="661" coveredstatements="595" conditionals="349" coveredconditionals="252" methods="253" coveredmethods="214" elements="1263" coveredelements="1061" complexity="0" loc="661" ncloc="661" packages="1" files="1" classes="1"/>
     <file name="index.ts" path="/home/runner/work/idb-ts/idb-ts/index.ts">
       <metrics statements="661" coveredstatements="595" conditionals="349" coveredconditionals="252" methods="253" coveredmethods="214"/>
@@ -378,13 +378,13 @@
       <line num="2209" count="14" type="stmt"/>
       <line num="2210" count="14" type="stmt"/>
       <line num="2212" count="14" type="stmt"/>
-      <line num="2213" count="29" type="stmt"/>
-      <line num="2214" count="29" type="cond" truecount="2" falsecount="0"/>
+      <line num="2213" count="27" type="stmt"/>
+      <line num="2214" count="27" type="cond" truecount="2" falsecount="0"/>
       <line num="2215" count="14" type="stmt"/>
-      <line num="2218" count="15" type="stmt"/>
-      <line num="2219" count="15" type="cond" truecount="3" falsecount="1"/>
-      <line num="2220" count="15" type="stmt"/>
-      <line num="2226" count="15" type="cond" truecount="4" falsecount="0"/>
+      <line num="2218" count="13" type="stmt"/>
+      <line num="2219" count="13" type="cond" truecount="3" falsecount="1"/>
+      <line num="2220" count="13" type="stmt"/>
+      <line num="2226" count="13" type="cond" truecount="4" falsecount="0"/>
       <line num="2227" count="3" type="stmt"/>
       <line num="2228" count="3" type="stmt"/>
       <line num="2229" count="3" type="stmt"/>
@@ -392,7 +392,7 @@
       <line num="2234" count="3" type="stmt"/>
       <line num="2235" count="0" type="stmt"/>
       <line num="2239" count="3" type="stmt"/>
-      <line num="2242" count="12" type="stmt"/>
+      <line num="2242" count="10" type="stmt"/>
       <line num="2245" count="14" type="stmt"/>
       <line num="2246" count="14" type="stmt"/>
       <line num="2247" count="0" type="stmt"/>
