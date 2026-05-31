@@ -12,7 +12,7 @@ class QueryBuilder<T> {
   private db: IDBDatabase;
   private storeName: string;
   private conditions: QueryCondition[] = [];
-  private orderField?: string;
+  private orderField?: Extract<keyof T, string>;
   private orderDirection: QueryDirection = 'asc';
   private limitCount?: number;
   private offsetCount?: number;
@@ -26,11 +26,11 @@ class QueryBuilder<T> {
     this.storeName = storeName;
   }
 
-  where(field: string) {
+  where(field: Extract<keyof T, string>) {
     this.currentField = field;
     return this;
   }
-  and(field: string) {
+  and(field: Extract<keyof T, string>) {
     this.currentField = field;
     return this;
   }
@@ -64,7 +64,7 @@ class QueryBuilder<T> {
     this.currentField = undefined;
     return this;
   }
-  orderBy(field: string, direction: QueryDirection = 'asc') {
+  orderBy(field: Extract<keyof T, string>, direction: QueryDirection = 'asc') {
     this.orderField = field;
     this.orderDirection = direction;
     return this;
