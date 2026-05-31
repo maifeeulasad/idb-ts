@@ -97,10 +97,7 @@ jobs:
           </script>
           """).strip()
 
-          for path in [
-            Path('./coverage/lcov-report/index.html'),
-            Path('./coverage/lcov-report/index.ts.html'),
-          ]:
+          for path in Path('./coverage/lcov-report').glob('*.html'):
             if not path.exists():
               continue
 
@@ -119,10 +116,7 @@ jobs:
           prefix = 'idb-ts --- '
           title_pattern = re.compile(r'<title>(.*?)</title>', re.DOTALL)
 
-          for path in [
-            Path('./coverage/lcov-report/index.html'),
-            Path('./coverage/lcov-report/index.ts.html'),
-          ]:
+          for path in Path('./coverage/lcov-report').glob('*.html'):
             if not path.exists():
               continue
 
