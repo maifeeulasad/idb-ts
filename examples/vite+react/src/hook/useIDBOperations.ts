@@ -44,7 +44,10 @@ const useIDBOperations = () => {
   };
 
   // Read an item by key using repository pattern
-  const readItem = async <T>(entityClass: Function, key: any): Promise<T | undefined> => {
+  const readItem = async <T>(
+    entityClass: Function,
+    key: any,
+  ): Promise<T | undefined> => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -135,7 +138,10 @@ const useIDBOperations = () => {
   };
 
   // Advanced query operations
-  const queryItems = async <T>(entityClass: Function, queryFn: (query: any) => any): Promise<T[]> => {
+  const queryItems = async <T>(
+    entityClass: Function,
+    queryFn: (query: any) => any,
+  ): Promise<T[]> => {
     if (!db) {
       setError('Database not initialized');
       return [];
@@ -160,7 +166,11 @@ const useIDBOperations = () => {
   };
 
   // Find by index
-  const findByIndex = async <T>(entityClass: Function, indexName: string, value: any): Promise<T | undefined> => {
+  const findByIndex = async <T>(
+    entityClass: Function,
+    indexName: string,
+    value: any,
+  ): Promise<T | undefined> => {
     if (!db) {
       setError('Database not initialized');
       return;
@@ -183,7 +193,11 @@ const useIDBOperations = () => {
   };
 
   // Find all by index
-  const findAllByIndex = async <T>(entityClass: Function, indexName: string, value: any): Promise<T[]> => {
+  const findAllByIndex = async <T>(
+    entityClass: Function,
+    indexName: string,
+    value: any,
+  ): Promise<T[]> => {
     if (!db) {
       setError('Database not initialized');
       return [];
