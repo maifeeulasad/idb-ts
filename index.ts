@@ -164,6 +164,11 @@ interface ValidationRule<T = any> {
   message: string;
 }
 
+interface IndexMetadata {
+  field: string;
+  options?: IDBIndexParameters;
+}
+
 interface RetentionPolicyOptions {
   seconds: number;
   enabled?: boolean;
@@ -233,11 +238,12 @@ function CompositeKeyPath(fields: string[], options?: KeyPathOptions): ClassDeco
   };
 }
 
-function Index(): PropertyDecorator {
+function Index(options?: IDBIndexParameters): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
     const constructor = target.constructor as Function;
     const existing = Reflect.getMetadata("indexes", constructor) || [];
-    Reflect.defineMetadata("indexes", [...existing, propertyKey as string], constructor);
+    const nextIndexes = [...existing, { field: propertyKey as string, options } as IndexMetadata];
+    Reflect.defineMetadata("indexes", nextIndexes, constructor);
   };
 }
 
@@ -394,9 +400,14 @@ class Database {
               
               const store = db.createObjectStore(storeName, storeOptions);
 
-              indexFields.forEach((indexField: string) => {
-                if (!store.indexNames.contains(indexField)) {
-                  store.createIndex(indexField, indexField, { unique: false });
+              indexFields.forEach((indexField: string | IndexMetadata) => {
+                const indexName = typeof indexField === 'string' ? indexField : indexField.field;
+                const indexOptions = typeof indexField === 'string'
+                  ? { unique: false }
+                  : (indexField.options ?? { unique: false });
+
+                if (!store.indexNames.contains(indexName)) {
+                  store.createIndex(indexName, indexName, indexOptions);
                 }
               });
             } else {
@@ -406,10 +417,15 @@ class Database {
               if (transaction) {
                 const store = transaction.objectStore(storeName);
                 
-                indexFields.forEach((indexField: string) => {
-                  if (!store.indexNames.contains(indexField)) {
-                    console.debug(`Adding index: ${indexField} to ${storeName}`);
-                    store.createIndex(indexField, indexField, { unique: false });
+                indexFields.forEach((indexField: string | IndexMetadata) => {
+                  const indexName = typeof indexField === 'string' ? indexField : indexField.field;
+                  const indexOptions = typeof indexField === 'string'
+                    ? { unique: false }
+                    : (indexField.options ?? { unique: false });
+
+                  if (!store.indexNames.contains(indexName)) {
+                    console.debug(`Adding index: ${indexName} to ${storeName}`);
+                    store.createIndex(indexName, indexName, indexOptions);
                   }
                 });
               }
