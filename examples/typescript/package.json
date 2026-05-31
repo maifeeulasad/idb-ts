@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
+    "dev": "npx esbuild index.ts --bundle --platform=browser --format=esm --external:tslib --outfile=index.js --servedir=. --serve=8000 --watch",
     "build": "npx esbuild index.ts --bundle --platform=browser --format=esm --external:tslib --outfile=index.js && mkdir -p build/typescript && cp index.html index.js build/typescript"
   },
   "author": "Maifee Ul Asad <maifeeulasad@gmail.com>",
