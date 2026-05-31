@@ -55,18 +55,18 @@ yarn add idb-ts
 
 ## Feature Overview
 
-| Feature | Description |
-|---|---|
-| **Declarative entity definition** | Define stores, keys, and indexes with class decorators |
-| **Full CRUD API** | Create, read, update, delete, list, paginate, and count |
-| **Typed query builder** | Chainable, type-checked filter, sort, and aggregation DSL |
-| **Key generation** | Auto-increment, UUID v4, timestamp, random, or custom function |
-| **Composite keys** | Multi-field primary keys for relational associations |
-| **Field validation** | Per-property predicate rules enforced on write |
-| **Schema versioning** | Automatic `onupgradeneeded` migration based on entity versions |
-| **Transaction API** | Callback-based and explicit commit/rollback patterns |
-| **Data retention** | Periodic background cleanup of expired records |
-| **Automatic timestamps** | `__idb_createdAt` / `__idb_updatedAt` injected on every write |
+| Feature                           | Description                                                    |
+| --------------------------------- | -------------------------------------------------------------- |
+| **Declarative entity definition** | Define stores, keys, and indexes with class decorators         |
+| **Full CRUD API**                 | Create, read, update, delete, list, paginate, and count        |
+| **Typed query builder**           | Chainable, type-checked filter, sort, and aggregation DSL      |
+| **Key generation**                | Auto-increment, UUID v4, timestamp, random, or custom function |
+| **Composite keys**                | Multi-field primary keys for relational associations           |
+| **Field validation**              | Per-property predicate rules enforced on write                 |
+| **Schema versioning**             | Automatic `onupgradeneeded` migration based on entity versions |
+| **Transaction API**               | Callback-based and explicit commit/rollback patterns           |
+| **Data retention**                | Periodic background cleanup of expired records                 |
+| **Automatic timestamps**          | `__idb_createdAt` / `__idb_updatedAt` injected on every write  |
 
 ---
 
@@ -88,9 +88,16 @@ class User {
   age!: number;
 }
 
-const db = await Database.build<{ User: EntityRepository<User> }>('mydb', [User]);
+const db = await Database.build<{ User: EntityRepository<User> }>('mydb', [
+  User,
+]);
 
-await db.User.create({ id: '', name: 'Alice', age: 30, email: 'alice@example.com' });
+await db.User.create({
+  id: '',
+  name: 'Alice',
+  age: 30,
+  email: 'alice@example.com',
+});
 const alice = await db.User.findOneByIndex('email', 'alice@example.com');
 ```
 
@@ -109,7 +116,10 @@ class User {
   id!: string;
 
   @Index({ unique: true })
-  @Validate((v) => typeof v === 'string' && v.includes('@'), 'must be a valid email')
+  @Validate(
+    (v) => typeof v === 'string' && v.includes('@'),
+    'must be a valid email',
+  )
   email!: string;
 
   @Validate((v) => typeof v === 'number' && v >= 0, 'age must be non-negative')
@@ -125,18 +135,18 @@ class User {
 
 Marks a class as a managed entity. Must be applied exactly once per class, after all other idb-ts decorators.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `version` | `number` | `1` | Schema version. Increment when the entity's store or indexes change. |
+| Option    | Type     | Default | Description                                                          |
+| --------- | -------- | ------- | -------------------------------------------------------------------- |
+| `version` | `number` | `1`     | Schema version. Increment when the entity's store or indexes change. |
 
 #### `@KeyPath(options?)`
 
 Designates the decorated property as the primary key of the object store. Exactly one property per class may carry this decorator. For multi-field keys, use `@CompositeKeyPath` at the class level instead.
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `autoIncrement` | `boolean` | `false` | Delegate key assignment to IndexedDB's auto-increment mechanism. |
-| `generator` | `'uuid'` \| `'timestamp'` \| `'random'` \| `(item) => string \| number` | - | Automatic key generator invoked when the key field is absent or empty on `create`. |
+| Option          | Type                                                                    | Default | Description                                                                        |
+| --------------- | ----------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------- |
+| `autoIncrement` | `boolean`                                                               | `false` | Delegate key assignment to IndexedDB's auto-increment mechanism.                   |
+| `generator`     | `'uuid'` \| `'timestamp'` \| `'random'` \| `(item) => string \| number` | -       | Automatic key generator invoked when the key field is absent or empty on `create`. |
 
 #### `@CompositeKeyPath(fields, options?)`
 
@@ -156,8 +166,8 @@ class UserProject {
 
 Creates an IDB index on the decorated field, enabling efficient lookups via `findByIndex` and `findOneByIndex`.
 
-| Option | Type | Description |
-|---|---|---|
+| Option   | Type      | Description                              |
+| -------- | --------- | ---------------------------------------- |
 | `unique` | `boolean` | Enforce uniqueness on the indexed field. |
 
 #### `@Validate(predicate, message)`
@@ -174,7 +184,7 @@ Class-level decorator that configures automatic expiry and deletion of records. 
 
 ```typescript
 const db = await Database.build<{
-  User:  EntityRepository<User>;
+  User: EntityRepository<User>;
   Order: EntityRepository<Order>;
 }>('shop', [User, Order]);
 ```
@@ -186,10 +196,10 @@ The effective database version is the highest `version` value declared across al
 ### Inspecting database metadata
 
 ```typescript
-db.getDatabaseVersion();         // number - current IDB version
-db.getEntityVersions();          // Map<string, number>
-db.getEntityVersion('User');     // number | undefined
-db.getAvailableEntities();       // string[]
+db.getDatabaseVersion(); // number - current IDB version
+db.getEntityVersions(); // Map<string, number>
+db.getEntityVersion('User'); // number | undefined
+db.getAvailableEntities(); // string[]
 ```
 
 ### Closing the connection
@@ -210,9 +220,9 @@ await db.User.create(user);
 await db.User.createMany([alice, bob, charlie]);
 
 // Read
-const user = await db.User.read('u1');           // by primary key
+const user = await db.User.read('u1'); // by primary key
 const page = await db.User.listPaginated(1, 20); // 1-based pagination
-const all  = await db.User.list();
+const all = await db.User.list();
 
 // Update
 await db.User.update(updatedUser);
@@ -224,7 +234,7 @@ await db.User.deleteMany(['u1', 'u2']);
 await db.User.deleteWhere((q) => q.where('age').lt(18));
 
 // Utilities
-const count  = await db.User.count();
+const count = await db.User.count();
 const exists = await db.User.exists('u1');
 await db.User.clear();
 ```
@@ -232,7 +242,7 @@ await db.User.clear();
 ### Index lookups
 
 ```typescript
-const allAdmins  = await db.User.findByIndex('role', 'admin');
+const allAdmins = await db.User.findByIndex('role', 'admin');
 const firstAdmin = await db.User.findOneByIndex('role', 'admin');
 ```
 
@@ -244,9 +254,9 @@ Querying a non-existent index throws immediately.
 
 Every record written through a repository automatically receives two internal fields:
 
-| Field | Type | Set on |
-|---|---|---|
-| `__idb_createdAt` | `number` (ms since epoch) | `create` only |
+| Field             | Type                      | Set on                |
+| ----------------- | ------------------------- | --------------------- |
+| `__idb_createdAt` | `number` (ms since epoch) | `create` only         |
 | `__idb_updatedAt` | `number` (ms since epoch) | `create` and `update` |
 
 `__idb_createdAt` is preserved across updates; `__idb_updatedAt` is refreshed on every write.
@@ -266,25 +276,27 @@ console.log(item.__idb_createdAt, item.__idb_updatedAt);
 
 ```typescript
 const results = await db.User.query()
-  .where('age').gte(18)
-  .and('status').equals('active')
+  .where('age')
+  .gte(18)
+  .and('status')
+  .equals('active')
   .execute();
 ```
 
 #### Available operators
 
-| Operator | Field types | Description |
-|---|---|---|
-| `equals` | any | Strict equality (`===`) |
-| `gt` / `gte` / `lt` / `lte` | `ComparableValue` | Comparison |
-| `between(start, end)` | `ComparableValue` | Inclusive range |
-| `notBetween(start, end)` | `ComparableValue` | Outside range |
-| `startsWith` / `endsWith` | `string` | Prefix / suffix match |
-| `contains` | `string` \| array | Substring or element membership |
-| `matches` | `string` | Regular expression test |
-| `in(values)` / `notIn(values)` | any | Membership test |
-| `containsAny(values)` | array | At least one element matches |
-| `containsAll(values)` | array | All elements present |
+| Operator                       | Field types       | Description                     |
+| ------------------------------ | ----------------- | ------------------------------- |
+| `equals`                       | any               | Strict equality (`===`)         |
+| `gt` / `gte` / `lt` / `lte`    | `ComparableValue` | Comparison                      |
+| `between(start, end)`          | `ComparableValue` | Inclusive range                 |
+| `notBetween(start, end)`       | `ComparableValue` | Outside range                   |
+| `startsWith` / `endsWith`      | `string`          | Prefix / suffix match           |
+| `contains`                     | `string` \| array | Substring or element membership |
+| `matches`                      | `string`          | Regular expression test         |
+| `in(values)` / `notIn(values)` | any               | Membership test                 |
+| `containsAny(values)`          | array             | At least one element matches    |
+| `containsAll(values)`          | array             | All elements present            |
 
 TypeScript enforces operator/type compatibility at compile time - string-only operators are not exposed on numeric fields, and so on.
 
@@ -293,9 +305,11 @@ TypeScript enforces operator/type compatibility at compile time - string-only op
 ```typescript
 // OR connector
 const results = await db.User.query()
-  .where('age').gte(18)
+  .where('age')
+  .gte(18)
   .or()
-  .where('hasParentalConsent').equals(true)
+  .where('hasParentalConsent')
+  .equals(true)
   .execute();
 
 // Grouped sub-expression
@@ -304,7 +318,8 @@ const premiumOrTrial = await db.User.query()
     qb.where('type').equals('premium').and('status').equals('active'),
   )
   .or()
-  .where('isTrial').equals(true)
+  .where('isTrial')
+  .equals(true)
   .execute();
 ```
 
@@ -312,7 +327,8 @@ const premiumOrTrial = await db.User.query()
 
 ```typescript
 await db.User.query()
-  .where('status').equals('active')
+  .where('status')
+  .equals('active')
   .orderBy('createdAt', 'desc')
   .offset(20)
   .limit(10)
@@ -324,10 +340,7 @@ await db.User.query()
 When a field is indexed, you can constrain the initial IDB candidate set at the storage layer before in-memory filtering begins:
 
 ```typescript
-await db.Product.query()
-  .useIndex('price')
-  .range(10, 100)
-  .execute();
+await db.Product.query().useIndex('price').range(10, 100).execute();
 ```
 
 ### Aggregations
@@ -356,7 +369,7 @@ const byStatus = await db.Order.query().groupBy('status').count();
 @DataClass()
 class Task {
   @KeyPath({ autoIncrement: true })
-  id!: number;   // Assigned by IndexedDB: 1, 2, 3, …
+  id!: number; // Assigned by IndexedDB: 1, 2, 3, …
 
   title!: string;
 }
@@ -367,7 +380,7 @@ class Task {
 ```typescript
 @DataClass()
 class Document {
-  @KeyPath({ generator: 'uuid' })      // RFC 4122 v4
+  @KeyPath({ generator: 'uuid' }) // RFC 4122 v4
   id!: string;
 }
 
@@ -379,7 +392,7 @@ class Event {
 
 @DataClass()
 class Session {
-  @KeyPath({ generator: 'random' })    // Base-36 random string
+  @KeyPath({ generator: 'random' }) // Base-36 random string
   id!: string;
 }
 ```
@@ -406,9 +419,9 @@ class Invoice {
 ```typescript
 import { KeyGenerators } from 'idb-ts';
 
-KeyGenerators.uuid();      // "a1b2c3d4-..."
+KeyGenerators.uuid(); // "a1b2c3d4-..."
 KeyGenerators.timestamp(); // 1696118400000
-KeyGenerators.random();    // "xyz789abc"
+KeyGenerators.random(); // "xyz789abc"
 ```
 
 ### Composite keys
@@ -452,7 +465,10 @@ class User {
   )
   email!: string;
 
-  @Validate((v) => Number.isInteger(v) && v >= 0, 'must be a non-negative integer')
+  @Validate(
+    (v) => Number.isInteger(v) && v >= 0,
+    'must be a non-negative integer',
+  )
   age!: number;
 }
 ```
@@ -514,11 +530,11 @@ class Session {
 }
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `seconds` | `number` | - | **(Required)** Retention window in seconds. Must be a positive integer. |
-| `enabled` | `boolean` | `true` | Set to `false` to suspend cleanup without removing the policy. |
-| `field` | `string` | `'__idb_createdAt'` | Numeric timestamp field used to compute record age. |
+| Option    | Type      | Default             | Description                                                             |
+| --------- | --------- | ------------------- | ----------------------------------------------------------------------- |
+| `seconds` | `number`  | -                   | **(Required)** Retention window in seconds. Must be a positive integer. |
+| `enabled` | `boolean` | `true`              | Set to `false` to suspend cleanup without removing the policy.          |
+| `field`   | `string`  | `'__idb_createdAt'` | Numeric timestamp field used to compute record age.                     |
 
 When multiple entities define retention policies, the cleanup interval is set to the GCD of all configured `seconds` values in milliseconds, so a single timer satisfies every policy efficiently. The job runs immediately on database open and then on each interval tick, using cursor-based `readwrite` transactions.
 
@@ -529,9 +545,18 @@ When multiple entities define retention policies, the cleanup interval is set to
 Increment an entity's `version` to trigger `onupgradeneeded` and update its object store on the user's next visit. The effective database version is the maximum across all registered entities, so adding a new high-version entity is sufficient to initiate a migration.
 
 ```typescript
-@DataClass({ version: 1 }) class User   { /* ... */ }
-@DataClass({ version: 2 }) class Post   { /* ... */ }
-@DataClass({ version: 3 }) class Comment { /* ... */ }
+@DataClass({ version: 1 })
+class User {
+  /* ... */
+}
+@DataClass({ version: 2 })
+class Post {
+  /* ... */
+}
+@DataClass({ version: 3 })
+class Comment {
+  /* ... */
+}
 
 // Database opens at version 3.
 // If a user was on version 1, only Post (v2) and Comment (v3) stores are
@@ -564,4 +589,4 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
 
-Made by [Maifee Ulasad](https://github.com/maifeeulasad) with :heart: and :tea:. Licensed under [MIT](./LICENSE). 
+Made by [Maifee Ulasad](https://github.com/maifeeulasad) with :heart: and :tea:. Licensed under [MIT](./LICENSE).
