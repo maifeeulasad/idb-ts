@@ -158,6 +158,12 @@ interface KeyPathOptions {
   generator?: 'uuid' | 'timestamp' | 'random' | ((item?: any) => string | number);
 }
 
+interface ValidationRule<T = any> {
+  field: string;
+  predicate: (value: any, item: T) => boolean;
+  message: string;
+}
+
 interface RetentionPolicyOptions {
   seconds: number;
   enabled?: boolean;
@@ -232,6 +238,15 @@ function Index(): PropertyDecorator {
     const constructor = target.constructor as Function;
     const existing = Reflect.getMetadata("indexes", constructor) || [];
     Reflect.defineMetadata("indexes", [...existing, propertyKey as string], constructor);
+  };
+}
+
+function Validate<T = any>(predicate: (value: any, item: T) => boolean, message: string): PropertyDecorator {
+  return (target: Object, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    const existing = Reflect.getMetadata('validators', constructor) || [];
+    const nextRules = [...existing, { field: propertyKey as string, predicate, message } as ValidationRule<T>];
+    Reflect.defineMetadata('validators', nextRules, constructor);
   };
 }
 
@@ -536,6 +551,30 @@ class Database {
   const self = this;
   const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
   const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
+  const validators = (Reflect.getMetadata('validators', cls) || []) as ValidationRule<T>[];
+
+  const validateItem = (item: T): void => {
+    const failures: string[] = [];
+
+    validators.forEach((rule) => {
+      const value = (item as any)[rule.field];
+      let valid = false;
+
+      try {
+        valid = rule.predicate(value, item);
+      } catch {
+        valid = false;
+      }
+
+      if (!valid) {
+        failures.push(`${rule.field}: ${rule.message}`);
+      }
+    });
+
+    if (failures.length) {
+      throw new Error(`Validation failed for ${cls.name}: ${failures.join('; ')}`);
+    }
+  };
   
   // Helper function to generate keys
   const generateKey = (item: T): string | number | undefined => {
@@ -625,6 +664,7 @@ class Database {
           }
         }
 
+        validateItem(item);
         applyTimestampFields(item);
         
         return this.performOperation(cls.name, 'readwrite', (store) => {
@@ -653,6 +693,8 @@ class Database {
       },
 
       update: async (item: T): Promise<void> => {
+        validateItem(item);
+
         return this.performOperation(cls.name, 'readwrite', (store) => {
           const key = extractKey(item);
 
@@ -846,5 +888,5 @@ class Database {
   }
 }
 
-export { Database, KeyPath, CompositeKeyPath, DataClass, Index, RetentionPolicy, EntityRepository, KeyGenerators };
+export { Database, KeyPath, CompositeKeyPath, DataClass, Index, Validate, RetentionPolicy, EntityRepository, KeyGenerators };
 export type { DatabaseWithRepositories, DataClassOptions, KeyPathOptions, KeyPathMetadata, RetentionPolicyOptions, RetentionPolicyMetadata };
