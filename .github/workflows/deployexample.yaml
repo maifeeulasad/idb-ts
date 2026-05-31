@@ -107,6 +107,11 @@ jobs:
           path: ./public
       - name: Copy index.html to public directory
         run: cp ./examples/index.html ./public/index.html
+      - name: Copy documentation to public directory
+        run: |
+          mkdir -p ./public/docs
+          cp ./README.md ./public/docs/README.md
+          cp ./examples/docs/index.html ./public/docs/index.html
       - name: Download Coverage Report
         uses: actions/download-artifact@v4
         with:
