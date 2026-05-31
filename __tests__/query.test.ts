@@ -1,4 +1,10 @@
-import { Database, DataClass, KeyPath, Index, CompositeKeyPath } from '../index';
+import {
+  Database,
+  DataClass,
+  KeyPath,
+  Index,
+  CompositeKeyPath,
+} from '../index';
 
 // Test entities for coverage improvement
 @DataClass()
@@ -57,14 +63,14 @@ describe('Coverage Improvement Tests', () => {
   beforeEach(async () => {
     // Use unique database names to avoid conflicts
     const dbName = `coverage-test-${Date.now()}-${Math.random()}`;
-    
+
     // Clear any existing database
     const deleteRequest = indexedDB.deleteDatabase(dbName);
     await new Promise<void>((resolve) => {
       deleteRequest.onsuccess = () => resolve();
       deleteRequest.onerror = () => resolve(); // Continue even if deletion fails
     });
-    
+
     db = await Database.build(dbName, [CoverageUser]);
   });
 
@@ -84,9 +90,11 @@ describe('Coverage Improvement Tests', () => {
         .where('age')
         .lte(30)
         .execute();
-      
+
       expect(results).toHaveLength(3);
-      expect(results.map((u: any) => u.id)).toEqual(expect.arrayContaining(['u1', 'u2', 'u4']));
+      expect(results.map((u: any) => u.id)).toEqual(
+        expect.arrayContaining(['u1', 'u2', 'u4']),
+      );
     });
 
     it('should test lte comparison in query execution', async () => {
@@ -95,9 +103,11 @@ describe('Coverage Improvement Tests', () => {
         .where('score')
         .lte(80)
         .execute();
-      
+
       expect(results).toHaveLength(2);
-      expect(results.map((u: any) => u.id)).toEqual(expect.arrayContaining(['u2', 'u4']));
+      expect(results.map((u: any) => u.id)).toEqual(
+        expect.arrayContaining(['u2', 'u4']),
+      );
     });
 
     it('should test descending order sorting', async () => {
@@ -107,7 +117,7 @@ describe('Coverage Improvement Tests', () => {
         .equals('active')
         .orderBy('age', 'desc')
         .execute();
-      
+
       expect(results).toHaveLength(2);
       expect(results[0].age).toBe(35); // u3 should be first
       expect(results[1].age).toBe(25); // u1 should be second
@@ -119,20 +129,24 @@ describe('Coverage Improvement Tests', () => {
         .where('age')
         .gte(30)
         .execute();
-      
+
       expect(results).toHaveLength(2);
-      expect(results.map((u: any) => u.id)).toEqual(expect.arrayContaining(['u2', 'u3']));
+      expect(results.map((u: any) => u.id)).toEqual(
+        expect.arrayContaining(['u2', 'u3']),
+      );
     });
 
     it('should test query with only upper bound', async () => {
-      // Test upperBound only (line 110)  
+      // Test upperBound only (line 110)
       const results = await db.CoverageUser.query()
         .where('age')
         .lte(30)
         .execute();
-      
+
       expect(results).toHaveLength(3);
-      expect(results.map((u: any) => u.id)).toEqual(expect.arrayContaining(['u1', 'u2', 'u4']));
+      expect(results.map((u: any) => u.id)).toEqual(
+        expect.arrayContaining(['u1', 'u2', 'u4']),
+      );
     });
 
     it('should test query with both bounds', async () => {
@@ -143,9 +157,11 @@ describe('Coverage Improvement Tests', () => {
         .where('age')
         .lte(30)
         .execute();
-      
+
       expect(results).toHaveLength(2);
-      expect(results.map((u: any) => u.id)).toEqual(expect.arrayContaining(['u1', 'u2']));
+      expect(results.map((u: any) => u.id)).toEqual(
+        expect.arrayContaining(['u1', 'u2']),
+      );
     });
   });
 
@@ -155,7 +171,7 @@ describe('Coverage Improvement Tests', () => {
       await db.CoverageUser.clear();
       await db.CoverageUser.create(new CoverageUser('u1', 25, 'active', 85));
       await db.CoverageUser.create(new CoverageUser('u2', 30, 'inactive', 75));
-      
+
       // Test count method (lines 579-585)
       const count = await db.CoverageUser.count();
       expect(count).toBe(2);
@@ -165,11 +181,11 @@ describe('Coverage Improvement Tests', () => {
       // Clear and add test data
       await db.CoverageUser.clear();
       await db.CoverageUser.create(new CoverageUser('u1', 25, 'active', 85));
-      
+
       // Test exists method (lines 587-597)
       const exists1 = await db.CoverageUser.exists('u1');
       expect(exists1).toBe(true);
-      
+
       const exists2 = await db.CoverageUser.exists('nonexistent');
       expect(exists2).toBe(false);
     });
@@ -178,14 +194,14 @@ describe('Coverage Improvement Tests', () => {
       // Add test data
       await db.CoverageUser.create(new CoverageUser('u1', 25, 'active', 85));
       await db.CoverageUser.create(new CoverageUser('u2', 30, 'inactive', 75));
-      
+
       // Verify data exists
       let count = await db.CoverageUser.count();
       expect(count).toBe(2);
-      
+
       // Test clear method (lines 599-609)
       await db.CoverageUser.clear();
-      
+
       // Verify data is cleared
       count = await db.CoverageUser.count();
       expect(count).toBe(0);
@@ -198,7 +214,7 @@ describe('Coverage Improvement Tests', () => {
       const DatabaseClass = require('../index').Database;
       const uninitializedDb = new DatabaseClass('testDb', [CoverageUser]);
       uninitializedDb.db = null; // Force uninitialized state
-      
+
       try {
         await uninitializedDb.performOperation('test', 'readonly', () => {});
         fail('Should have thrown an error');
@@ -223,13 +239,15 @@ describe('Coverage Improvement Tests', () => {
       // Create a query that uses both rangeStart and rangeEnd
       const results = await db.CoverageUser.query()
         .where('age')
-        .gte(25)  // rangeStart
+        .gte(25) // rangeStart
         .where('age')
-        .lte(35)  // rangeEnd
+        .lte(35) // rangeEnd
         .execute();
-      
+
       expect(results).toHaveLength(3);
-      expect(results.map((u: any) => u.age)).toEqual(expect.arrayContaining([25, 30, 35]));
+      expect(results.map((u: any) => u.age)).toEqual(
+        expect.arrayContaining([25, 30, 35]),
+      );
     });
 
     it('should test range queries with only lower bound (line 109)', async () => {
@@ -238,9 +256,11 @@ describe('Coverage Improvement Tests', () => {
         .where('age')
         .gte(35)
         .execute();
-      
+
       expect(results).toHaveLength(2);
-      expect(results.map((u: any) => u.age)).toEqual(expect.arrayContaining([35, 40]));
+      expect(results.map((u: any) => u.age)).toEqual(
+        expect.arrayContaining([35, 40]),
+      );
     });
 
     it('should test range queries with only upper bound (line 110)', async () => {
@@ -249,9 +269,11 @@ describe('Coverage Improvement Tests', () => {
         .where('age')
         .lte(25)
         .execute();
-      
+
       expect(results).toHaveLength(2);
-      expect(results.map((u: any) => u.age)).toEqual(expect.arrayContaining([25, 20]));
+      expect(results.map((u: any) => u.age)).toEqual(
+        expect.arrayContaining([25, 20]),
+      );
     });
 
     it('should test descending sort with multiple items (line 142)', async () => {
@@ -259,7 +281,7 @@ describe('Coverage Improvement Tests', () => {
       const results = await db.CoverageUser.query()
         .orderBy('age', 'desc')
         .execute();
-      
+
       expect(results).toHaveLength(5);
       expect(results[0].age).toBe(40); // u5 should be first
       expect(results[1].age).toBe(35); // u3 should be second
@@ -275,7 +297,7 @@ describe('Coverage Improvement Tests', () => {
         .offset(1)
         .limit(2)
         .execute();
-      
+
       expect(results).toHaveLength(2);
       expect(results[0].age).toBe(25); // Skip first (age 20), take age 25
       expect(results[1].age).toBe(30); // Take age 30
@@ -285,7 +307,7 @@ describe('Coverage Improvement Tests', () => {
   describe('Random Key Generator Coverage', () => {
     it('should test random key generator (line 411)', async () => {
       const dbName = `random-key-test-${Date.now()}-${Math.random()}`;
-      
+
       try {
         // Clear any existing database
         const deleteRequest = indexedDB.deleteDatabase(dbName);
@@ -293,13 +315,13 @@ describe('Coverage Improvement Tests', () => {
           deleteRequest.onsuccess = () => resolve();
           deleteRequest.onerror = () => resolve();
         });
-        
+
         const randomDb = await Database.build(dbName, [RandomKeyEntity]);
-        
+
         // Test random key generator
         const entity = new RandomKeyEntity('Test Entity');
         await randomDb.RandomKeyEntity.create(entity);
-        
+
         // Verify the entity was created with a random ID
         const all = await randomDb.RandomKeyEntity.list();
         expect(all).toHaveLength(1);
@@ -317,7 +339,7 @@ describe('Coverage Improvement Tests', () => {
   describe('Composite Key Coverage', () => {
     it('should test composite key extraction (line 424)', async () => {
       const dbName = `composite-test-${Date.now()}-${Math.random()}`;
-      
+
       try {
         // Clear any existing database
         const deleteRequest = indexedDB.deleteDatabase(dbName);
@@ -325,15 +347,18 @@ describe('Coverage Improvement Tests', () => {
           deleteRequest.onsuccess = () => resolve();
           deleteRequest.onerror = () => resolve();
         });
-        
+
         const compositeDb = await Database.build(dbName, [CompositeEntity]);
-        
+
         // Test composite key creation and retrieval
         const entity = new CompositeEntity('user1', 'project1', 'admin');
         await compositeDb.CompositeEntity.create(entity);
-        
+
         // Test reading with composite key
-        const retrieved = await compositeDb.CompositeEntity.read(['user1', 'project1']);
+        const retrieved = await compositeDb.CompositeEntity.read([
+          'user1',
+          'project1',
+        ]);
         expect(retrieved).toBeDefined();
         expect(retrieved.userId).toBe('user1');
         expect(retrieved.projectId).toBe('project1');
@@ -349,12 +374,12 @@ describe('Coverage Improvement Tests', () => {
     it('should test database initialization error (lines 365-366)', async () => {
       // Try to trigger database initialization errors
       require('../index').Database;
-      
+
       try {
         // Create database with invalid name to potentially trigger error paths
         const badDbName = ''; // Empty name might trigger errors
         const errorDb = await Database.build(badDbName, [CoverageUser]);
-        
+
         // If it doesn't fail, at least we tested the path
         expect(errorDb).toBeDefined();
       } catch (error: any) {
