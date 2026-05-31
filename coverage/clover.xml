@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1780230263608" clover="3.2.0">
-  <project timestamp="1780230263608" name="All files">
+<coverage generated="1780230351449" clover="3.2.0">
+  <project timestamp="1780230351449" name="All files">
     <metrics statements="661" coveredstatements="595" conditionals="349" coveredconditionals="252" methods="253" coveredmethods="214" elements="1263" coveredelements="1061" complexity="0" loc="661" ncloc="661" packages="1" files="1" classes="1"/>
     <file name="index.ts" path="/home/runner/work/idb-ts/idb-ts/index.ts">
       <metrics statements="661" coveredstatements="595" conditionals="349" coveredconditionals="252" methods="253" coveredmethods="214"/>
@@ -378,13 +378,13 @@
       <line num="1097" count="14" type="stmt"/>
       <line num="1098" count="14" type="stmt"/>
       <line num="1100" count="14" type="stmt"/>
-      <line num="1101" count="28" type="stmt"/>
-      <line num="1102" count="28" type="cond" truecount="2" falsecount="0"/>
+      <line num="1101" count="27" type="stmt"/>
+      <line num="1102" count="27" type="cond" truecount="2" falsecount="0"/>
       <line num="1103" count="14" type="stmt"/>
-      <line num="1106" count="14" type="stmt"/>
-      <line num="1107" count="14" type="cond" truecount="3" falsecount="1"/>
-      <line num="1108" count="14" type="stmt"/>
-      <line num="1114" count="14" type="cond" truecount="4" falsecount="0"/>
+      <line num="1106" count="13" type="stmt"/>
+      <line num="1107" count="13" type="cond" truecount="3" falsecount="1"/>
+      <line num="1108" count="13" type="stmt"/>
+      <line num="1114" count="13" type="cond" truecount="4" falsecount="0"/>
       <line num="1115" count="3" type="stmt"/>
       <line num="1116" count="3" type="stmt"/>
       <line num="1117" count="3" type="stmt"/>
@@ -392,7 +392,7 @@
       <line num="1122" count="3" type="stmt"/>
       <line num="1123" count="0" type="stmt"/>
       <line num="1127" count="3" type="stmt"/>
-      <line num="1130" count="11" type="stmt"/>
+      <line num="1130" count="10" type="stmt"/>
       <line num="1133" count="14" type="stmt"/>
       <line num="1134" count="14" type="stmt"/>
       <line num="1135" count="0" type="stmt"/>
