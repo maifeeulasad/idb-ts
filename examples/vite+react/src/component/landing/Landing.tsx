@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Table, Button, Space, Modal, Input, notification, Card, Typography, Statistic, Row, Col, Tabs } from 'antd';
+import {
+  Table,
+  Button,
+  Space,
+  Modal,
+  Input,
+  notification,
+  Card,
+  Typography,
+  Statistic,
+  Row,
+  Col,
+  Tabs,
+} from 'antd';
 import { User, Post, UserProject, Activity } from '../../entities';
 import useIDBOperations from '../../hook/useIDBOperations';
 
@@ -30,24 +43,51 @@ const Landing = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [userProjects, setUserProjects] = useState<UserProject[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [stats, setStats] = useState({ users: 0, posts: 0, projects: 0, activities: 0 });
+  const [stats, setStats] = useState({
+    users: 0,
+    posts: 0,
+    projects: 0,
+    activities: 0,
+  });
 
   // Modal states
   const [isUserModalVisible, setIsUserModalVisible] = useState(false);
   const [isPostModalVisible, setIsPostModalVisible] = useState(false);
   const [isProjectModalVisible, setIsProjectModalVisible] = useState(false);
-  
+
   // Form states
-  const [newUser, setNewUser] = useState({ name: '', email: '', age: 18, address: '' });
-  const [newPost, setNewPost] = useState({ title: '', content: '', authorEmail: '', category: 'general' });
-  const [newProject, setNewProject] = useState({ userId: '', projectId: '', role: 'member' as 'admin' | 'member' | 'viewer' });
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    age: 18,
+    address: '',
+  });
+  const [newPost, setNewPost] = useState({
+    title: '',
+    content: '',
+    authorEmail: '',
+    category: 'general',
+  });
+  const [newProject, setNewProject] = useState({
+    userId: '',
+    projectId: '',
+    role: 'member' as 'admin' | 'member' | 'viewer',
+  });
 
   useEffect(() => {
     const init = async () => {
       try {
-        await initializeDB('idb-demo-v3-react', [User, Post, UserProject, Activity]);
+        await initializeDB('idb-demo-v3-react', [
+          User,
+          Post,
+          UserProject,
+          Activity,
+        ]);
         await loadData();
-        showNotification('success', 'Database initialized successfully with idb-ts v3.7.0!');
+        showNotification(
+          'success',
+          'Database initialized successfully with idb-ts v3.7.0!',
+        );
       } catch (err) {
         console.error('Failed to initialize database:', err);
         showNotification('error', 'Failed to initialize database');
@@ -58,23 +98,24 @@ const Landing = () => {
 
   const loadData = async () => {
     try {
-      const [usersData, postsData, projectsData, activitiesData] = await Promise.all([
-        listItems<User>(User),
-        listItems<Post>(Post), 
-        listItems<UserProject>(UserProject),
-        listItems<Activity>(Activity)
-      ]);
+      const [usersData, postsData, projectsData, activitiesData] =
+        await Promise.all([
+          listItems<User>(User),
+          listItems<Post>(Post),
+          listItems<UserProject>(UserProject),
+          listItems<Activity>(Activity),
+        ]);
 
       setUsers(usersData);
       setPosts(postsData);
       setUserProjects(projectsData);
       setActivities(activitiesData);
-      
+
       setStats({
         users: usersData.length,
         posts: postsData.length,
         projects: projectsData.length,
-        activities: activitiesData.length
+        activities: activitiesData.length,
       });
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -82,28 +123,39 @@ const Landing = () => {
     }
   };
 
-  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+  const showNotification = (
+    type: 'success' | 'error' | 'info',
+    message: string,
+  ) => {
     api[type]({ message, duration: 3 });
   };
 
   // === User Operations ===
   const handleCreateUser = async () => {
     try {
-      const user = new User(newUser.name, newUser.email, newUser.age, newUser.address);
+      const user = new User(
+        newUser.name,
+        newUser.email,
+        newUser.age,
+        newUser.address,
+      );
       await createItem(User, user);
-      
+
       // Create login activity
-      const loginActivity = new Activity(newUser.email, 'login', { 
-        ip: '192.168.1.100', 
+      const loginActivity = new Activity(newUser.email, 'login', {
+        ip: '192.168.1.100',
         browser: 'Chrome',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
       await createItem(Activity, loginActivity);
-      
+
       setIsUserModalVisible(false);
       setNewUser({ name: '', email: '', age: 18, address: '' });
       await loadData();
-      showNotification('success', `User ${newUser.name} created with auto-increment ID!`);
+      showNotification(
+        'success',
+        `User ${newUser.name} created with auto-increment ID!`,
+      );
     } catch (err) {
       console.error('Failed to create user:', err);
       showNotification('error', 'Failed to create user');
@@ -124,20 +176,33 @@ const Landing = () => {
   // === Post Operations ===
   const handleCreatePost = async () => {
     try {
-      const post = new Post(newPost.title, newPost.content, newPost.authorEmail, newPost.category);
+      const post = new Post(
+        newPost.title,
+        newPost.content,
+        newPost.authorEmail,
+        newPost.category,
+      );
       await createItem(Post, post);
-      
+
       // Create post creation activity
       const postActivity = new Activity(newPost.authorEmail, 'post_created', {
         postTitle: newPost.title,
-        category: newPost.category
+        category: newPost.category,
       });
       await createItem(Activity, postActivity);
-      
+
       setIsPostModalVisible(false);
-      setNewPost({ title: '', content: '', authorEmail: '', category: 'general' });
+      setNewPost({
+        title: '',
+        content: '',
+        authorEmail: '',
+        category: 'general',
+      });
       await loadData();
-      showNotification('success', `Post "${newPost.title}" created with UUID key!`);
+      showNotification(
+        'success',
+        `Post "${newPost.title}" created with UUID key!`,
+      );
     } catch (err) {
       console.error('Failed to create post:', err);
       showNotification('error', 'Failed to create post');
@@ -158,13 +223,20 @@ const Landing = () => {
   // === Project Operations ===
   const handleCreateProject = async () => {
     try {
-      const project = new UserProject(newProject.userId, newProject.projectId, newProject.role);
+      const project = new UserProject(
+        newProject.userId,
+        newProject.projectId,
+        newProject.role,
+      );
       await createItem(UserProject, project);
-      
+
       setIsProjectModalVisible(false);
       setNewProject({ userId: '', projectId: '', role: 'member' });
       await loadData();
-      showNotification('success', `Project relationship created with composite key!`);
+      showNotification(
+        'success',
+        `Project relationship created with composite key!`,
+      );
     } catch (err) {
       console.error('Failed to create project:', err);
       showNotification('error', 'Failed to create project');
@@ -187,27 +259,35 @@ const Landing = () => {
     try {
       // Query active users older than 25
       const activeUsers = await queryItems<User>(User, (query) =>
-        query.where('status').equals('active')
-          .and('age').gt(25)
-          .orderBy('age', 'asc')
+        query
+          .where('status')
+          .equals('active')
+          .and('age')
+          .gt(25)
+          .orderBy('age', 'asc'),
       );
 
       // Query posts by category
       const tutorialPosts = await queryItems<Post>(Post, (query) =>
-        query.where('category').equals('tutorial')
+        query
+          .where('category')
+          .equals('tutorial')
           .orderBy('publishedAt', 'desc')
-          .limit(5)
+          .limit(5),
       );
 
       // Query recent activities
       const recentActivities = await queryItems<Activity>(Activity, (query) =>
-        query.where('timestamp').gte(Date.now() - 24 * 60 * 60 * 1000)
+        query
+          .where('timestamp')
+          .gte(Date.now() - 24 * 60 * 60 * 1000)
           .orderBy('timestamp', 'desc')
-          .limit(10)
+          .limit(10),
       );
 
-      showNotification('info', 
-        `Advanced queries executed: ${activeUsers.length} active users, ${tutorialPosts.length} tutorial posts, ${recentActivities.length} recent activities`
+      showNotification(
+        'info',
+        `Advanced queries executed: ${activeUsers.length} active users, ${tutorialPosts.length} tutorial posts, ${recentActivities.length} recent activities`,
       );
     } catch (err) {
       console.error('Failed to execute advanced queries:', err);
@@ -222,7 +302,7 @@ const Landing = () => {
       const demoUsers = [
         new User('Alice Johnson', 'alice@example.com', 28, '123 Main St'),
         new User('Bob Smith', 'bob@example.com', 32, '456 Oak Ave'),
-        new User('Charlie Brown', 'charlie@example.com', 25, '789 Pine Rd')
+        new User('Charlie Brown', 'charlie@example.com', 25, '789 Pine Rd'),
       ];
 
       for (const user of demoUsers) {
@@ -231,9 +311,24 @@ const Landing = () => {
 
       // Create demo posts
       const demoPosts = [
-        new Post('Getting Started with idb-ts', 'Comprehensive guide...', 'alice@example.com', 'tutorial'),
-        new Post('Advanced Database Patterns', 'Exploring patterns...', 'bob@example.com', 'advanced'),
-        new Post('TypeScript Best Practices', 'Clean code tips...', 'charlie@example.com', 'tutorial')
+        new Post(
+          'Getting Started with idb-ts',
+          'Comprehensive guide...',
+          'alice@example.com',
+          'tutorial',
+        ),
+        new Post(
+          'Advanced Database Patterns',
+          'Exploring patterns...',
+          'bob@example.com',
+          'advanced',
+        ),
+        new Post(
+          'TypeScript Best Practices',
+          'Clean code tips...',
+          'charlie@example.com',
+          'tutorial',
+        ),
       ];
 
       for (const post of demoPosts) {
@@ -244,7 +339,7 @@ const Landing = () => {
       const demoProjects = [
         new UserProject('alice@example.com', 'project-alpha', 'admin'),
         new UserProject('bob@example.com', 'project-alpha', 'member'),
-        new UserProject('charlie@example.com', 'project-beta', 'admin')
+        new UserProject('charlie@example.com', 'project-beta', 'admin'),
       ];
 
       for (const project of demoProjects) {
@@ -271,7 +366,9 @@ const Landing = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: User) => (
-        <Button danger onClick={() => handleDeleteUser(record.id!)}>Delete</Button>
+        <Button danger onClick={() => handleDeleteUser(record.id!)}>
+          Delete
+        </Button>
       ),
     },
   ];
@@ -286,7 +383,9 @@ const Landing = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Post) => (
-        <Button danger onClick={() => handleDeletePost(record.uuid!)}>Delete</Button>
+        <Button danger onClick={() => handleDeletePost(record.uuid!)}>
+          Delete
+        </Button>
       ),
     },
   ];
@@ -295,32 +394,55 @@ const Landing = () => {
     { title: 'User ID', dataIndex: 'userId', key: 'userId' },
     { title: 'Project ID', dataIndex: 'projectId', key: 'projectId' },
     { title: 'Role', dataIndex: 'role', key: 'role' },
-    { title: 'Joined At', dataIndex: 'joinedAt', key: 'joinedAt', render: (date: Date) => new Date(date).toLocaleString() },
+    {
+      title: 'Joined At',
+      dataIndex: 'joinedAt',
+      key: 'joinedAt',
+      render: (date: Date) => new Date(date).toLocaleString(),
+    },
     {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: UserProject) => (
-        <Button danger onClick={() => handleDeleteProject(record.userId, record.projectId)}>Delete</Button>
+        <Button
+          danger
+          onClick={() => handleDeleteProject(record.userId, record.projectId)}
+        >
+          Delete
+        </Button>
       ),
     },
   ];
 
   const activityColumns = [
-    { title: 'Activity ID', dataIndex: 'activityId', key: 'activityId', width: 200 },
+    {
+      title: 'Activity ID',
+      dataIndex: 'activityId',
+      key: 'activityId',
+      width: 200,
+    },
     { title: 'User ID', dataIndex: 'userId', key: 'userId' },
     { title: 'Type', dataIndex: 'type', key: 'type' },
-    { title: 'Timestamp', dataIndex: 'timestamp', key: 'timestamp', render: (ts: number) => new Date(ts).toLocaleString() },
+    {
+      title: 'Timestamp',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (ts: number) => new Date(ts).toLocaleString(),
+    },
   ];
 
   return (
     <Context.Provider value={contextValue}>
       {contextHolder}
       <div style={{ padding: '24px' }}>
-        <Title level={1}>🚀 idb-ts v3.7.0 Demo - Modern IndexedDB with TypeScript</Title>
-        
+        <Title level={1}>
+          🚀 idb-ts v3.7.0 Demo - Modern IndexedDB with TypeScript
+        </Title>
+
         <Paragraph>
-          This demo showcases the latest features of idb-ts v3.7.0 including schema versioning, 
-          auto-increment keys, UUID generation, composite keys, advanced query builder, and more!
+          This demo showcases the latest features of idb-ts v3.7.0 including
+          schema versioning, auto-increment keys, UUID generation, composite
+          keys, advanced query builder, and more!
         </Paragraph>
 
         {error && (
@@ -363,65 +485,67 @@ const Landing = () => {
           </Button>
           <Button onClick={() => setIsUserModalVisible(true)}>Add User</Button>
           <Button onClick={() => setIsPostModalVisible(true)}>Add Post</Button>
-          <Button onClick={() => setIsProjectModalVisible(true)}>Add Project</Button>
+          <Button onClick={() => setIsProjectModalVisible(true)}>
+            Add Project
+          </Button>
         </Space>
 
         {/* Data Tables */}
-        <Tabs 
+        <Tabs
           defaultActiveKey="1"
           items={[
             {
               key: '1',
               label: 'Users (Auto-increment ID)',
               children: (
-                <Table 
-                  columns={userColumns} 
-                  dataSource={users} 
-                  rowKey="id" 
+                <Table
+                  columns={userColumns}
+                  dataSource={users}
+                  rowKey="id"
                   loading={loading}
                   pagination={{ pageSize: 5 }}
                 />
-              )
+              ),
             },
             {
               key: '2',
               label: 'Posts (UUID Keys)',
               children: (
-                <Table 
-                  columns={postColumns} 
-                  dataSource={posts} 
-                  rowKey="uuid" 
+                <Table
+                  columns={postColumns}
+                  dataSource={posts}
+                  rowKey="uuid"
                   loading={loading}
                   pagination={{ pageSize: 5 }}
                 />
-              )
+              ),
             },
             {
               key: '3',
               label: 'Projects (Composite Keys)',
               children: (
-                <Table 
-                  columns={projectColumns} 
-                  dataSource={userProjects} 
+                <Table
+                  columns={projectColumns}
+                  dataSource={userProjects}
                   rowKey={(record) => `${record.userId}-${record.projectId}`}
                   loading={loading}
                   pagination={{ pageSize: 5 }}
                 />
-              )
+              ),
             },
             {
               key: '4',
               label: 'Activities (Custom Keys)',
               children: (
-                <Table 
-                  columns={activityColumns} 
-                  dataSource={activities} 
-                  rowKey="activityId" 
+                <Table
+                  columns={activityColumns}
+                  dataSource={activities}
+                  rowKey="activityId"
                   loading={loading}
                   pagination={{ pageSize: 5 }}
                 />
-              )
-            }
+              ),
+            },
           ]}
         />
 
@@ -449,13 +573,17 @@ const Landing = () => {
             placeholder="Age"
             type="number"
             value={newUser.age}
-            onChange={(e) => setNewUser({ ...newUser, age: parseInt(e.target.value) || 18 })}
+            onChange={(e) =>
+              setNewUser({ ...newUser, age: parseInt(e.target.value) || 18 })
+            }
             style={{ marginBottom: 8 }}
           />
           <Input
             placeholder="Address"
             value={newUser.address}
-            onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
+            onChange={(e) =>
+              setNewUser({ ...newUser, address: e.target.value })
+            }
           />
         </Modal>
 
@@ -476,19 +604,25 @@ const Landing = () => {
           <Input.TextArea
             placeholder="Content"
             value={newPost.content}
-            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+            onChange={(e) =>
+              setNewPost({ ...newPost, content: e.target.value })
+            }
             style={{ marginBottom: 8 }}
           />
           <Input
             placeholder="Author Email"
             value={newPost.authorEmail}
-            onChange={(e) => setNewPost({ ...newPost, authorEmail: e.target.value })}
+            onChange={(e) =>
+              setNewPost({ ...newPost, authorEmail: e.target.value })
+            }
             style={{ marginBottom: 8 }}
           />
           <Input
             placeholder="Category"
             value={newPost.category}
-            onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+            onChange={(e) =>
+              setNewPost({ ...newPost, category: e.target.value })
+            }
           />
         </Modal>
 
@@ -503,18 +637,24 @@ const Landing = () => {
           <Input
             placeholder="User ID (Email)"
             value={newProject.userId}
-            onChange={(e) => setNewProject({ ...newProject, userId: e.target.value })}
+            onChange={(e) =>
+              setNewProject({ ...newProject, userId: e.target.value })
+            }
             style={{ marginBottom: 8 }}
           />
           <Input
             placeholder="Project ID"
             value={newProject.projectId}
-            onChange={(e) => setNewProject({ ...newProject, projectId: e.target.value })}
+            onChange={(e) =>
+              setNewProject({ ...newProject, projectId: e.target.value })
+            }
             style={{ marginBottom: 8 }}
           />
           <select
             value={newProject.role}
-            onChange={(e) => setNewProject({ ...newProject, role: e.target.value as any })}
+            onChange={(e) =>
+              setNewProject({ ...newProject, role: e.target.value as any })
+            }
             style={{ width: '100%', padding: '4px', marginBottom: 8 }}
           >
             <option value="member">Member</option>
