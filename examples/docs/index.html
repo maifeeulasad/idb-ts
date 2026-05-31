@@ -1,278 +1,306 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>idb-ts Documentation</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>idb-ts Documentation</title>
 
-      <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT"></script>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT"
+    ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
+      function gtag() {
+        dataLayer.push(arguments);
+      }
       gtag('js', new Date());
 
       gtag('config', 'G-3G1RNC5YLT');
     </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f7f7fb;
-      --panel: rgba(255, 255, 255, 0.92);
-      --text: #172033;
-      --muted: #5b6476;
-      --accent: #0f766e;
-      --accent-2: #1d4ed8;
-      --border: rgba(23, 32, 51, 0.12);
-      --shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(29, 78, 216, 0.14), transparent 28%),
-        radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 24%),
-        linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
-      min-height: 100vh;
-    }
-
-    header {
-      padding: 48px 20px 16px;
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.72);
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    h1 {
-      margin: 18px 0 10px;
-      font-size: clamp(2.2rem, 5vw, 4.2rem);
-      line-height: 1.02;
-      letter-spacing: -0.05em;
-    }
-
-    p {
-      margin: 0 auto;
-      max-width: 760px;
-      color: var(--muted);
-      line-height: 1.6;
-      font-size: 1.03rem;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 24px;
-    }
-
-    .actions a {
-      text-decoration: none;
-      padding: 12px 18px;
-      border-radius: 999px;
-      font-weight: 700;
-      border: 1px solid var(--border);
-      background: white;
-      color: var(--text);
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-    }
-
-    .actions a.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: white;
-      border-color: transparent;
-    }
-
-    main {
-      width: min(1120px, calc(100% - 32px));
-      margin: 24px auto 56px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(247, 247, 251, 0.8);
-      flex-wrap: wrap;
-    }
-
-    .toolbar strong {
-      font-size: 0.95rem;
-    }
-
-    .toolbar span {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    #content {
-      padding: clamp(22px, 4vw, 42px);
-      line-height: 1.72;
-      overflow-wrap: anywhere;
-    }
-
-    #content h1,
-    #content h2,
-    #content h3,
-    #content h4 {
-      margin-top: 1.8em;
-      line-height: 1.18;
-    }
-
-    #content h1 { font-size: 2.2rem; }
-    #content h2 { font-size: 1.7rem; }
-    #content h3 { font-size: 1.35rem; }
-    #content h4 { font-size: 1.1rem; }
-
-    #content a {
-      color: var(--accent-2);
-      text-decoration-thickness: 2px;
-      text-underline-offset: 2px;
-    }
-
-    #content pre {
-      padding: 18px;
-      border-radius: 18px;
-      overflow: auto;
-      background: #0f172a;
-      color: #e2e8f0;
-    }
-
-    #content code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.92em;
-    }
-
-    #content :not(pre) > code {
-      padding: 0.18rem 0.42rem;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.07);
-    }
-
-    #content blockquote {
-      margin: 1.4rem 0;
-      padding: 0.2rem 1rem;
-      border-left: 4px solid var(--accent);
-      background: rgba(15, 118, 110, 0.06);
-      border-radius: 0 14px 14px 0;
-    }
-
-    #content table {
-      width: 100%;
-      border-collapse: collapse;
-      display: block;
-      overflow: auto;
-    }
-
-    #content th,
-    #content td {
-      border: 1px solid var(--border);
-      padding: 10px 12px;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    #content img {
-      max-width: 100%;
-    }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-      padding: 0 20px 36px;
-    }
-
-    .error {
-      color: #b91c1c;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      padding: 16px;
-      border-radius: 16px;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="eyebrow">Documentation</div>
-    <h1>idb-ts docs</h1>
-    <p>
-      This page renders the repository markdown so the docs can be browsed directly from GitHub Pages.
-    </p>
-    <div class="actions">
-      <a class="primary" href="../">Back to examples</a>
-      <a href="../../README.md">Open markdown source</a>
-    </div>
-  </header>
-
-  <main>
-    <div class="toolbar">
-      <div>
-        <strong>Rendered from README.md</strong>
-        <div><span>Published as part of the GitHub Pages artifact</span></div>
-      </div>
-      <span id="status">Loading documentation...</span>
-    </div>
-    <div id="content"></div>
-  </main>
-
-  <footer>
-    Markdown is fetched from the published README copy in this docs directory.
-  </footer>
-
-  <script>
-    const statusElement = document.getElementById('status');
-    const contentElement = document.getElementById('content');
-
-    async function loadDocs() {
-      try {
-        const response = await fetch('./README.md', { cache: 'no-store' });
-        if (!response.ok) {
-          throw new Error(`Unable to load README.md (${response.status})`);
-        }
-
-        const markdown = await response.text();
-        contentElement.innerHTML = marked.parse(markdown, {
-          mangle: false,
-          headerIds: true,
-        });
-        statusElement.textContent = 'Ready';
-      } catch (error) {
-        statusElement.textContent = 'Failed to load';
-        contentElement.innerHTML = `<div class="error">${error.message}</div>`;
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f7fb;
+        --panel: rgba(255, 255, 255, 0.92);
+        --text: #172033;
+        --muted: #5b6476;
+        --accent: #0f766e;
+        --accent-2: #1d4ed8;
+        --border: rgba(23, 32, 51, 0.12);
+        --shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
       }
-    }
 
-    loadDocs();
-  </script>
-</body>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(29, 78, 216, 0.14),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at top right,
+            rgba(15, 118, 110, 0.14),
+            transparent 24%
+          ),
+          linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
+        min-height: 100vh;
+      }
+
+      header {
+        padding: 48px 20px 16px;
+        text-align: center;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      h1 {
+        margin: 18px 0 10px;
+        font-size: clamp(2.2rem, 5vw, 4.2rem);
+        line-height: 1.02;
+        letter-spacing: -0.05em;
+      }
+
+      p {
+        margin: 0 auto;
+        max-width: 760px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 1.03rem;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+      }
+
+      .actions a {
+        text-decoration: none;
+        padding: 12px 18px;
+        border-radius: 999px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+        background: white;
+        color: var(--text);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      .actions a.primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: white;
+        border-color: transparent;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 24px auto 56px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(247, 247, 251, 0.8);
+        flex-wrap: wrap;
+      }
+
+      .toolbar strong {
+        font-size: 0.95rem;
+      }
+
+      .toolbar span {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      #content {
+        padding: clamp(22px, 4vw, 42px);
+        line-height: 1.72;
+        overflow-wrap: anywhere;
+      }
+
+      #content h1,
+      #content h2,
+      #content h3,
+      #content h4 {
+        margin-top: 1.8em;
+        line-height: 1.18;
+      }
+
+      #content h1 {
+        font-size: 2.2rem;
+      }
+      #content h2 {
+        font-size: 1.7rem;
+      }
+      #content h3 {
+        font-size: 1.35rem;
+      }
+      #content h4 {
+        font-size: 1.1rem;
+      }
+
+      #content a {
+        color: var(--accent-2);
+        text-decoration-thickness: 2px;
+        text-underline-offset: 2px;
+      }
+
+      #content pre {
+        padding: 18px;
+        border-radius: 18px;
+        overflow: auto;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+
+      #content code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.92em;
+      }
+
+      #content :not(pre) > code {
+        padding: 0.18rem 0.42rem;
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.07);
+      }
+
+      #content blockquote {
+        margin: 1.4rem 0;
+        padding: 0.2rem 1rem;
+        border-left: 4px solid var(--accent);
+        background: rgba(15, 118, 110, 0.06);
+        border-radius: 0 14px 14px 0;
+      }
+
+      #content table {
+        width: 100%;
+        border-collapse: collapse;
+        display: block;
+        overflow: auto;
+      }
+
+      #content th,
+      #content td {
+        border: 1px solid var(--border);
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      #content img {
+        max-width: 100%;
+      }
+
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+        padding: 0 20px 36px;
+      }
+
+      .error {
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        padding: 16px;
+        border-radius: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="eyebrow">Documentation</div>
+      <h1>idb-ts docs</h1>
+      <p>
+        This page renders the repository markdown so the docs can be browsed
+        directly from GitHub Pages.
+      </p>
+      <div class="actions">
+        <a class="primary" href="../">Back to examples</a>
+        <a href="../../README.md">Open markdown source</a>
+      </div>
+    </header>
+
+    <main>
+      <div class="toolbar">
+        <div>
+          <strong>Rendered from README.md</strong>
+          <div><span>Published as part of the GitHub Pages artifact</span></div>
+        </div>
+        <span id="status">Loading documentation...</span>
+      </div>
+      <div id="content"></div>
+    </main>
+
+    <footer>
+      Markdown is fetched from the published README copy in this docs directory.
+    </footer>
+
+    <script>
+      const statusElement = document.getElementById('status');
+      const contentElement = document.getElementById('content');
+
+      async function loadDocs() {
+        try {
+          const response = await fetch('./README.md', { cache: 'no-store' });
+          if (!response.ok) {
+            throw new Error(`Unable to load README.md (${response.status})`);
+          }
+
+          const markdown = await response.text();
+          contentElement.innerHTML = marked.parse(markdown, {
+            mangle: false,
+            headerIds: true,
+          });
+          statusElement.textContent = 'Ready';
+        } catch (error) {
+          statusElement.textContent = 'Failed to load';
+          contentElement.innerHTML = `<div class="error">${error.message}</div>`;
+        }
+      }
+
+      loadDocs();
+    </script>
+  </body>
 </html>
