@@ -110,6 +110,29 @@ jobs:
 
             path.write_text(content.replace('</head>', f'{snippet}\n</head>', 1))
           PY
+      - name: Prefix generated coverage titles
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          prefix = 'idb-ts --- '
+          title_pattern = re.compile(r'<title>(.*?)</title>', re.DOTALL)
+
+          for path in [
+            Path('./coverage/lcov-report/index.html'),
+            Path('./coverage/lcov-report/index.ts.html'),
+          ]:
+            if not path.exists():
+              continue
+
+            content = path.read_text()
+            if prefix in content:
+              continue
+
+            content = title_pattern.sub(lambda match: f'<title>{prefix}{match.group(1)}</title>', content, count=1)
+            path.write_text(content)
+          PY
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
