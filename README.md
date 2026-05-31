@@ -190,6 +190,31 @@ const item = await db.MyEntity.read('key');
 console.log(item.__idb_createdAt, item.__idb_updatedAt);
 ```
 
+### Retention Policy & Cleanup Job
+
+`idb-ts` supports per-entity data retention via the `@RetentionPolicy()` class decorator. It accepts the following options:
+
+- `seconds` (required): number of seconds after which records are considered expired.
+- `enabled` (optional, default `true`): whether cleanup is active for this entity.
+- `field` (optional, default `__idb_createdAt`): the numeric field to use for age calculation (usually creation timestamp).
+
+When one or more entities register retention policies, the library computes a single cleanup interval equal to the greatest common divisor (GCD) of all configured `seconds` values and runs a background cleanup job at that interval. On each tick the job scans the configured entity stores and deletes records whose `field` value is older than the configured retention window.
+
+Example:
+
+```ts
+@RetentionPolicy({ seconds: 60 * 60 * 24 * 30 }) // 30 days
+@DataClass()
+class Session { /* ... */ }
+
+// Database will run a periodic cleanup that removes sessions older than 30 days
+```
+
+Notes:
+
+- Cleanup runs with readwrite transactions and deletes records one-by-one via cursors. It runs at startup and then periodically. Logs are emitted for inspection when debug logging is enabled.
+- To temporarily disable cleanup for an entity, set `enabled: false` on the decorator.
+
 #### Error Handling
 - If you query a non-existent index, an error is thrown:
   ```typescript
