@@ -1,4 +1,4 @@
-import { Database, DataClass, KeyPath, Index, CompositeKeyPath } from "../index";
+import { Database, DataClass, KeyPath, Index, CompositeKeyPath } from '../index';
 
 // Test entities for coverage improvement
 @DataClass()
