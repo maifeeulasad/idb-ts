@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +9,11 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-      gtag('config', 'G-3G1RNC5YLT');
+        gtag('config', 'G-3G1RNC5YLT');
     </script>
 
     <style>
@@ -25,44 +26,55 @@
             height: 100vh;
             margin: 0;
         }
+
         table {
             border-collapse: collapse;
             width: 50%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        th, td {
+
+        th,
+        td {
             padding: 12px;
             text-align: center;
             border-bottom: 1px solid #ddd;
         }
+
         th {
             background-color: #f4f4f4;
         }
+
         tr:hover {
             background-color: #f1f1f1;
         }
+
         a {
             text-decoration: none;
             color: #3498db;
             font-weight: bold;
         }
+
         a:hover {
             color: #2980b9;
         }
+
         /* Highlight style for the Coverage Report row */
         .highlight {
             background: linear-gradient(90deg, #fff7e6, #fff1cc);
             box-shadow: inset 4px 0 0 0 #ffd166;
             font-weight: 600;
         }
+
         .highlight a {
             color: #b36000;
         }
+
         .highlight:hover {
             background: linear-gradient(90deg, #fff3d6, #ffe7b3);
         }
     </style>
 </head>
+
 <body>
     <table>
         <thead>
@@ -88,11 +100,12 @@
                 <td>Coverage Report</td>
                 <td><a href="./coverage/lcov-report/index.html">Go to Coverage Report</a></td>
             </tr>
-                <tr class="highlight">
-                    <td>Documentation</td>
-                    <td><a href="./docs/">Go to Docs</a></td>
-                </tr>
+            <tr class="highlight">
+                <td>Documentation</td>
+                <td><a href="./docs/">Go to Docs</a></td>
+            </tr>
         </tbody>
     </table>
 </body>
+
 </html>
