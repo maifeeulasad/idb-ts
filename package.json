@@ -56,18 +56,18 @@
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@rollup/plugin-typescript": "^12.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.37.0",
-    "@typescript-eslint/parser": "^8.37.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.12.0",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "eslint": "^9.31.0",
     "fake-indexeddb": "^6.2.5",
+    "globals": "^15.15.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
-    "eslint": "^9.31.0",
+    "prettier": "^3.8.3",
     "rollup": "^4.60.1",
     "ts-jest": "^29.4.9",
-    "typescript": "^6.0.3",
-    "globals": "^15.15.0",
-    "prettier": "^3.8.3"
+    "typescript": "^6.0.3"
   }
 }
