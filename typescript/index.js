@@ -1106,58 +1106,204 @@ var require_Reflect = __commonJS({
 
 // node_modules/idb-ts/lib/index.esm.js
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KeyGenerators = exports.Index = exports.DataClass = exports.CompositeKeyPath = exports.KeyPath = exports.Database = void 0;
+exports.KeyGenerators = exports.Database = void 0;
+exports.KeyPath = KeyPath;
+exports.CompositeKeyPath = CompositeKeyPath;
+exports.DataClass = DataClass;
+exports.Index = Index;
+exports.Validate = Validate;
+exports.RetentionPolicy = RetentionPolicy;
 var tslib_1 = __require("tslib");
 require_Reflect();
-var QueryBuilder = class {
-  constructor(db, storeName) {
-    this.conditions = [];
-    this.orderDirection = "asc";
-    this.db = db;
-    this.storeName = storeName;
+var FieldQueryBuilder = class {
+  constructor(parent, field) {
+    this.parent = parent;
+    this.field = field;
   }
-  where(field) {
-    this.currentField = field;
-    return this;
+  equals(value) {
+    this.parent.appendCondition(this.field, "equals", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  gt(value) {
+    this.parent.appendCondition(this.field, "gt", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  gte(value) {
+    this.parent.appendCondition(this.field, "gte", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  lt(value) {
+    this.parent.appendCondition(this.field, "lt", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  lte(value) {
+    this.parent.appendCondition(this.field, "lte", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  startsWith(value) {
+    this.parent.appendCondition(this.field, "startsWith", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  endsWith(value) {
+    this.parent.appendCondition(this.field, "endsWith", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  contains(value) {
+    this.parent.appendCondition(this.field, "contains", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  matches(value) {
+    this.parent.appendCondition(this.field, "matches", value);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  between(start, end) {
+    this.parent.appendCondition(this.field, "between", [start, end]);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  notBetween(start, end) {
+    this.parent.appendCondition(this.field, "notBetween", [start, end]);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  in(values) {
+    this.parent.appendCondition(this.field, "in", values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  notIn(values) {
+    this.parent.appendCondition(this.field, "notIn", values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  containsAny(values) {
+    this.parent.appendCondition(this.field, "containsAny", values);
+    this.parent.clearCurrentField();
+    return this.parent;
+  }
+  containsAll(values) {
+    this.parent.appendCondition(this.field, "containsAll", values);
+    this.parent.clearCurrentField();
+    return this.parent;
   }
   and(field) {
-    this.currentField = field;
+    this.parent.clearCurrentField();
+    return this.parent.and(field);
+  }
+  or() {
+    this.parent.clearCurrentField();
+    return this.parent.or();
+  }
+};
+var QueryBuilder = class _QueryBuilder {
+  constructor(db, storeName, transaction) {
+    this.clauses = [];
+    this.orderDirection = "asc";
+    this.pendingConnector = "and";
+    this.db = db;
+    this.storeName = storeName;
+    this.transaction = transaction;
+  }
+  where(fieldOrBuilder) {
+    if (typeof fieldOrBuilder === "function") {
+      this.clearCurrentField();
+      return this.addNestedGroup(fieldOrBuilder);
+    }
+    this.currentField = fieldOrBuilder;
+    return new FieldQueryBuilder(this, fieldOrBuilder);
+  }
+  and(fieldOrBuilder) {
+    return this.where(fieldOrBuilder);
+  }
+  or() {
+    this.pendingConnector = "or";
+    return this;
+  }
+  addNestedGroup(builder) {
+    var _a;
+    const nested = new _QueryBuilder(this.db, this.storeName, this.transaction);
+    const returned = (_a = builder(nested)) !== null && _a !== void 0 ? _a : nested;
+    const clauses = returned instanceof _QueryBuilder ? returned.clauses : nested.clauses;
+    this.appendClause({ kind: "group", clauses });
+    return this;
+  }
+  clearCurrentField() {
+    this.currentField = void 0;
+  }
+  appendCondition(field, op, value) {
+    this.appendClause({ kind: "condition", field, op, value });
+  }
+  appendClause(clause) {
+    const connector = this.clauses.length === 0 ? null : this.pendingConnector;
+    this.clauses.push(Object.assign(Object.assign({}, clause), { connector }));
+    this.pendingConnector = "and";
+  }
+  requireCurrentField(operation) {
+    if (!this.currentField) {
+      throw new Error(`No field specified for ${operation}`);
+    }
+    const field = this.currentField;
+    this.currentField = void 0;
+    return field;
+  }
+  addCondition(op, value) {
+    const field = this.requireCurrentField(op);
+    this.appendCondition(field, op, value);
     return this;
   }
   equals(value) {
-    if (!this.currentField)
-      throw new Error("No field specified for equals");
-    this.conditions.push({ field: this.currentField, op: "equals", value });
-    this.currentField = void 0;
-    return this;
+    return this.addCondition("equals", value);
   }
   gt(value) {
-    if (!this.currentField)
-      throw new Error("No field specified for gt");
-    this.conditions.push({ field: this.currentField, op: "gt", value });
-    this.currentField = void 0;
-    return this;
+    return this.addCondition("gt", value);
   }
   gte(value) {
-    if (!this.currentField)
-      throw new Error("No field specified for gte");
-    this.conditions.push({ field: this.currentField, op: "gte", value });
-    this.currentField = void 0;
-    return this;
+    return this.addCondition("gte", value);
   }
   lt(value) {
-    if (!this.currentField)
-      throw new Error("No field specified for lt");
-    this.conditions.push({ field: this.currentField, op: "lt", value });
-    this.currentField = void 0;
-    return this;
+    return this.addCondition("lt", value);
   }
   lte(value) {
-    if (!this.currentField)
-      throw new Error("No field specified for lte");
-    this.conditions.push({ field: this.currentField, op: "lte", value });
-    this.currentField = void 0;
-    return this;
+    return this.addCondition("lte", value);
+  }
+  startsWith(value) {
+    return this.addCondition("startsWith", value);
+  }
+  endsWith(value) {
+    return this.addCondition("endsWith", value);
+  }
+  contains(value) {
+    return this.addCondition("contains", value);
+  }
+  matches(value) {
+    return this.addCondition("matches", value);
+  }
+  between(start, end) {
+    return this.addCondition("between", [start, end]);
+  }
+  notBetween(start, end) {
+    return this.addCondition("notBetween", [start, end]);
+  }
+  ["in"](values) {
+    return this.addCondition("in", values);
+  }
+  notIn(values) {
+    return this.addCondition("notIn", values);
+  }
+  containsAny(values) {
+    return this.addCondition("containsAny", values);
+  }
+  containsAll(values) {
+    return this.addCondition("containsAll", values);
   }
   orderBy(field, direction = "asc") {
     this.orderField = field;
@@ -1181,83 +1327,207 @@ var QueryBuilder = class {
     this.rangeEnd = end;
     return this;
   }
-  execute() {
+  groupBy(field) {
+    this.groupField = field;
+    return this;
+  }
+  loadCandidates() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const store = this.transaction ? this.transaction.objectStore(this.storeName) : this.db.transaction(this.storeName, "readonly").objectStore(this.storeName);
+      const request = this.createReadRequest(store);
       return new Promise((resolve, reject) => {
-        const tx = this.db.transaction(this.storeName, "readonly");
-        let store = tx.objectStore(this.storeName);
-        let request;
-        let results = [];
-        if (this.indexName) {
-          if (!store.indexNames.contains(this.indexName)) {
-            reject(new Error(`Index '${this.indexName}' does not exist on ${this.storeName}`));
-            return;
-          }
-          const index = store.index(this.indexName);
-          let keyRange;
-          if (this.rangeStart !== void 0 && this.rangeEnd !== void 0) {
-            keyRange = IDBKeyRange.bound(this.rangeStart, this.rangeEnd);
-          } else if (this.rangeStart !== void 0) {
-            keyRange = IDBKeyRange.lowerBound(this.rangeStart);
-          } else if (this.rangeEnd !== void 0) {
-            keyRange = IDBKeyRange.upperBound(this.rangeEnd);
-          }
-          request = index.openCursor(keyRange);
-        } else {
-          request = store.openCursor();
-        }
         request.onsuccess = () => {
-          const cursor = request.result;
-          if (cursor) {
-            let match = true;
-            const value = cursor.value;
-            for (const cond of this.conditions) {
-              const val = value[cond.field];
-              switch (cond.op) {
-                case "equals":
-                  match = match && val === cond.value;
-                  break;
-                case "gt":
-                  match = match && val > cond.value;
-                  break;
-                case "gte":
-                  match = match && val >= cond.value;
-                  break;
-                case "lt":
-                  match = match && val < cond.value;
-                  break;
-                case "lte":
-                  match = match && val <= cond.value;
-                  break;
-              }
-            }
-            if (match)
-              results.push(value);
-            cursor.continue();
-          } else {
-            if (this.orderField) {
-              results.sort((a, b) => {
-                const va = a[this.orderField];
-                const vb = b[this.orderField];
-                if (va < vb)
-                  return this.orderDirection === "asc" ? -1 : 1;
-                if (va > vb)
-                  return this.orderDirection === "asc" ? 1 : -1;
-                return 0;
-              });
-            }
-            if (this.offsetCount !== void 0)
-              results = results.slice(this.offsetCount);
-            if (this.limitCount !== void 0)
-              results = results.slice(0, this.limitCount);
-            resolve(results);
-          }
+          var _a;
+          return resolve((_a = request.result) !== null && _a !== void 0 ? _a : []);
         };
         request.onerror = () => reject(request.error);
       });
     });
   }
+  createReadRequest(store) {
+    if (!this.indexName) {
+      return store.getAll();
+    }
+    if (!store.indexNames.contains(this.indexName)) {
+      throw new Error(`Index '${this.indexName}' does not exist on ${this.storeName}`);
+    }
+    const index = store.index(this.indexName);
+    let keyRange;
+    if (this.rangeStart !== void 0 && this.rangeEnd !== void 0) {
+      keyRange = IDBKeyRange.bound(this.rangeStart, this.rangeEnd);
+    } else if (this.rangeStart !== void 0) {
+      keyRange = IDBKeyRange.lowerBound(this.rangeStart);
+    } else if (this.rangeEnd !== void 0) {
+      keyRange = IDBKeyRange.upperBound(this.rangeEnd);
+    }
+    return keyRange ? index.getAll(keyRange) : index.getAll();
+  }
+  matchesClause(item, clause) {
+    if (clause.kind === "group") {
+      return this.evaluateClauses(item, clause.clauses);
+    }
+    const value = item[clause.field];
+    switch (clause.op) {
+      case "equals":
+        return value === clause.value;
+      case "gt":
+        return value > clause.value;
+      case "gte":
+        return value >= clause.value;
+      case "lt":
+        return value < clause.value;
+      case "lte":
+        return value <= clause.value;
+      case "startsWith":
+        return typeof value === "string" && value.startsWith(String(clause.value));
+      case "endsWith":
+        return typeof value === "string" && value.endsWith(String(clause.value));
+      case "contains":
+        if (typeof value === "string") {
+          return value.includes(String(clause.value));
+        }
+        return Array.isArray(value) && value.includes(clause.value);
+      case "matches": {
+        const pattern = clause.value instanceof RegExp ? new RegExp(clause.value.source, clause.value.flags) : new RegExp(String(clause.value));
+        return typeof value === "string" && pattern.test(value);
+      }
+      case "between": {
+        const [start, end] = clause.value;
+        return value >= start && value <= end;
+      }
+      case "notBetween": {
+        const [start, end] = clause.value;
+        return value < start || value > end;
+      }
+      case "in":
+        return Array.isArray(clause.value) && clause.value.includes(value);
+      case "notIn":
+        return Array.isArray(clause.value) && !clause.value.includes(value);
+      case "containsAny":
+        return Array.isArray(value) && Array.isArray(clause.value) && clause.value.some((entry) => value.includes(entry));
+      case "containsAll":
+        return Array.isArray(value) && Array.isArray(clause.value) && clause.value.every((entry) => value.includes(entry));
+    }
+  }
+  evaluateClauses(item, clauses) {
+    if (!clauses.length) {
+      return true;
+    }
+    let result = this.matchesClause(item, clauses[0]);
+    for (let index = 1; index < clauses.length; index += 1) {
+      const clause = clauses[index];
+      const matches = this.matchesClause(item, clause);
+      result = clause.connector === "or" ? result || matches : result && matches;
+    }
+    return result;
+  }
+  collectMatches() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const candidates = yield this.loadCandidates();
+      return candidates.filter((item) => this.evaluateClauses(item, this.clauses));
+    });
+  }
+  sortResults(results) {
+    if (!this.orderField) {
+      return results;
+    }
+    return [...results].sort((left, right) => {
+      const leftValue = left[this.orderField];
+      const rightValue = right[this.orderField];
+      if (leftValue < rightValue)
+        return this.orderDirection === "asc" ? -1 : 1;
+      if (leftValue > rightValue)
+        return this.orderDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
+  applyPagination(results) {
+    let nextResults = results;
+    if (this.offsetCount !== void 0) {
+      nextResults = nextResults.slice(this.offsetCount);
+    }
+    if (this.limitCount !== void 0) {
+      nextResults = nextResults.slice(0, this.limitCount);
+    }
+    return nextResults;
+  }
+  aggregateValues(field, reducer) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const results = yield this.collectMatches();
+      const values = field ? results.map((item) => item[field]) : results;
+      return reducer(values);
+    });
+  }
+  aggregateGroupedCount(field) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      var _a;
+      const results = yield this.collectMatches();
+      const groups = /* @__PURE__ */ new Map();
+      for (const item of results) {
+        const key = item[field];
+        groups.set(key, ((_a = groups.get(key)) !== null && _a !== void 0 ? _a : 0) + 1);
+      }
+      return Array.from(groups.entries()).sort(([left], [right]) => {
+        if (left < right)
+          return -1;
+        if (left > right)
+          return 1;
+        return 0;
+      }).map(([key, count]) => ({ [field]: key, count }));
+    });
+  }
+  execute() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const results = yield this.collectMatches();
+      return this.applyPagination(this.sortResults(results));
+    });
+  }
+  count() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      if (this.groupField) {
+        return this.aggregateGroupedCount(this.groupField);
+      }
+      const results = yield this.collectMatches();
+      return results.length;
+    });
+  }
+  sum(field) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const total = yield this.aggregateValues(field, (values) => values.reduce((accumulator, value) => accumulator + (Number(value) || 0), 0));
+      return total;
+    });
+  }
+  avg(field) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const values = yield this.aggregateValues(field, (items) => items);
+      if (!values.length) {
+        return 0;
+      }
+      const total = values.reduce((accumulator, value) => accumulator + (Number(value) || 0), 0);
+      return total / values.length;
+    });
+  }
+  min(field) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const values = yield this.aggregateValues(field, (items) => items);
+      if (!values.length) {
+        return null;
+      }
+      return values.reduce((currentMin, value) => value < currentMin ? value : currentMin);
+    });
+  }
+  max(field) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const values = yield this.aggregateValues(field, (items) => items);
+      if (!values.length) {
+        return null;
+      }
+      return values.reduce((currentMax, value) => value > currentMax ? value : currentMax);
+    });
+  }
 };
+var INTERNAL_CREATED_AT_FIELD = "__idb_createdAt";
+var INTERNAL_UPDATED_AT_FIELD = "__idb_updatedAt";
 var KeyGenerators = class {
   static uuid() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
@@ -1287,7 +1557,6 @@ function KeyPath(options) {
     Reflect.defineMetadata("keypath", metadata, constructor);
   };
 }
-exports.KeyPath = KeyPath;
 function CompositeKeyPath(fields, options) {
   return (target) => {
     const metadata = {
@@ -1297,15 +1566,42 @@ function CompositeKeyPath(fields, options) {
     Reflect.defineMetadata("keypath", metadata, target);
   };
 }
-exports.CompositeKeyPath = CompositeKeyPath;
-function Index() {
+function Index(options) {
   return (target, propertyKey) => {
     const constructor = target.constructor;
     const existing = Reflect.getMetadata("indexes", constructor) || [];
-    Reflect.defineMetadata("indexes", [...existing, propertyKey], constructor);
+    const nextIndexes = [
+      ...existing,
+      { field: propertyKey, options }
+    ];
+    Reflect.defineMetadata("indexes", nextIndexes, constructor);
   };
 }
-exports.Index = Index;
+function Validate(predicate, message) {
+  return (target, propertyKey) => {
+    const constructor = target.constructor;
+    const existing = Reflect.getMetadata("validators", constructor) || [];
+    const nextRules = [
+      ...existing,
+      { field: propertyKey, predicate, message }
+    ];
+    Reflect.defineMetadata("validators", nextRules, constructor);
+  };
+}
+function RetentionPolicy(options) {
+  return (target) => {
+    var _a, _b;
+    if (!Number.isInteger(options.seconds) || options.seconds <= 0) {
+      throw new Error("RetentionPolicy.seconds must be a positive integer.");
+    }
+    const metadata = {
+      seconds: options.seconds,
+      enabled: (_a = options.enabled) !== null && _a !== void 0 ? _a : true,
+      field: (_b = options.field) !== null && _b !== void 0 ? _b : INTERNAL_CREATED_AT_FIELD
+    };
+    Reflect.defineMetadata("retention_policy", metadata, target);
+  };
+}
 function DataClass(options = {}) {
   return (target) => {
     const keyPathMetadata = Reflect.getMetadata("keypath", target);
@@ -1321,17 +1617,29 @@ function DataClass(options = {}) {
     Reflect.defineMetadata("version", version, target);
   };
 }
-exports.DataClass = DataClass;
 var Database = class _Database {
   constructor(dbName, classes) {
     this.db = null;
     this.entityRepositories = /* @__PURE__ */ new Map();
+    this.retentionTimer = null;
+    this.retentionCleanupRunning = false;
     this.dbName = dbName;
     if (!classes.every((cls) => Reflect.getMetadata("dataclass", cls))) {
       throw new Error("All classes should be decorated with @DataClass.");
     }
     this.classes = classes;
     this.dbVersion = this.calculateDatabaseVersion();
+    this.retentionPolicies = this.classes.map((cls) => {
+      const policy = Reflect.getMetadata("retention_policy", cls);
+      if (!(policy === null || policy === void 0 ? void 0 : policy.enabled)) {
+        return null;
+      }
+      return {
+        className: cls.name,
+        storeName: cls.name.toLowerCase(),
+        policy
+      };
+    }).filter((policy) => policy !== null);
   }
   calculateDatabaseVersion() {
     const versions = this.classes.map((cls) => Reflect.getMetadata("version", cls) || 1);
@@ -1372,8 +1680,11 @@ var Database = class _Database {
                 }
                 const store = db.createObjectStore(storeName, storeOptions);
                 indexFields.forEach((indexField) => {
-                  if (!store.indexNames.contains(indexField)) {
-                    store.createIndex(indexField, indexField, { unique: false });
+                  var _a2;
+                  const indexName = typeof indexField === "string" ? indexField : indexField.field;
+                  const indexOptions = typeof indexField === "string" ? { unique: false } : (_a2 = indexField.options) !== null && _a2 !== void 0 ? _a2 : { unique: false };
+                  if (!store.indexNames.contains(indexName)) {
+                    store.createIndex(indexName, indexName, indexOptions);
                   }
                 });
               } else {
@@ -1382,9 +1693,12 @@ var Database = class _Database {
                 if (transaction) {
                   const store = transaction.objectStore(storeName);
                   indexFields.forEach((indexField) => {
-                    if (!store.indexNames.contains(indexField)) {
-                      console.debug(`Adding index: ${indexField} to ${storeName}`);
-                      store.createIndex(indexField, indexField, { unique: false });
+                    var _a2;
+                    const indexName = typeof indexField === "string" ? indexField : indexField.field;
+                    const indexOptions = typeof indexField === "string" ? { unique: false } : (_a2 = indexField.options) !== null && _a2 !== void 0 ? _a2 : { unique: false };
+                    if (!store.indexNames.contains(indexName)) {
+                      console.debug(`Adding index: ${indexName} to ${storeName}`);
+                      store.createIndex(indexName, indexName, indexOptions);
                     }
                   });
                 }
@@ -1395,6 +1709,7 @@ var Database = class _Database {
         request.onsuccess = () => {
           this.db = request.result;
           console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
+          this.startRetentionCleanup();
           resolve();
         };
         request.onerror = () => {
@@ -1417,8 +1732,120 @@ var Database = class _Database {
       });
     });
   }
-  createEntityRepository(cls) {
+  calculateRetentionCleanupIntervalMs() {
+    if (!this.retentionPolicies.length) {
+      return void 0;
+    }
+    const gcd = (left, right) => {
+      let a = left;
+      let b = right;
+      while (b !== 0) {
+        const remainder = a % b;
+        a = b;
+        b = remainder;
+      }
+      return Math.abs(a);
+    };
+    const seconds = this.retentionPolicies.map(({ policy }) => policy.seconds);
+    return seconds.reduce((accumulator, value) => gcd(accumulator, value)) * 1e3;
+  }
+  startRetentionCleanup() {
+    const cleanupIntervalMs = this.calculateRetentionCleanupIntervalMs();
+    if (!cleanupIntervalMs || !this.db || this.retentionTimer) {
+      return;
+    }
+    console.debug(`Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`);
+    void this.runRetentionCleanup();
+    this.retentionTimer = setInterval(() => {
+      void this.runRetentionCleanup();
+    }, cleanupIntervalMs);
+  }
+  runRetentionCleanup() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      if (!this.db || this.retentionCleanupRunning || !this.retentionPolicies.length) {
+        return;
+      }
+      this.retentionCleanupRunning = true;
+      try {
+        console.debug("Retention cleanup tick started");
+        for (const { storeName, className, policy } of this.retentionPolicies) {
+          yield this.cleanupExpiredRecords(storeName, className, policy);
+        }
+        console.debug("Retention cleanup tick finished");
+      } finally {
+        this.retentionCleanupRunning = false;
+      }
+    });
+  }
+  cleanupExpiredRecords(storeName, className, policy) {
+    if (!this.db) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = this.db.transaction(storeName, "readwrite");
+        const store = transaction.objectStore(storeName);
+        const cutoff = Date.now() - policy.seconds * 1e3;
+        const request = store.openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor) {
+            return;
+          }
+          const value = cursor.value;
+          const timestamp = value === null || value === void 0 ? void 0 : value[policy.field];
+          console.debug(`Retention cleanup inspecting ${className}.${policy.field}:`, timestamp, "cutoff:", cutoff);
+          if (typeof timestamp === "number" && timestamp <= cutoff) {
+            const deleteRequest = cursor.delete();
+            deleteRequest.onsuccess = () => {
+              console.debug(`Retention cleanup removed expired record from ${className}`);
+              cursor.continue();
+            };
+            deleteRequest.onerror = () => {
+              var _a;
+              return reject((_a = deleteRequest.error) !== null && _a !== void 0 ? _a : new Error(`Retention cleanup delete failed for ${className}`));
+            };
+            return;
+          }
+          cursor.continue();
+        };
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => {
+          var _a;
+          return reject((_a = transaction.error) !== null && _a !== void 0 ? _a : new Error(`Retention cleanup failed for ${className}`));
+        };
+        transaction.onabort = () => {
+          var _a;
+          return reject((_a = transaction.error) !== null && _a !== void 0 ? _a : new Error(`Retention cleanup aborted for ${className}`));
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+  createEntityRepository(cls, transaction) {
     const self2 = this;
+    const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
+    const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
+    const validators = Reflect.getMetadata("validators", cls) || [];
+    const validateItem = (item) => {
+      const failures = [];
+      validators.forEach((rule) => {
+        const value = item[rule.field];
+        let valid = false;
+        try {
+          valid = rule.predicate(value, item);
+        } catch (_a) {
+          valid = false;
+        }
+        if (!valid) {
+          failures.push(`${rule.field}: ${rule.message}`);
+        }
+      });
+      if (failures.length) {
+        throw new Error(`Validation failed for ${cls.name}: ${failures.join("; ")}`);
+      }
+    };
     const generateKey = (item) => {
       var _a;
       const keyPathMetadata = Reflect.getMetadata("keypath", cls);
@@ -1438,6 +1865,46 @@ var Database = class _Database {
         default:
           return void 0;
       }
+    };
+    const applyTimestampFields = (item, existingItem) => {
+      const now = Date.now();
+      const existingCreationValue = existingItem ? existingItem[creationTimestampField] : void 0;
+      item[creationTimestampField] = existingCreationValue !== void 0 ? existingCreationValue : now;
+      item[updateTimestampField] = now;
+    };
+    const readExistingItem = (store, key) => {
+      return new Promise((resolve, reject) => {
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    };
+    const createStoredItem = (store, item) => {
+      return new Promise((resolve, reject) => {
+        const request = store.add(item);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    };
+    const updateStoredItem = (store, item) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const key = extractKey(item);
+      let existingItem;
+      if (key !== void 0 && key !== null) {
+        existingItem = yield readExistingItem(store, key);
+      }
+      applyTimestampFields(item, existingItem);
+      yield new Promise((resolve, reject) => {
+        const request = store.put(item);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    });
+    const deleteStoredItem = (store, key) => {
+      return new Promise((resolve, reject) => {
+        const request = store.delete(key);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
     };
     const extractKey = (item) => {
       const keyPathMetadata = Reflect.getMetadata("keypath", cls);
@@ -1464,7 +1931,7 @@ var Database = class _Database {
         if (!self2.db)
           throw new Error("Database not initialized.");
         const storeName = cls.name.toLowerCase();
-        return new QueryBuilder(self2.db, storeName);
+        return new QueryBuilder(self2.db, storeName, transaction);
       },
       create: (item) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         var _a;
@@ -1478,16 +1945,19 @@ var Database = class _Database {
             }
           }
         }
+        validateItem(item);
+        applyTimestampFields(item);
         return this.performOperation(cls.name, "readwrite", (store) => {
-          const request = store.add(item);
-          return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item added to ${cls.name}:`, item);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
+          return createStoredItem(store, item).then(() => {
+            console.debug(`Item added to ${cls.name}:`, item);
           });
-        });
+        }, transaction);
+      }),
+      createMany: (items) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const repository = this.createEntityRepository(cls, transaction);
+        for (const item of items) {
+          yield repository.create(item);
+        }
       }),
       read: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1499,31 +1969,43 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       update: (item) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        validateItem(item);
         return this.performOperation(cls.name, "readwrite", (store) => {
-          const request = store.put(item);
-          return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item updated in ${cls.name}:`, item);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
+          return updateStoredItem(store, item).then(() => {
+            console.debug(`Item updated in ${cls.name}:`, item);
           });
-        });
+        }, transaction);
+      }),
+      updateMany: (items) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const repository = this.createEntityRepository(cls, transaction);
+        for (const item of items) {
+          yield repository.update(item);
+        }
       }),
       delete: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readwrite", (store) => {
-          const request = store.delete(key);
-          return new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item deleted from ${cls.name}:`, key);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
+          return deleteStoredItem(store, key).then(() => {
+            console.debug(`Item deleted from ${cls.name}:`, key);
           });
-        });
+        }, transaction);
+      }),
+      deleteMany: (keys) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const repository = this.createEntityRepository(cls, transaction);
+        for (const key of keys) {
+          yield repository.delete(key);
+        }
+      }),
+      deleteWhere: (predicate) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        var _a;
+        const repository = this.createEntityRepository(cls, transaction);
+        const query = repository.query();
+        const resolvedQuery = (_a = predicate(query)) !== null && _a !== void 0 ? _a : query;
+        const matches = yield resolvedQuery.execute();
+        const keys = matches.map((item) => extractKey(item)).filter((key) => key !== void 0 && key !== null);
+        yield repository.deleteMany(keys);
       }),
       list: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1535,7 +2017,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       listPaginated: (page, pageSize) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1549,7 +2031,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       findByIndex: (indexName, value) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1565,7 +2047,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       findOneByIndex: (indexName, value) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1581,7 +2063,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       count: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1593,7 +2075,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       exists: (key) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readonly", (store) => {
@@ -1606,7 +2088,7 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       }),
       clear: () => tslib_1.__awaiter(this, void 0, void 0, function* () {
         return this.performOperation(cls.name, "readwrite", (store) => {
@@ -1618,20 +2100,104 @@ var Database = class _Database {
             };
             request.onerror = () => reject(request.error);
           });
-        });
+        }, transaction);
       })
     };
   }
-  performOperation(className, mode, operation) {
+  performOperation(className, mode, operation, transaction) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-      if (!this.db) {
+      if (!this.db && !transaction) {
         throw new Error("Database not initialized.");
       }
       const storeName = className.toLowerCase();
-      const transaction = this.db.transaction(storeName, mode);
-      const store = transaction.objectStore(storeName);
+      const activeTransaction = transaction !== null && transaction !== void 0 ? transaction : this.db.transaction(storeName, mode);
+      const store = activeTransaction.objectStore(storeName);
       return operation(store);
     });
+  }
+  createTransactionHandle(entityNames, mode) {
+    if (!this.db) {
+      throw new Error("Database not initialized.");
+    }
+    const uniqueEntityNames = [...new Set(entityNames)];
+    const storeNames = uniqueEntityNames.map((entityName) => {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (!entityClass) {
+        throw new Error(`Entity '${entityName}' is not registered in ${this.dbName}.`);
+      }
+      return entityClass.name.toLowerCase();
+    });
+    const nativeTransaction = this.db.transaction(storeNames, mode);
+    let rollbackRequested = false;
+    const completion = new Promise((resolve, reject) => {
+      nativeTransaction.oncomplete = () => resolve();
+      nativeTransaction.onabort = () => {
+        var _a;
+        if (rollbackRequested) {
+          resolve();
+          return;
+        }
+        reject((_a = nativeTransaction.error) !== null && _a !== void 0 ? _a : new Error("Transaction aborted."));
+      };
+      nativeTransaction.onerror = () => {
+        var _a;
+        if (rollbackRequested) {
+          resolve();
+          return;
+        }
+        reject((_a = nativeTransaction.error) !== null && _a !== void 0 ? _a : new Error("Transaction failed."));
+      };
+    });
+    const handle = {};
+    uniqueEntityNames.forEach((entityName) => {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (entityClass) {
+        handle[entityName] = this.createEntityRepository(entityClass, nativeTransaction);
+      }
+    });
+    handle.commit = () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+      if (typeof nativeTransaction.commit === "function") {
+        nativeTransaction.commit();
+      }
+      yield completion;
+    });
+    handle.rollback = () => tslib_1.__awaiter(this, void 0, void 0, function* () {
+      rollbackRequested = true;
+      try {
+        nativeTransaction.abort();
+      } catch (_a) {
+      }
+      yield completion.catch(() => void 0);
+    });
+    return handle;
+  }
+  beginTransaction(entityNames_1) {
+    return tslib_1.__awaiter(this, arguments, void 0, function* (entityNames, mode = "readwrite") {
+      return this.createTransactionHandle(entityNames, mode);
+    });
+  }
+  transaction(callback) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+      const tx = this.createTransactionHandle(this.classes.map((cls) => cls.name), "readwrite");
+      try {
+        const result = yield callback(tx);
+        yield tx.commit();
+        return result;
+      } catch (error) {
+        yield tx.rollback();
+        throw error;
+      }
+    });
+  }
+  close() {
+    if (this.retentionTimer) {
+      clearInterval(this.retentionTimer);
+      this.retentionTimer = null;
+    }
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+    }
   }
   getAvailableEntities() {
     return Array.from(this.entityRepositories.keys());

@@ -564,4 +564,4 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
 
-Made by [Maifee Ulasad](https://github.com/maifeeulasad) with :love: and :tea:. Licensed under [MIT](./LICENSE). 
+Made by [Maifee Ulasad](https://github.com/maifeeulasad) with :heart: and :tea:. Licensed under [MIT](./LICENSE). 
