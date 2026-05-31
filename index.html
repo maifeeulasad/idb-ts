@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,91 +9,223 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-      gtag('config', 'G-3G1RNC5YLT');
+        gtag('config', 'G-3G1RNC5YLT');
     </script>
 
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #ece9e6, #ffffff);
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(236, 233, 230, 0.9) 35%, rgba(224, 228, 235, 0.95)),
+                linear-gradient(to right, #ece9e6, #ffffff);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            color: #1f2937;
         }
+
+        .page {
+            width: min(920px, calc(100vw - 32px));
+            padding: 28px;
+        }
+
+        .hero {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            border-radius: 24px;
+            box-shadow: 0 18px 60px rgba(15, 23, 42, 0.12);
+            padding: 28px 30px;
+            margin-bottom: 18px;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.78rem;
+            color: #6b7280;
+            font-weight: 700;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            line-height: 1.05;
+        }
+
+        .subtext {
+            margin: 14px 0 0;
+            max-width: 62ch;
+            font-size: 1rem;
+            line-height: 1.65;
+            color: #4b5563;
+        }
+
+        .links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .link-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(59, 130, 246, 0.18);
+            background: rgba(255, 255, 255, 0.88);
+            color: #0f4c81;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .link-pill:hover {
+            color: #0b3d66;
+            transform: translateY(-1px);
+        }
+
+        .table-shell {
+            background: rgba(255, 255, 255, 0.78);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            overflow: hidden;
+            box-shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
+        }
+
         table {
+            width: 100%;
             border-collapse: collapse;
-            width: 50%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        th, td {
+
+        th,
+        td {
             padding: 12px;
             text-align: center;
             border-bottom: 1px solid #ddd;
         }
+
         th {
             background-color: #f4f4f4;
         }
+
         tr:hover {
             background-color: #f1f1f1;
         }
+
         a {
             text-decoration: none;
             color: #3498db;
             font-weight: bold;
         }
+
         a:hover {
             color: #2980b9;
         }
+
         /* Highlight style for the Coverage Report row */
         .highlight {
             background: linear-gradient(90deg, #fff7e6, #fff1cc);
             box-shadow: inset 4px 0 0 0 #ffd166;
             font-weight: 600;
         }
+
         .highlight a {
             color: #b36000;
         }
+
         .highlight:hover {
             background: linear-gradient(90deg, #fff3d6, #ffe7b3);
         }
+
+        .muted {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(920px, calc(100vw - 20px));
+                padding: 10px;
+            }
+
+            .hero,
+            .table-shell {
+                border-radius: 18px;
+            }
+
+            .hero {
+                padding: 22px;
+            }
+
+            th,
+            td {
+                padding: 10px 8px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <table>
-        <thead>
-            <tr>
-                <th>Technology</th>
-                <th>Link</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>TypeScript with ESBuild</td>
-                <td><a href="./typescript">Go to TypeScript</a></td>
-            </tr>
-            <tr>
-                <td>Vite React with TypeScript</td>
-                <td><a href="./vitereact">Go to Vite React</a></td>
-            </tr>
-            <tr>
-                <td>Vue with TypeScript</td>
-                <td><a href="./vue">Go to Vue</a></td>
-            </tr>
-            <tr class="highlight">
-                <td>Coverage Report</td>
-                <td><a href="./coverage/lcov-report/index.html">Go to Coverage Report</a></td>
-            </tr>
-                <tr class="highlight">
-                    <td>Documentation</td>
-                    <td><a href="./docs/">Go to Docs</a></td>
-                </tr>
-        </tbody>
-    </table>
+    <main class="page">
+        <section class="hero">
+            <p class="eyebrow">IndexedDB utility library</p>
+            <h1>idb-ts</h1>
+            <p class="subtext">
+                A small CRUD helper for IndexedDB, published on npm and maintained by Maifee Ul Asad.
+                Use the links below to open the examples, view the coverage report, or jump to the project
+                repository and package page.
+            </p>
+            <div class="links">
+                <a class="link-pill" href="https://www.npmjs.com/package/idb-ts" target="_blank" rel="noreferrer">npm package</a>
+                <a class="link-pill" href="https://github.com/maifeeulasad/idb-ts" target="_blank" rel="noreferrer">GitHub repo</a>
+            </div>
+            <p class="muted">Made by Maifee Ul Asad</p>
+        </section>
+
+        <section class="table-shell">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Technology</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>TypeScript with ESBuild</td>
+                        <td><a href="./typescript">Go to TypeScript</a></td>
+                    </tr>
+                    <tr>
+                        <td>Vite React with TypeScript</td>
+                        <td><a href="./vitereact">Go to Vite React</a></td>
+                    </tr>
+                    <tr>
+                        <td>Vue with TypeScript</td>
+                        <td><a href="./vue">Go to Vue</a></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>Coverage Report</td>
+                        <td><a href="./coverage/lcov-report/index.html">Go to Coverage Report</a></td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>Documentation</td>
+                        <td><a href="./docs/">Go to Docs</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
 </body>
+
 </html>
