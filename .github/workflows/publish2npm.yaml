@@ -25,7 +25,7 @@ jobs:
       - name: Install build tools
         run: npm i -g pnpm
       - name: 'Installing prod deps'
-        run: pnpm install
+        run: pnpm i --frozen-lockfile
       - name: 'Build'
         run: pnpm run build
       - name: 'Publish'
