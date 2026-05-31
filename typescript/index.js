@@ -2233,13 +2233,13 @@ var User = class {
   }
 };
 __decorateClass([
-  (void 0)("id", { autoIncrement: true })
+  (void 0)({ autoIncrement: true })
 ], User.prototype, "id", 2);
 __decorateClass([
-  (void 0)("email", { unique: true })
+  (void 0)({ unique: true })
 ], User.prototype, "email", 2);
 __decorateClass([
-  (void 0)("age")
+  (void 0)()
 ], User.prototype, "age", 2);
 User = __decorateClass([
   (void 0)({ version: 1 })
@@ -2256,13 +2256,13 @@ var Post = class {
   }
 };
 __decorateClass([
-  (void 0)("uuid", { generator: (void 0).uuid })
+  (void 0)({ generator: (void 0).uuid })
 ], Post.prototype, "uuid", 2);
 __decorateClass([
-  (void 0)("authorEmail")
+  (void 0)()
 ], Post.prototype, "authorEmail", 2);
 __decorateClass([
-  (void 0)("category")
+  (void 0)()
 ], Post.prototype, "category", 2);
 Post = __decorateClass([
   (void 0)({ version: 2 })
@@ -2277,7 +2277,7 @@ var UserProject = class {
   }
 };
 __decorateClass([
-  (void 0)("role")
+  (void 0)()
 ], UserProject.prototype, "role", 2);
 UserProject = __decorateClass([
   (void 0)({ version: 1 }),
@@ -2293,29 +2293,26 @@ var Activity = class {
   }
 };
 __decorateClass([
-  (void 0)("activityId", {
+  (void 0)({
     generator: (item) => `${item.type}_${item.userId}_${Date.now()}`
   })
 ], Activity.prototype, "activityId", 2);
 __decorateClass([
-  (void 0)("userId")
+  (void 0)()
 ], Activity.prototype, "userId", 2);
 __decorateClass([
-  (void 0)("type")
+  (void 0)()
 ], Activity.prototype, "type", 2);
 __decorateClass([
-  (void 0)("timestamp")
+  (void 0)()
 ], Activity.prototype, "timestamp", 2);
 Activity = __decorateClass([
   (void 0)({ version: 1 })
 ], Activity);
 async function demonstrateFeatures() {
   console.log("\u{1F680} Starting idb-ts v3.7.0 Feature Demonstration");
-  const db = new (void 0)("idb-demo-v3", [User, Post, UserProject, Activity]);
-  await db.initialize();
-  console.log(
-    `\u{1F4CA} Database initialized with version: ${db.getDatabaseVersion()}`
-  );
+  const db = await (void 0).build("idb-demo-v3", [User, Post, UserProject, Activity]);
+  console.log(`\u{1F4CA} Database initialized with version: ${db.getDatabaseVersion()}`);
   console.log(`\u{1F4CB} Available entities: ${db.getAvailableEntities().join(", ")}`);
   console.log("\n=== CRUD Operations Demo ===");
   const alice = new User(
@@ -2411,12 +2408,12 @@ async function demonstrateFeatures() {
     }))
   );
   console.log("\n=== Index-based Queries Demo ===");
-  const userByEmail = await db.User.findByIndex("email", "alice@example.com");
+  const userByEmail = await db.User.findOneByIndex("email", "alice@example.com");
   console.log(
     "\u{1F464} User found by email:",
     userByEmail ? { name: userByEmail.name, email: userByEmail.email } : "Not found"
   );
-  const adminProjects = await db.UserProject.findAllByIndex("role", "admin");
+  const adminProjects = await db.UserProject.findByIndex("role", "admin");
   console.log(
     `\u{1F451} Found ${adminProjects.length} admin relationships:`,
     adminProjects.map((p) => ({ userId: p.userId, projectId: p.projectId }))
@@ -2442,14 +2439,8 @@ async function demonstrateFeatures() {
   console.log("\n=== Pagination Demo ===");
   const firstPage = await db.User.query().orderBy("name", "asc").limit(2).execute();
   const secondPage = await db.User.query().orderBy("name", "asc").offset(2).limit(2).execute();
-  console.log(
-    "\u{1F4C4} First page users:",
-    firstPage.map((u) => u.name)
-  );
-  console.log(
-    "\u{1F4C4} Second page users:",
-    secondPage.map((u) => u.name)
-  );
+  console.log("\u{1F4C4} First page users:", firstPage.map((u) => u.name));
+  console.log("\u{1F4C4} Second page users:", secondPage.map((u) => u.name));
   console.log("\n=== Database Statistics ===");
   const allUsers = await db.User.list();
   const allPosts = await db.Post.list();
