@@ -85,7 +85,10 @@ describe('IndexedDB CRUD', () => {
 
     await db.User.createMany([user1, user2, user3]);
 
-    const createdUsers = await db.User.findByIndex('email', 'frank@example.com');
+    const createdUsers = await db.User.findByIndex(
+      'email',
+      'frank@example.com',
+    );
     expect(createdUsers).toHaveLength(1);
     expect(createdUsers[0].id).toBe('u10');
 
@@ -117,9 +120,11 @@ describe('IndexedDB CRUD', () => {
 
     await db.User.deleteWhere((qb) => qb.where('status').equals('inactive'));
 
-    const remainingInactive = await db.User.query().where('status').equals('inactive').execute();
+    const remainingInactive = await db.User.query()
+      .where('status')
+      .equals('inactive')
+      .execute();
     expect(remainingInactive).toHaveLength(0);
     expect(await db.User.read('u14')).toBeDefined();
   });
-
 });
