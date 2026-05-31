@@ -6,7 +6,7 @@ export default {
     {
       file: 'lib/index.esm.js',
       format: 'esm',
-    }
+    },
   ],
   plugins: [typescript()],
 };
