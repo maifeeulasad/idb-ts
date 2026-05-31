@@ -64,7 +64,10 @@ describe('IndexedDB Indexing', () => {
   });
 
   it('should return undefined when no user found by index', async () => {
-    const user = await db.User.findOneByIndex('email', 'nonexistent@example.com');
+    const user = await db.User.findOneByIndex(
+      'email',
+      'nonexistent@example.com',
+    );
     expect(user).toBeUndefined();
   });
 
@@ -75,20 +78,20 @@ describe('IndexedDB Indexing', () => {
 
   it('should throw error when querying non-existent index', async () => {
     await expect(db.User.findByIndex('nonexistent', 'value')).rejects.toThrow(
-      "Index 'nonexistent' does not exist on User"
+      "Index 'nonexistent' does not exist on User",
     );
   });
 
   it('should throw error when querying non-existent index with findOneByIndex', async () => {
-    await expect(db.User.findOneByIndex('nonexistent', 'value')).rejects.toThrow(
-      "Index 'nonexistent' does not exist on User"
-    );
+    await expect(
+      db.User.findOneByIndex('nonexistent', 'value'),
+    ).rejects.toThrow("Index 'nonexistent' does not exist on User");
   });
 
   it('should work with non-indexed fields not being queryable by index', async () => {
     // name field is not indexed, so this should throw an error
     await expect(db.User.findByIndex('name', 'Alice')).rejects.toThrow(
-      "Index 'name' does not exist on User"
+      "Index 'name' does not exist on User",
     );
   });
 });
