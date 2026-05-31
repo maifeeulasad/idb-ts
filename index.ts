@@ -277,9 +277,13 @@ function DataClass(options: DataClassOptions = {}): ClassDecorator {
 
 interface EntityRepository<T> {
   create(item: T): Promise<void>;
+  createMany(items: T[]): Promise<void>;
   read(key: string | string[] | number): Promise<T | undefined>;
   update(item: T): Promise<void>;
+  updateMany(items: T[]): Promise<void>;
   delete(key: string | string[] | number): Promise<void>;
+  deleteMany(keys: Array<string | string[] | number>): Promise<void>;
+  deleteWhere(predicate: (query: QueryBuilder<T>) => QueryBuilder<T> | void): Promise<void>;
   list(): Promise<T[]>;
   listPaginated(page: number, pageSize: number): Promise<T[]>;
   findByIndex(indexName: string, value: any): Promise<T[]>;
@@ -575,6 +579,39 @@ class Database {
       request.onerror = () => reject(request.error);
     });
   };
+
+  const createStoredItem = (store: IDBObjectStore, item: T): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      const request = store.add(item);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  const updateStoredItem = async (store: IDBObjectStore, item: T): Promise<void> => {
+    const key = extractKey(item);
+
+    let existingItem: T | undefined;
+    if (key !== undefined && key !== null) {
+      existingItem = await readExistingItem(store, key);
+    }
+
+    applyTimestampFields(item, existingItem);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.put(item);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  const deleteStoredItem = (store: IDBObjectStore, key: string | string[] | number): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  };
   
   // Helper function to extract key from item
   const extractKey = (item: T): any => {
@@ -628,15 +665,17 @@ class Database {
         applyTimestampFields(item);
         
         return this.performOperation(cls.name, 'readwrite', (store) => {
-          const request = store.add(item);
-          return new Promise<void>((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item added to ${cls.name}:`, item);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
+          return createStoredItem(store, item).then(() => {
+            console.debug(`Item added to ${cls.name}:`, item);
           });
         });
+      },
+
+      createMany: async (items: T[]): Promise<void> => {
+        const repository = this.createEntityRepository<T>(cls);
+        for (const item of items) {
+          await repository.create(item);
+        }
       },
 
       read: async (key: string | string[] | number): Promise<T | undefined> => {
@@ -654,39 +693,44 @@ class Database {
 
       update: async (item: T): Promise<void> => {
         return this.performOperation(cls.name, 'readwrite', (store) => {
-          const key = extractKey(item);
-
-          return (async () => {
-            let existingItem: T | undefined;
-            if (key !== undefined && key !== null) {
-              existingItem = await readExistingItem(store, key);
-            }
-
-            applyTimestampFields(item, existingItem);
-
-            const request = store.put(item);
-            return new Promise<void>((resolve, reject) => {
-              request.onsuccess = () => {
-                console.debug(`Item updated in ${cls.name}:`, item);
-                resolve();
-              };
-              request.onerror = () => reject(request.error);
-            });
-          })();
+          return updateStoredItem(store, item).then(() => {
+            console.debug(`Item updated in ${cls.name}:`, item);
+          });
         });
+      },
+
+      updateMany: async (items: T[]): Promise<void> => {
+        const repository = this.createEntityRepository<T>(cls);
+        for (const item of items) {
+          await repository.update(item);
+        }
       },
 
       delete: async (key: string | string[] | number): Promise<void> => {
         return this.performOperation(cls.name, 'readwrite', (store) => {
-          const request = store.delete(key);
-          return new Promise<void>((resolve, reject) => {
-            request.onsuccess = () => {
-              console.debug(`Item deleted from ${cls.name}:`, key);
-              resolve();
-            };
-            request.onerror = () => reject(request.error);
+          return deleteStoredItem(store, key).then(() => {
+            console.debug(`Item deleted from ${cls.name}:`, key);
           });
         });
+      },
+
+      deleteMany: async (keys: Array<string | string[] | number>): Promise<void> => {
+        const repository = this.createEntityRepository<T>(cls);
+        for (const key of keys) {
+          await repository.delete(key);
+        }
+      },
+
+      deleteWhere: async (predicate: (query: QueryBuilder<T>) => QueryBuilder<T> | void): Promise<void> => {
+        const repository = this.createEntityRepository<T>(cls);
+        const query = repository.query();
+        const resolvedQuery = predicate(query) ?? query;
+        const matches = await resolvedQuery.execute();
+        const keys = matches
+          .map((item) => extractKey(item))
+          .filter((key): key is string | string[] | number => key !== undefined && key !== null);
+
+        await repository.deleteMany(keys);
       },
 
       list: async (): Promise<T[]> => {
