@@ -76,7 +76,7 @@ jobs:
       - name: Install build tools
         run: npm i -g pnpm
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm i --frozen-lockfile
       - name: Run tests with coverage
         run: pnpm test:coverage
       - name: Add Google tag to generated coverage pages
