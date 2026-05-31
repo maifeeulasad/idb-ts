@@ -79,6 +79,37 @@ jobs:
         run: pnpm i
       - name: Run tests with coverage
         run: pnpm test:coverage
+      - name: Add Google tag to generated coverage pages
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+
+          snippet = dedent("""
+          <!-- Google tag (gtag.js) -->
+          <script async src=\"https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT\"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-3G1RNC5YLT');
+          </script>
+          """).strip()
+
+          for path in [
+            Path('./coverage/lcov-report/index.html'),
+            Path('./coverage/lcov-report/index.ts.html'),
+          ]:
+            if not path.exists():
+              continue
+
+            content = path.read_text()
+            if 'G-3G1RNC5YLT' in content:
+              continue
+
+            path.write_text(content.replace('</head>', f'{snippet}\n</head>', 1))
+          PY
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
