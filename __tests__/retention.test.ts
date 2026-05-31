@@ -40,7 +40,10 @@ describe('Retention policy cleanup', () => {
       deleteRequest.onerror = () => resolve();
     });
 
-    db = await Database.build('RetentionPolicyDB', [ShortRetentionEntry, LongRetentionEntry]);
+    db = await Database.build('RetentionPolicyDB', [
+      ShortRetentionEntry,
+      LongRetentionEntry,
+    ]);
   });
 
   afterAll(() => {
@@ -48,8 +51,12 @@ describe('Retention policy cleanup', () => {
   });
 
   it('should cleanup old data with one periodic hook across repositories', async () => {
-    await db.ShortRetentionEntry.create(new ShortRetentionEntry('short-1', 'batch-1'));
-    await db.LongRetentionEntry.create(new LongRetentionEntry('long-1', 'batch-1'));
+    await db.ShortRetentionEntry.create(
+      new ShortRetentionEntry('short-1', 'batch-1'),
+    );
+    await db.LongRetentionEntry.create(
+      new LongRetentionEntry('long-1', 'batch-1'),
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 3100));
 
@@ -60,8 +67,12 @@ describe('Retention policy cleanup', () => {
     expect(afterFirstWaitLong).toHaveLength(1);
     expect(afterFirstWaitLong[0].id).toBe('long-1');
 
-    await db.ShortRetentionEntry.create(new ShortRetentionEntry('short-2', 'batch-2'));
-    await db.LongRetentionEntry.create(new LongRetentionEntry('long-2', 'batch-2'));
+    await db.ShortRetentionEntry.create(
+      new ShortRetentionEntry('short-2', 'batch-2'),
+    );
+    await db.LongRetentionEntry.create(
+      new LongRetentionEntry('long-2', 'batch-2'),
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 3300));
 
