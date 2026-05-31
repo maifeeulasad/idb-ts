@@ -18,7 +18,7 @@ jobs:
       - name: Install build tools
         run: npm i -g pnpm
       - name: Install dependencies
-        run: pnpm i
+        run: pnpm i --frozen-lockfile
       - name: Run tests
         run: pnpm test
       - name: Run tests with coverage
