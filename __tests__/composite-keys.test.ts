@@ -1,4 +1,11 @@
-import { Database, KeyPath, DataClass, Index, KeyGenerators, CompositeKeyPath } from '../index';
+import {
+  Database,
+  KeyPath,
+  DataClass,
+  Index,
+  KeyGenerators,
+  CompositeKeyPath,
+} from '../index';
 
 // Test entities with different key configurations
 
@@ -7,7 +14,7 @@ import { Database, KeyPath, DataClass, Index, KeyGenerators, CompositeKeyPath } 
 class AutoIncrementEntity {
   @KeyPath({ autoIncrement: true })
   id!: number;
-  
+
   name!: string;
   value!: number;
 
@@ -22,10 +29,10 @@ class AutoIncrementEntity {
 class UUIDEntity {
   @KeyPath({ generator: 'uuid' })
   uuid!: string;
-  
+
   @Index()
   category!: string;
-  
+
   title!: string;
 
   constructor(category: string, title: string) {
@@ -39,7 +46,7 @@ class UUIDEntity {
 class TimestampEntity {
   @KeyPath({ generator: 'timestamp' })
   timestamp!: number;
-  
+
   event!: string;
   data!: any;
 
@@ -54,7 +61,7 @@ class TimestampEntity {
 class RandomEntity {
   @KeyPath({ generator: 'random' })
   randomId!: string;
-  
+
   description!: string;
 
   constructor(description: string) {
@@ -67,7 +74,7 @@ class RandomEntity {
 class CustomKeyEntity {
   @KeyPath({ generator: (item: any) => `custom_${item.type}_${Date.now()}` })
   customId!: string;
-  
+
   type!: string;
   content!: string;
 
@@ -83,10 +90,10 @@ class CustomKeyEntity {
 class UserProject {
   userId!: string;
   projectId!: string;
-  
+
   @Index()
   role!: string;
-  
+
   @Index()
   joinedAt!: Date;
 
@@ -103,7 +110,7 @@ class UserProject {
 class TraditionalEntity {
   @KeyPath()
   id!: string;
-  
+
   name!: string;
 
   constructor(id: string, name: string) {
@@ -130,7 +137,7 @@ describe('Multi-Field & Composite Key Support', () => {
       RandomEntity,
       CustomKeyEntity,
       UserProject,
-      TraditionalEntity
+      TraditionalEntity,
     ]);
   });
 
@@ -153,12 +160,14 @@ describe('Multi-Field & Composite Key Support', () => {
   describe('UUID generated keys', () => {
     it('should create entities with UUID keys', async () => {
       const entity = new UUIDEntity('test', 'Test Entity');
-      
+
       await db.UUIDEntity.create(entity);
-      
+
       expect(entity.uuid).toBeDefined();
-      expect(entity.uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-      
+      expect(entity.uuid).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
+
       const retrieved = await db.UUIDEntity.read(entity.uuid);
       expect(retrieved).toEqual(entity);
     });
@@ -166,10 +175,10 @@ describe('Multi-Field & Composite Key Support', () => {
     it('should generate different UUIDs for different entities', async () => {
       const entity1 = new UUIDEntity('test1', 'Test Entity 1');
       const entity2 = new UUIDEntity('test2', 'Test Entity 2');
-      
+
       await db.UUIDEntity.create(entity1);
       await db.UUIDEntity.create(entity2);
-      
+
       expect(entity1.uuid).not.toBe(entity2.uuid);
     });
   });
@@ -178,14 +187,14 @@ describe('Multi-Field & Composite Key Support', () => {
     it('should create entities with timestamp keys', async () => {
       const beforeTime = Date.now();
       const entity = new TimestampEntity('user_login', { userId: 'user123' });
-      
+
       await db.TimestampEntity.create(entity);
       const afterTime = Date.now();
-      
+
       expect(entity.timestamp).toBeDefined();
       expect(entity.timestamp).toBeGreaterThanOrEqual(beforeTime);
       expect(entity.timestamp).toBeLessThanOrEqual(afterTime);
-      
+
       const retrieved = await db.TimestampEntity.read(entity.timestamp);
       expect(retrieved).toEqual(entity);
     });
@@ -194,13 +203,13 @@ describe('Multi-Field & Composite Key Support', () => {
   describe('Random generated keys', () => {
     it('should create entities with random keys', async () => {
       const entity = new RandomEntity('Random test entity');
-      
+
       await db.RandomEntity.create(entity);
-      
+
       expect(entity.randomId).toBeDefined();
       expect(typeof entity.randomId).toBe('string');
       expect(entity.randomId.length).toBeGreaterThan(0);
-      
+
       const retrieved = await db.RandomEntity.read(entity.randomId);
       expect(retrieved).toEqual(entity);
     });
@@ -208,10 +217,10 @@ describe('Multi-Field & Composite Key Support', () => {
     it('should generate different random keys for different entities', async () => {
       const entity1 = new RandomEntity('Random entity 1');
       const entity2 = new RandomEntity('Random entity 2');
-      
+
       await db.RandomEntity.create(entity1);
       await db.RandomEntity.create(entity2);
-      
+
       expect(entity1.randomId).not.toBe(entity2.randomId);
     });
   });
@@ -219,12 +228,12 @@ describe('Multi-Field & Composite Key Support', () => {
   describe('Custom key generators', () => {
     it('should create entities with custom generated keys', async () => {
       const entity = new CustomKeyEntity('blog_post', 'My first blog post');
-      
+
       await db.CustomKeyEntity.create(entity);
-      
+
       expect(entity.customId).toBeDefined();
       expect(entity.customId).toMatch(/^custom_blog_post_\d+$/);
-      
+
       const retrieved = await db.CustomKeyEntity.read(entity.customId);
       expect(retrieved).toEqual(entity);
     });
@@ -233,9 +242,9 @@ describe('Multi-Field & Composite Key Support', () => {
   describe('Composite keys', () => {
     it('should create entities with composite keys', async () => {
       const userProject = new UserProject('user123', 'project456', 'developer');
-      
+
       await db.UserProject.create(userProject);
-      
+
       // Read using composite key
       const retrieved = await db.UserProject.read(['user123', 'project456']);
       expect(retrieved).toBeDefined();
@@ -247,25 +256,29 @@ describe('Multi-Field & Composite Key Support', () => {
     it('should handle multiple entities with different composite keys', async () => {
       const userProject1 = new UserProject('user123', 'project789', 'admin');
       const userProject2 = new UserProject('user456', 'project456', 'viewer');
-      
+
       await db.UserProject.create(userProject1);
       await db.UserProject.create(userProject2);
-      
+
       const retrieved1 = await db.UserProject.read(['user123', 'project789']);
       const retrieved2 = await db.UserProject.read(['user456', 'project456']);
-      
+
       expect(retrieved1?.role).toBe('admin');
       expect(retrieved2?.role).toBe('viewer');
     });
 
     it('should support updates with composite keys', async () => {
-      const userProject = new UserProject('user789', 'project123', 'contributor');
+      const userProject = new UserProject(
+        'user789',
+        'project123',
+        'contributor',
+      );
       await db.UserProject.create(userProject);
-      
+
       // Update the entity
       userProject.role = 'maintainer';
       await db.UserProject.update(userProject);
-      
+
       const retrieved = await db.UserProject.read(['user789', 'project123']);
       expect(retrieved?.role).toBe('maintainer');
     });
@@ -273,14 +286,14 @@ describe('Multi-Field & Composite Key Support', () => {
     it('should support deletion with composite keys', async () => {
       const userProject = new UserProject('user999', 'project999', 'temp');
       await db.UserProject.create(userProject);
-      
+
       // Verify it exists
       let retrieved = await db.UserProject.read(['user999', 'project999']);
       expect(retrieved).toBeDefined();
-      
+
       // Delete it
       await db.UserProject.delete(['user999', 'project999']);
-      
+
       // Verify it's gone
       retrieved = await db.UserProject.read(['user999', 'project999']);
       expect(retrieved).toBeUndefined();
@@ -297,9 +310,9 @@ describe('Multi-Field & Composite Key Support', () => {
   describe('Traditional single keys (backward compatibility)', () => {
     it('should still work with traditional single key syntax', async () => {
       const entity = new TraditionalEntity('trad_1', 'Traditional Entity');
-      
+
       await db.TraditionalEntity.create(entity);
-      
+
       const retrieved = await db.TraditionalEntity.read('trad_1');
       expect(retrieved).toEqual(entity);
     });
@@ -310,11 +323,11 @@ describe('Multi-Field & Composite Key Support', () => {
       expect(KeyGenerators.uuid).toBeDefined();
       expect(KeyGenerators.timestamp).toBeDefined();
       expect(KeyGenerators.random).toBeDefined();
-      
+
       const uuid = KeyGenerators.uuid();
       const timestamp = KeyGenerators.timestamp();
       const random = KeyGenerators.random();
-      
+
       expect(typeof uuid).toBe('string');
       expect(typeof timestamp).toBe('number');
       expect(typeof random).toBe('string');
