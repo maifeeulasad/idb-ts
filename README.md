@@ -241,6 +241,25 @@ await db.User.create(new User('u1', 'alice@example.com', 30));
 
 The thrown error contains all failing rules in the format `field: message` joined by `; `.
 
+### Bulk Operations
+
+Repositories include convenience bulk helpers for common batch operations:
+
+- `createMany(items: T[])`: creates multiple items (runs validators and generators for each item).
+- `updateMany(items: T[])`: updates multiple items.
+- `deleteMany(keys: Array<string | string[] | number>)`: deletes multiple keys.
+
+These helpers are implemented by iterating the corresponding single-item operations. They are convenient for simple bulk workloads but are not currently implemented as a single atomic transaction across all items. For high-throughput or atomic requirements, consider batching items into a single transaction or performing multiple operations inside a custom `performOperation` call.
+
+Example:
+
+```ts
+await db.User.createMany([alice, bob, charlie]);
+await db.User.deleteMany(['u1', 'u2']);
+```
+
+Performance note: `createMany` will trigger validation and key generation per item. If you need large batch inserts frequently, batching these into a single transaction or adding a dedicated bulk API may improve throughput.
+
 #### Error Handling
 - If you query a non-existent index, an error is thrown:
   ```typescript
