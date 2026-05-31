@@ -7,6 +7,19 @@ const quoteRules = {
   quotes: ['error', 'single', { avoidEscape: true }],
 };
 
+const lengthRules = {
+  'max-len': [
+    'error',
+    {
+      code: 80,
+      ignoreComments: true,
+      ignoreStrings: true,
+      ignoreTemplateLiterals: true,
+      ignoreRegExpLiterals: true,
+    },
+  ],
+};
+
 export default [
   {
     ignores: ['lib/**', 'coverage/**', 'examples/**', 'node_modules/**'],
@@ -16,6 +29,7 @@ export default [
     files: ['**/*.{js,mjs,cjs}'],
     rules: {
       ...quoteRules,
+      ...lengthRules,
     },
   },
   {
@@ -39,7 +53,8 @@ export default [
     },
     rules: {
       ...quoteRules,
-      'eqeqeq': ['error', 'always'],
+      ...lengthRules,
+      eqeqeq: ['error', 'always'],
       'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }],
       'no-console': 'off',
       'no-unused-vars': 'off',
@@ -49,19 +64,19 @@ export default [
         {
           prefer: 'type-imports',
           fixStyle: 'separate-type-imports',
-          disallowTypeAnnotations: false
-        }
+          disallowTypeAnnotations: false,
+        },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-redeclare': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          'argsIgnorePattern': '^_',
-          'varsIgnorePattern': '^_',
-          'caughtErrorsIgnorePattern': '^_'
-        }
-      ]
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   {
@@ -89,9 +104,9 @@ export default [
         {
           prefer: 'type-imports',
           fixStyle: 'separate-type-imports',
-          disallowTypeAnnotations: false
-        }
-      ]
+          disallowTypeAnnotations: false,
+        },
+      ],
     },
   },
 ];
