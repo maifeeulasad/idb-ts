@@ -78,4 +78,48 @@ describe('IndexedDB CRUD', () => {
     expect(found!.name).toBe('Eve');
   });
 
+  it('should support bulk create, update, and delete operations', async () => {
+    const user1 = new User('u10', 'Frank', 33, 'frank@example.com');
+    const user2 = new User('u11', 'Grace', 28, 'grace@example.com');
+    const user3 = new User('u12', 'Heidi', 41, 'heidi@example.com');
+
+    await db.User.createMany([user1, user2, user3]);
+
+    const createdUsers = await db.User.findByIndex('email', 'frank@example.com');
+    expect(createdUsers).toHaveLength(1);
+    expect(createdUsers[0].id).toBe('u10');
+
+    const updatedUser1 = new User('u10', 'Frank', 34, 'frank@example.com');
+    const updatedUser2 = new User('u11', 'Grace', 29, 'grace@example.com');
+
+    await db.User.updateMany([updatedUser1, updatedUser2]);
+
+    const reloadedUser1 = await db.User.read('u10');
+    const reloadedUser2 = await db.User.read('u11');
+    expect(reloadedUser1?.age).toBe(34);
+    expect(reloadedUser2?.age).toBe(29);
+
+    await db.User.deleteMany(['u12']);
+    expect(await db.User.read('u12')).toBeUndefined();
+
+    const inactive1 = new User('u13', 'Ivy', 22, 'ivy@example.com');
+    const inactive2 = new User('u14', 'Judy', 24, 'judy@example.com');
+    inactive1.name = 'Ivy';
+    inactive2.name = 'Judy';
+
+    await db.User.createMany([inactive1, inactive2]);
+    inactive1.email = 'ivy@example.com';
+    inactive2.email = 'judy@example.com';
+
+    (inactive1 as any).status = 'inactive';
+    (inactive2 as any).status = 'active';
+    await db.User.updateMany([inactive1, inactive2]);
+
+    await db.User.deleteWhere((qb) => qb.where('status').equals('inactive'));
+
+    const remainingInactive = await db.User.query().where('status').equals('inactive').execute();
+    expect(remainingInactive).toHaveLength(0);
+    expect(await db.User.read('u14')).toBeDefined();
+  });
+
 });
