@@ -15,8 +15,8 @@
   },
   "scripts": {
     "prepare": "pnpm run build",
-    "build": "pnpm run build:tsc && pnpm run build:rollup",
-    "build:tsc": "tsc",
+    "build": "rm -rf lib && pnpm run build:tsc && pnpm run build:rollup",
+    "build:tsc": "tsc -p tsconfig.build.json",
     "build:rollup": "rollup -c",
     "lint": "eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
