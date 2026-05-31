@@ -215,6 +215,32 @@ Notes:
 - Cleanup runs with readwrite transactions and deletes records one-by-one via cursors. It runs at startup and then periodically. Logs are emitted for inspection when debug logging is enabled.
 - To temporarily disable cleanup for an entity, set `enabled: false` on the decorator.
 
+### Field Validation
+
+You can declare validation rules for individual properties using the `@Validate(predicate, message)` property decorator. Each rule must provide a predicate function that receives the property value and the full item and returns `true` when valid.
+
+Validation is enforced on `create` and `update` operations. If any rule fails, the repository operation throws an error with a concise message describing the failing fields.
+
+Example:
+
+```ts
+@DataClass()
+class User {
+  @KeyPath()
+  id!: string;
+
+  @Validate((v) => typeof v === 'string' && v.includes('@'), 'must be a valid email')
+  email!: string;
+
+  @Validate((v) => typeof v === 'number' && v >= 0, 'age must be >= 0')
+  age!: number;
+}
+
+await db.User.create(new User('u1', 'alice@example.com', 30));
+```
+
+The thrown error contains all failing rules in the format `field: message` joined by `; `.
+
 #### Error Handling
 - If you query a non-existent index, an error is thrown:
   ```typescript
