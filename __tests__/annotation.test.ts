@@ -88,5 +88,4 @@ describe('IndexedDB annotation', () => {
     expect(entities).toContain('Foo');
     expect(entities).toContain('Bar');
   });
-
 });
