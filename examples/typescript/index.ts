@@ -130,6 +130,13 @@ async function demonstrateFeatures() {
   console.log('🚀 Starting idb-ts v3.7.0 Feature Demonstration');
 
   // Initialize database with all entities
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase('idb-demo-v3');
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => resolve();
+  });
+
   const db = await Database.build('idb-demo-v3', [User, Post, UserProject, Activity]);
 
   console.log(`📊 Database initialized with version: ${db.getDatabaseVersion()}`);
