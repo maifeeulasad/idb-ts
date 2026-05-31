@@ -3,7 +3,9 @@
   "compilerOptions": {
     "emitDeclarationOnly": true,
     "noEmit": false,
-    "outDir": "lib"
+    "outDir": "lib",
+    "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
+    "ignoreDeprecations": "6.0",
   },
   "include": ["index.ts"]
 }
