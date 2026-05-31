@@ -10,13 +10,13 @@ import {
 // Example 1: Auto-increment ID with schema versioning
 @DataClass({ version: 1 })
 class User {
-  @KeyPath('id', { autoIncrement: true })
+  @KeyPath({ autoIncrement: true })
   id?: number;
 
-  @Index('email', { unique: true })
+  @Index({ unique: true })
   email: string;
 
-  @Index('age')
+  @Index()
   age: number;
 
   name: string;
@@ -43,13 +43,13 @@ class User {
 // Example 2: UUID key generation with versioning
 @DataClass({ version: 2 })
 class Post {
-  @KeyPath('uuid', { generator: KeyGenerators.uuid })
+  @KeyPath({ generator: KeyGenerators.uuid })
   uuid?: string;
 
-  @Index('authorEmail')
+  @Index()
   authorEmail: string;
 
-  @Index('category')
+  @Index()
   category: string;
 
   title: string;
@@ -78,7 +78,7 @@ class UserProject {
   userId: string;
   projectId: string;
 
-  @Index('role')
+  @Index()
   role: 'admin' | 'member' | 'viewer';
 
   joinedAt: Date = new Date();
@@ -98,18 +98,18 @@ class UserProject {
 // Example 4: Custom key generator with advanced features
 @DataClass({ version: 1 })
 class Activity {
-  @KeyPath('activityId', {
+  @KeyPath({
     generator: (item: Activity) => `${item.type}_${item.userId}_${Date.now()}`,
   })
   activityId?: string;
 
-  @Index('userId')
+  @Index()
   userId: string;
 
-  @Index('type')
+  @Index()
   type: 'login' | 'logout' | 'post_created' | 'post_liked' | 'comment_added';
 
-  @Index('timestamp')
+  @Index()
   timestamp: number = Date.now();
 
   metadata: Record<string, any> = {};
@@ -130,12 +130,9 @@ async function demonstrateFeatures() {
   console.log('🚀 Starting idb-ts v3.7.0 Feature Demonstration');
 
   // Initialize database with all entities
-  const db = new Database('idb-demo-v3', [User, Post, UserProject, Activity]);
-  await db.initialize();
+  const db = await Database.build('idb-demo-v3', [User, Post, UserProject, Activity]);
 
-  console.log(
-    `📊 Database initialized with version: ${db.getDatabaseVersion()}`,
-  );
+  console.log(`📊 Database initialized with version: ${db.getDatabaseVersion()}`);
   console.log(`📋 Available entities: ${db.getAvailableEntities().join(', ')}`);
 
   // === CRUD Operations Demo ===
@@ -247,7 +244,7 @@ async function demonstrateFeatures() {
 
   console.log(
     `🔍 Found ${activeUsers.length} active users older than 25:`,
-    activeUsers.map((u) => ({ name: u.name, age: u.age, email: u.email })),
+    activeUsers.map((u: User) => ({ name: u.name, age: u.age, email: u.email })),
   );
 
   // Query 2: Find posts by category with pagination
@@ -260,7 +257,7 @@ async function demonstrateFeatures() {
 
   console.log(
     `📚 Found ${tutorialPosts.length} tutorial posts:`,
-    tutorialPosts.map((p) => ({ title: p.title, author: p.authorEmail })),
+    tutorialPosts.map((p: Post) => ({ title: p.title, author: p.authorEmail })),
   );
 
   // Query 3: Find user activities by type with time range
@@ -274,7 +271,7 @@ async function demonstrateFeatures() {
 
   console.log(
     `🚪 Found ${recentLogins.length} recent logins:`,
-    recentLogins.map((a) => ({
+    recentLogins.map((a: Activity) => ({
       userId: a.userId,
       timestamp: new Date(a.timestamp).toLocaleString(),
     })),
@@ -284,7 +281,7 @@ async function demonstrateFeatures() {
   console.log('\n=== Index-based Queries Demo ===');
 
   // Query by unique email index
-  const userByEmail = await db.User.findByIndex('email', 'alice@example.com');
+  const userByEmail = await db.User.findOneByIndex('email', 'alice@example.com');
   console.log(
     '👤 User found by email:',
     userByEmail
@@ -293,10 +290,10 @@ async function demonstrateFeatures() {
   );
 
   // Query multiple items by non-unique index
-  const adminProjects = await db.UserProject.findAllByIndex('role', 'admin');
+  const adminProjects = await db.UserProject.findByIndex('role', 'admin');
   console.log(
     `👑 Found ${adminProjects.length} admin relationships:`,
-    adminProjects.map((p) => ({ userId: p.userId, projectId: p.projectId })),
+    adminProjects.map((p: UserProject) => ({ userId: p.userId, projectId: p.projectId })),
   );
 
   // === Composite Key Operations Demo ===
@@ -340,14 +337,8 @@ async function demonstrateFeatures() {
     .limit(2)
     .execute();
 
-  console.log(
-    '📄 First page users:',
-    firstPage.map((u) => u.name),
-  );
-  console.log(
-    '📄 Second page users:',
-    secondPage.map((u) => u.name),
-  );
+  console.log('📄 First page users:', firstPage.map((u: User) => u.name));
+  console.log('📄 Second page users:', secondPage.map((u: User) => u.name));
 
   // === Statistics Demo ===
   console.log('\n=== Database Statistics ===');
@@ -366,7 +357,7 @@ async function demonstrateFeatures() {
   // Entity versions
   const entityVersions = db.getEntityVersions();
   console.log('🏷️ Entity versions:');
-  entityVersions.forEach((version, entity) => {
+  entityVersions.forEach((version: number, entity: string) => {
     console.log(`   ${entity}: v${version}`);
   });
 
