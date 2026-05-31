@@ -1,4 +1,4 @@
-name: Deploy React Vite and Vue Examples and TypeScript to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
