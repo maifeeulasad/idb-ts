@@ -1,13 +1,13 @@
 import { defineConfig } from 'vite';
-import svgrPlugin from "vite-plugin-svgr";
-import react from "@vitejs/plugin-react";
-import ViteVisualizer from "rollup-plugin-visualizer";
-import { VitePluginRadar } from "vite-plugin-radar";
+import svgrPlugin from 'vite-plugin-svgr';
+import react from '@vitejs/plugin-react';
+import ViteVisualizer from 'rollup-plugin-visualizer';
+import { VitePluginRadar } from 'vite-plugin-radar';
 
 // https://stackoverflow.com/a/15802301
 const headCommitHash = (): string | undefined => {
   try {
-    return require("child_process").execSync("git rev-parse HEAD").toString();
+    return require('child_process').execSync('git rev-parse HEAD').toString();
   } catch (_) {}
   return undefined;
 };
@@ -18,15 +18,15 @@ export default defineConfig({
     __HEAD_COMMIT_HASH__: JSON.stringify(headCommitHash()),
   },
   build: {
-    outDir: "./build/vitereact",
+    outDir: './build/vitereact',
   },
-  base: "./",
+  base: './',
   plugins: [
     react({
       babel: {
         plugins: [
-          ["@babel/plugin-proposal-decorators", { version: "legacy" }],
-          ["@babel/plugin-proposal-class-properties", { loose: true }],
+          ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
+          ['@babel/plugin-proposal-class-properties', { loose: true }],
         ],
       },
     }),
@@ -38,7 +38,7 @@ export default defineConfig({
     VitePluginRadar({
       enableDev: true,
       analytics: {
-        id: "G-366693052",
+        id: 'G-366693052',
       },
     }),
     // ViteVisualizer({
