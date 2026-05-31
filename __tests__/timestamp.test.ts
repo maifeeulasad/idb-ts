@@ -61,8 +61,12 @@ describe('Internal timestamp fields', () => {
 
     expect((storedAfterUpdate as any)?.[createdField]).toBe(createdAt);
     expect((storedAfterUpdate as any)?.[createdField]).not.toBe(999999);
-    expect((storedAfterUpdate as any)?.[updatedField]).toBeGreaterThanOrEqual(beforeUpdate);
-    expect((storedAfterUpdate as any)?.[updatedField]).toBeLessThanOrEqual(afterUpdate);
+    expect((storedAfterUpdate as any)?.[updatedField]).toBeGreaterThanOrEqual(
+      beforeUpdate,
+    );
+    expect((storedAfterUpdate as any)?.[updatedField]).toBeLessThanOrEqual(
+      afterUpdate,
+    );
     expect((storedAfterUpdate as any)?.[updatedField]).not.toBe(888888);
   });
 });
