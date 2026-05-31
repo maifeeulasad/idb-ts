@@ -85,7 +85,12 @@ describe('Schema Versioning', () => {
       deleteRequest.onerror = () => resolve(); // Continue even if deletion fails
     });
 
-    db = await Database.build('VersionTestDB', [UserV1, PostV2, CommentV4, TagDefault]);
+    db = await Database.build('VersionTestDB', [
+      UserV1,
+      PostV2,
+      CommentV4,
+      TagDefault,
+    ]);
   });
 
   it('should calculate correct database version from highest entity version', () => {
@@ -153,16 +158,18 @@ describe('Schema Versioning', () => {
 
   it('should support query builder with versioned entities', async () => {
     const posts = await db.PostV2.query()
-      .where('authorId').equals('u1')
+      .where('authorId')
+      .equals('u1')
       .execute();
-    
+
     expect(posts.length).toBe(1);
     expect(posts[0].title).toBe('Hello World');
 
     const comments = await db.CommentV4.query()
-      .where('userId').equals('u1')
+      .where('userId')
+      .equals('u1')
       .execute();
-    
+
     expect(comments.length).toBe(1);
     expect(comments[0].text).toBe('Great post!');
   });
