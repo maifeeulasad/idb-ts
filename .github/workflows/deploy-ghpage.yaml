@@ -175,6 +175,7 @@ jobs:
       - name: Clean up old documentation and coverage directories
         run: |
           rm -rf ./public/docs
+          rm -rf ./public/coverage
       - name: Copy documentation to public directory
         uses: actions/download-artifact@v4
         with:
