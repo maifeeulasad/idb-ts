@@ -146,9 +146,9 @@ jobs:
         with:
           node-version: 24.x
       - name: Install dependencies
-        run: npm ci
+        run: npm i -g pnpm && pnpm i --frozen-lockfile
       - name: Generate Documentation
-        run: npm run docs:generate
+        run: pnpm docs:generate
       - name: Upload Documentation Artifacts
         uses: actions/upload-artifact@v4
         with:
