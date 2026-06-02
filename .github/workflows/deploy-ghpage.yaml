@@ -133,9 +133,26 @@ jobs:
           name: coverage-report
           path: ./coverage
 
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24.x
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Documentation
+        run: npm run docs:generate
+      - name: Upload Documentation Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: ./docs
   deploy:
     runs-on: ubuntu-latest
-    needs: [build-react, build-vue, build-typescript, generate-coverage]
+    needs: [build-react, build-vue, build-typescript, generate-coverage, generate-docs]
     steps:
       - uses: actions/checkout@v3
       - name: Download React Build Artifacts
@@ -155,11 +172,14 @@ jobs:
           path: ./public
       - name: Copy index.html to public directory
         run: cp ./examples/index.html ./public/index.html
-      - name: Copy documentation to public directory
+      - name: Clean up old documentation and coverage directories
         run: |
-          mkdir -p ./public/docs
-          cp ./README.md ./public/docs/README.md
-          cp ./examples/docs/index.html ./public/docs/index.html
+          rm -rf ./public/docs
+      - name: Copy documentation to public directory
+        uses: actions/download-artifact@v4
+        with:
+          name: documentation
+          path: ./public/docs
       - name: Download Coverage Report
         uses: actions/download-artifact@v4
         with:
