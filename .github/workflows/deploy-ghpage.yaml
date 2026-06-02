@@ -24,6 +24,7 @@ jobs:
         with:
           name: react-build
           path: ./examples/vite+react/build
+          retention-days: 1
 
   build-vue:
     runs-on: ubuntu-latest
@@ -44,6 +45,7 @@ jobs:
         with:
           name: vue-build
           path: ./examples/vue/build
+          retention-days: 1
 
   build-typescript:
     runs-on: ubuntu-latest
@@ -64,6 +66,7 @@ jobs:
         with:
           name: typescript-build
           path: ./examples/typescript/build
+          retention-days: 1
 
   generate-coverage:
     runs-on: ubuntu-latest
@@ -132,6 +135,7 @@ jobs:
         with:
           name: coverage-report
           path: ./coverage
+          retention-days: 1
 
   generate-docs:
     runs-on: ubuntu-latest
@@ -150,6 +154,7 @@ jobs:
         with:
           name: documentation
           path: ./docs
+          retention-days: 1
   deploy:
     runs-on: ubuntu-latest
     needs: [build-react, build-vue, build-typescript, generate-coverage, generate-docs]
