@@ -1,306 +1,422 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>idb-ts Documentation</title>
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>idb-ts</title><meta name="description" content="Documentation for idb-ts"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">idb-ts</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>idb-ts</h1></div><div class="tsd-panel tsd-typography"><h1 id="idb-ts" class="tsd-anchor-link">idb-ts<a href="#idb-ts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p align="center">
+  <a href="https://www.npmjs.com/package/idb-ts">
+    <img src="https://img.shields.io/npm/v/idb-ts.svg" alt="npm version">
+  </a>
+  <a href="https://badgen.net/bundlephobia/min/idb-ts">
+    <img src="https://badgen.net/bundlephobia/min/idb-ts&cache-control=no-cache" alt="minified">
+  </a>
+  <a href="https://badgen.net/bundlephobia/minzip/idb-ts">
+    <img src="https://badgen.net/bundlephobia/minzip/idb-ts&cache-control=no-cache" alt="minified + gzipped">
+  </a>
+</p>
+<p align="center">
+  <a href="https://github.com/maifeeulasad/idb-ts/stargazers">
+    <img src="https://img.shields.io/github/stars/maifeeulasad/idb-ts" alt="GitHub stars">
+  </a>
+  <a href="https://github.com/maifeeulasad/idb-ts/watchers">
+    <img src="https://img.shields.io/github/watchers/maifeeulasad/idb-ts" alt="GitHub watchers">
+  </a>
+  <a href="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases">
+    <img src="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases" alt="Commits since release">
+  </a>
+</p>
+<hr>
+<h2 id="introduction" class="tsd-anchor-link">Introduction<a href="#introduction" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><strong>idb-ts</strong> is a declarative, type-safe ORM layer for <a href="https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API">IndexedDB</a>. Define your data models with TypeScript decorators, and the library handles schema creation, key generation, validation, querying, transactions, and data retention automatically - with no external runtime dependencies.</p>
+<hr>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="sh"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">idb-ts</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-2">add</span><span class="hl-1"> </span><span class="hl-2">idb-ts</span><br/><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">add</span><span class="hl-1"> </span><span class="hl-2">idb-ts</span>
+</code><button type="button">Copy</button></pre>
 
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-3G1RNC5YLT"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
+<blockquote>
+<p><strong>Requirement:</strong> <code>reflect-metadata</code> must be imported once at your application entry point, and <code>experimentalDecorators</code> and <code>emitDecoratorMetadata</code> must be enabled in your <code>tsconfig.json</code>.</p>
+</blockquote>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-3">&quot;compilerOptions&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-3">&quot;experimentalDecorators&quot;</span><span class="hl-1">: </span><span class="hl-4">true</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-3">&quot;emitDecoratorMetadata&quot;</span><span class="hl-1">: </span><span class="hl-4">true</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      gtag('config', 'G-3G1RNC5YLT');
-    </script>
+<hr>
+<h2 id="feature-overview" class="tsd-anchor-link">Feature Overview<a href="#feature-overview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Declarative entity definition</strong></td>
+<td>Define stores, keys, and indexes with class decorators</td>
+</tr>
+<tr>
+<td><strong>Full CRUD API</strong></td>
+<td>Create, read, update, delete, list, paginate, and count</td>
+</tr>
+<tr>
+<td><strong>Typed query builder</strong></td>
+<td>Chainable, type-checked filter, sort, and aggregation DSL</td>
+</tr>
+<tr>
+<td><strong>Key generation</strong></td>
+<td>Auto-increment, UUID v4, timestamp, random, or custom function</td>
+</tr>
+<tr>
+<td><strong>Composite keys</strong></td>
+<td>Multi-field primary keys for relational associations</td>
+</tr>
+<tr>
+<td><strong>Field validation</strong></td>
+<td>Per-property predicate rules enforced on write</td>
+</tr>
+<tr>
+<td><strong>Schema versioning</strong></td>
+<td>Automatic <code>onupgradeneeded</code> migration based on entity versions</td>
+</tr>
+<tr>
+<td><strong>Transaction API</strong></td>
+<td>Callback-based and explicit commit/rollback patterns</td>
+</tr>
+<tr>
+<td><strong>Data retention</strong></td>
+<td>Periodic background cleanup of expired records</td>
+</tr>
+<tr>
+<td><strong>Automatic timestamps</strong></td>
+<td><code>__idb_createdAt</code> / <code>__idb_updatedAt</code> injected on every write</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="quick-start" class="tsd-anchor-link">Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="typescript"><span class="hl-5">import</span><span class="hl-1"> </span><span class="hl-2">&#39;reflect-metadata&#39;</span><span class="hl-1">;</span><br/><span class="hl-5">import</span><span class="hl-1"> { </span><span class="hl-6">Database</span><span class="hl-1">, </span><span class="hl-6">DataClass</span><span class="hl-1">, </span><span class="hl-6">KeyPath</span><span class="hl-1">, </span><span class="hl-6">Index</span><span class="hl-1"> } </span><span class="hl-5">from</span><span class="hl-1"> </span><span class="hl-2">&#39;idb-ts&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">User</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;uuid&#39;</span><span class="hl-1"> })</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Index</span><span class="hl-1">({ </span><span class="hl-6">unique:</span><span class="hl-1"> </span><span class="hl-4">true</span><span class="hl-1"> })</span><br/><span class="hl-1">  </span><span class="hl-6">email</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">name</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">  </span><span class="hl-6">age</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">db</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">Database</span><span class="hl-1">.</span><span class="hl-0">build</span><span class="hl-1">&lt;{ </span><span class="hl-6">User</span><span class="hl-1">: </span><span class="hl-7">EntityRepository</span><span class="hl-1">&lt;</span><span class="hl-7">User</span><span class="hl-1">&gt; }&gt;(</span><span class="hl-2">&#39;mydb&#39;</span><span class="hl-1">, [</span><br/><span class="hl-1">  </span><span class="hl-6">User</span><span class="hl-1">,</span><br/><span class="hl-1">]);</span><br/><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-6">id:</span><span class="hl-1"> </span><span class="hl-2">&#39;&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-6">name:</span><span class="hl-1"> </span><span class="hl-2">&#39;Alice&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-6">age:</span><span class="hl-1"> </span><span class="hl-9">30</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-6">email:</span><span class="hl-1"> </span><span class="hl-2">&#39;alice@example.com&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">alice</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">findOneByIndex</span><span class="hl-1">(</span><span class="hl-2">&#39;email&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;alice@example.com&#39;</span><span class="hl-1">);</span>
+</code><button type="button">Copy</button></pre>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #f7f7fb;
-        --panel: rgba(255, 255, 255, 0.92);
-        --text: #172033;
-        --muted: #5b6476;
-        --accent: #0f766e;
-        --accent-2: #1d4ed8;
-        --border: rgba(23, 32, 51, 0.12);
-        --shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
-      }
+<hr>
+<h2 id="defining-entities" class="tsd-anchor-link">Defining Entities<a href="#defining-entities" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Every entity class must declare exactly one primary key field and be annotated with <code>@DataClass()</code>. Apply decorators in the order shown - TypeScript executes decorators bottom-up, so <code>@DataClass</code> must appear last (i.e., closest to the <code>class</code> keyword).</p>
+<pre><code class="typescript"><span class="hl-5">import</span><span class="hl-1"> { </span><span class="hl-6">Database</span><span class="hl-1">, </span><span class="hl-6">DataClass</span><span class="hl-1">, </span><span class="hl-6">KeyPath</span><span class="hl-1">, </span><span class="hl-6">Index</span><span class="hl-1">, </span><span class="hl-6">Validate</span><span class="hl-1"> } </span><span class="hl-5">from</span><span class="hl-1"> </span><span class="hl-2">&#39;idb-ts&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">({ </span><span class="hl-6">version:</span><span class="hl-1"> </span><span class="hl-9">1</span><span class="hl-1"> })</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">User</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;uuid&#39;</span><span class="hl-1"> })</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Index</span><span class="hl-1">({ </span><span class="hl-6">unique:</span><span class="hl-1"> </span><span class="hl-4">true</span><span class="hl-1"> })</span><br/><span class="hl-1">  @</span><span class="hl-0">Validate</span><span class="hl-1">(</span><br/><span class="hl-1">    (</span><span class="hl-6">v</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-4">typeof</span><span class="hl-1"> </span><span class="hl-6">v</span><span class="hl-1"> === </span><span class="hl-2">&#39;string&#39;</span><span class="hl-1"> &amp;&amp; </span><span class="hl-6">v</span><span class="hl-1">.</span><span class="hl-0">includes</span><span class="hl-1">(</span><span class="hl-2">&#39;@&#39;</span><span class="hl-1">),</span><br/><span class="hl-1">    </span><span class="hl-2">&#39;must be a valid email&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  )</span><br/><span class="hl-1">  </span><span class="hl-6">email</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Validate</span><span class="hl-1">((</span><span class="hl-6">v</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-4">typeof</span><span class="hl-1"> </span><span class="hl-6">v</span><span class="hl-1"> === </span><span class="hl-2">&#39;number&#39;</span><span class="hl-1"> &amp;&amp; </span><span class="hl-6">v</span><span class="hl-1"> &gt;= </span><span class="hl-9">0</span><span class="hl-1">, </span><span class="hl-2">&#39;age must be non-negative&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  </span><span class="hl-6">age</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">name</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      * {
-        box-sizing: border-box;
-      }
+<h3 id="decorator-reference" class="tsd-anchor-link">Decorator reference<a href="#decorator-reference" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="_" class="tsd-anchor-link"><code>@DataClass(options?)</code><a href="#_" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Marks a class as a managed entity. Must be applied exactly once per class, after all other idb-ts decorators.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>version</code></td>
+<td><code>number</code></td>
+<td><code>1</code></td>
+<td>Schema version. Increment when the entity's store or indexes change.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-1" class="tsd-anchor-link"><code>@KeyPath(options?)</code><a href="#_-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Designates the decorated property as the primary key of the object store. Exactly one property per class may carry this decorator. For multi-field keys, use <code>@CompositeKeyPath</code> at the class level instead.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>autoIncrement</code></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td>Delegate key assignment to IndexedDB's auto-increment mechanism.</td>
+</tr>
+<tr>
+<td><code>generator</code></td>
+<td><code>'uuid'</code> | <code>'timestamp'</code> | <code>'random'</code> | <code>(item) =&gt; string | number</code></td>
+<td>-</td>
+<td>Automatic key generator invoked when the key field is absent or empty on <code>create</code>.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-2" class="tsd-anchor-link"><code>@CompositeKeyPath(fields, options?)</code><a href="#_-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Class-level decorator for composite primary keys. Cannot be combined with <code>@KeyPath</code>.</p>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">CompositeKeyPath</span><span class="hl-1">([</span><span class="hl-2">&#39;userId&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;projectId&#39;</span><span class="hl-1">])</span><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">UserProject</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-6">userId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">  </span><span class="hl-6">projectId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">  </span><span class="hl-6">role</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      body {
-        margin: 0;
-        font-family: Inter, system-ui, sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(
-            circle at top left,
-            rgba(29, 78, 216, 0.14),
-            transparent 28%
-          ),
-          radial-gradient(
-            circle at top right,
-            rgba(15, 118, 110, 0.14),
-            transparent 24%
-          ),
-          linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
-        min-height: 100vh;
-      }
+<h4 id="_-3" class="tsd-anchor-link"><code>@Index(options?)</code><a href="#_-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Creates an IDB index on the decorated field, enabling efficient lookups via <code>findByIndex</code> and <code>findOneByIndex</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>unique</code></td>
+<td><code>boolean</code></td>
+<td>Enforce uniqueness on the indexed field.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-4" class="tsd-anchor-link"><code>@Validate(predicate, message)</code><a href="#_-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Attaches a validation rule to the decorated property. Rules are enforced on every <code>create</code> and <code>update</code> call. If any rule fails, the operation throws with a message listing all failing fields.</p>
+<h4 id="_-5" class="tsd-anchor-link"><code>@RetentionPolicy(options)</code><a href="#_-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Class-level decorator that configures automatic expiry and deletion of records. See <a href="#data-retention">Data Retention</a> for full details.</p>
+<hr>
+<h2 id="database-initialisation" class="tsd-anchor-link">Database Initialisation<a href="#database-initialisation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="typescript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">db</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">Database</span><span class="hl-1">.</span><span class="hl-0">build</span><span class="hl-1">&lt;{</span><br/><span class="hl-1">  </span><span class="hl-6">User</span><span class="hl-1">: </span><span class="hl-7">EntityRepository</span><span class="hl-1">&lt;</span><span class="hl-7">User</span><span class="hl-1">&gt;;</span><br/><span class="hl-1">  </span><span class="hl-6">Order</span><span class="hl-1">: </span><span class="hl-7">EntityRepository</span><span class="hl-1">&lt;</span><span class="hl-7">Order</span><span class="hl-1">&gt;;</span><br/><span class="hl-1">}&gt;(</span><span class="hl-2">&#39;shop&#39;</span><span class="hl-1">, [</span><span class="hl-6">User</span><span class="hl-1">, </span><span class="hl-6">Order</span><span class="hl-1">]);</span>
+</code><button type="button">Copy</button></pre>
 
-      header {
-        padding: 48px 20px 16px;
-        text-align: center;
-      }
+<p><code>Database.build</code> opens (or upgrades) the IDB database, creates object stores and indexes for any entity whose version exceeds the stored database version, starts background retention jobs if applicable, and attaches typed repository properties to the returned object.</p>
+<p>The effective database version is the highest <code>version</code> value declared across all registered entities.</p>
+<h3 id="inspecting-database-metadata" class="tsd-anchor-link">Inspecting database metadata<a href="#inspecting-database-metadata" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">getDatabaseVersion</span><span class="hl-1">(); </span><span class="hl-10">// number - current IDB version</span><br/><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">getEntityVersions</span><span class="hl-1">(); </span><span class="hl-10">// Map&lt;string, number&gt;</span><br/><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">getEntityVersion</span><span class="hl-1">(</span><span class="hl-2">&#39;User&#39;</span><span class="hl-1">); </span><span class="hl-10">// number | undefined</span><br/><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">getAvailableEntities</span><span class="hl-1">(); </span><span class="hl-10">// string[]</span>
+</code><button type="button">Copy</button></pre>
 
-      .eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
-        border: 1px solid var(--border);
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.72);
-        color: var(--accent);
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-      }
+<h3 id="closing-the-connection" class="tsd-anchor-link">Closing the connection<a href="#closing-the-connection" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">close</span><span class="hl-1">(); </span><span class="hl-10">// Stops the retention cleanup timer and closes the IDB connection.</span>
+</code><button type="button">Copy</button></pre>
 
-      h1 {
-        margin: 18px 0 10px;
-        font-size: clamp(2.2rem, 5vw, 4.2rem);
-        line-height: 1.02;
-        letter-spacing: -0.05em;
-      }
+<hr>
+<h2 id="crud-operations" class="tsd-anchor-link">CRUD Operations<a href="#crud-operations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Each entity is accessible as a named property on the database object. All methods return <code>Promise</code>.</p>
+<pre><code class="typescript"><span class="hl-10">// Create</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">user</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">createMany</span><span class="hl-1">([</span><span class="hl-6">alice</span><span class="hl-1">, </span><span class="hl-6">bob</span><span class="hl-1">, </span><span class="hl-6">charlie</span><span class="hl-1">]);</span><br/><br/><span class="hl-10">// Read</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">user</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">read</span><span class="hl-1">(</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">); </span><span class="hl-10">// by primary key</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">page</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">listPaginated</span><span class="hl-1">(</span><span class="hl-9">1</span><span class="hl-1">, </span><span class="hl-9">20</span><span class="hl-1">); </span><span class="hl-10">// 1-based pagination</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">all</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">list</span><span class="hl-1">();</span><br/><br/><span class="hl-10">// Update</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">update</span><span class="hl-1">(</span><span class="hl-6">updatedUser</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">updateMany</span><span class="hl-1">([</span><span class="hl-6">user1</span><span class="hl-1">, </span><span class="hl-6">user2</span><span class="hl-1">]);</span><br/><br/><span class="hl-10">// Delete</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">delete</span><span class="hl-1">(</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">deleteMany</span><span class="hl-1">([</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;u2&#39;</span><span class="hl-1">]);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">deleteWhere</span><span class="hl-1">((</span><span class="hl-6">q</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-6">q</span><span class="hl-1">.</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;age&#39;</span><span class="hl-1">).</span><span class="hl-0">lt</span><span class="hl-1">(</span><span class="hl-9">18</span><span class="hl-1">));</span><br/><br/><span class="hl-10">// Utilities</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">count</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">count</span><span class="hl-1">();</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">exists</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">exists</span><span class="hl-1">(</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">clear</span><span class="hl-1">();</span>
+</code><button type="button">Copy</button></pre>
 
-      p {
-        margin: 0 auto;
-        max-width: 760px;
-        color: var(--muted);
-        line-height: 1.6;
-        font-size: 1.03rem;
-      }
+<h3 id="index-lookups" class="tsd-anchor-link">Index lookups<a href="#index-lookups" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">allAdmins</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">findByIndex</span><span class="hl-1">(</span><span class="hl-2">&#39;role&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;admin&#39;</span><span class="hl-1">);</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">firstAdmin</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">findOneByIndex</span><span class="hl-1">(</span><span class="hl-2">&#39;role&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;admin&#39;</span><span class="hl-1">);</span>
+</code><button type="button">Copy</button></pre>
 
-      .actions {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-top: 24px;
-      }
+<p>Querying a non-existent index throws immediately.</p>
+<hr>
+<h2 id="automatic-timestamps" class="tsd-anchor-link">Automatic Timestamps<a href="#automatic-timestamps" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Every record written through a repository automatically receives two internal fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Set on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__idb_createdAt</code></td>
+<td><code>number</code> (ms since epoch)</td>
+<td><code>create</code> only</td>
+</tr>
+<tr>
+<td><code>__idb_updatedAt</code></td>
+<td><code>number</code> (ms since epoch)</td>
+<td><code>create</code> and <code>update</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>__idb_createdAt</code> is preserved across updates; <code>__idb_updatedAt</code> is refreshed on every write.</p>
+<pre><code class="typescript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">item</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Session</span><span class="hl-1">.</span><span class="hl-0">read</span><span class="hl-1">(</span><span class="hl-6">key</span><span class="hl-1">);</span><br/><span class="hl-6">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-6">item</span><span class="hl-1">.</span><span class="hl-6">__idb_createdAt</span><span class="hl-1">, </span><span class="hl-6">item</span><span class="hl-1">.</span><span class="hl-6">__idb_updatedAt</span><span class="hl-1">);</span>
+</code><button type="button">Copy</button></pre>
 
-      .actions a {
-        text-decoration: none;
-        padding: 12px 18px;
-        border-radius: 999px;
-        font-weight: 700;
-        border: 1px solid var(--border);
-        background: white;
-        color: var(--text);
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      }
+<hr>
+<h2 id="query-builder" class="tsd-anchor-link">Query Builder<a href="#query-builder" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><code>EntityRepository.query()</code> returns a typed <code>QueryBuilder&lt;T&gt;</code> for constructing complex filter expressions, sorting, pagination, and aggregations.</p>
+<h3 id="filtering" class="tsd-anchor-link">Filtering<a href="#filtering" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">results</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;age&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">gte</span><span class="hl-1">(</span><span class="hl-9">18</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">and</span><span class="hl-1">(</span><span class="hl-2">&#39;status&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-2">&#39;active&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">execute</span><span class="hl-1">();</span>
+</code><button type="button">Copy</button></pre>
 
-      .actions a.primary {
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        color: white;
-        border-color: transparent;
-      }
+<h4 id="available-operators" class="tsd-anchor-link">Available operators<a href="#available-operators" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Field types</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>equals</code></td>
+<td>any</td>
+<td>Strict equality (<code>===</code>)</td>
+</tr>
+<tr>
+<td><code>gt</code> / <code>gte</code> / <code>lt</code> / <code>lte</code></td>
+<td><code>ComparableValue</code></td>
+<td>Comparison</td>
+</tr>
+<tr>
+<td><code>between(start, end)</code></td>
+<td><code>ComparableValue</code></td>
+<td>Inclusive range</td>
+</tr>
+<tr>
+<td><code>notBetween(start, end)</code></td>
+<td><code>ComparableValue</code></td>
+<td>Outside range</td>
+</tr>
+<tr>
+<td><code>startsWith</code> / <code>endsWith</code></td>
+<td><code>string</code></td>
+<td>Prefix / suffix match</td>
+</tr>
+<tr>
+<td><code>contains</code></td>
+<td><code>string</code> | array</td>
+<td>Substring or element membership</td>
+</tr>
+<tr>
+<td><code>matches</code></td>
+<td><code>string</code></td>
+<td>Regular expression test</td>
+</tr>
+<tr>
+<td><code>in(values)</code> / <code>notIn(values)</code></td>
+<td>any</td>
+<td>Membership test</td>
+</tr>
+<tr>
+<td><code>containsAny(values)</code></td>
+<td>array</td>
+<td>At least one element matches</td>
+</tr>
+<tr>
+<td><code>containsAll(values)</code></td>
+<td>array</td>
+<td>All elements present</td>
+</tr>
+</tbody>
+</table>
+<p>TypeScript enforces operator/type compatibility at compile time - string-only operators are not exposed on numeric fields, and so on.</p>
+<h3 id="logical-grouping" class="tsd-anchor-link">Logical grouping<a href="#logical-grouping" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-10">// OR connector</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">results</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;age&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">gte</span><span class="hl-1">(</span><span class="hl-9">18</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">or</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;hasParentalConsent&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-4">true</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">execute</span><span class="hl-1">();</span><br/><br/><span class="hl-10">// Grouped sub-expression</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">premiumOrTrial</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">((</span><span class="hl-6">qb</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><br/><span class="hl-1">    </span><span class="hl-6">qb</span><span class="hl-1">.</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;type&#39;</span><span class="hl-1">).</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-2">&#39;premium&#39;</span><span class="hl-1">).</span><span class="hl-0">and</span><span class="hl-1">(</span><span class="hl-2">&#39;status&#39;</span><span class="hl-1">).</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-2">&#39;active&#39;</span><span class="hl-1">),</span><br/><span class="hl-1">  )</span><br/><span class="hl-1">  .</span><span class="hl-0">or</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;isTrial&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-4">true</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">execute</span><span class="hl-1">();</span>
+</code><button type="button">Copy</button></pre>
 
-      main {
-        width: min(1120px, calc(100% - 32px));
-        margin: 24px auto 56px;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 28px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
+<h3 id="sorting-and-pagination" class="tsd-anchor-link">Sorting and pagination<a href="#sorting-and-pagination" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;status&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-2">&#39;active&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">orderBy</span><span class="hl-1">(</span><span class="hl-2">&#39;createdAt&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;desc&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">offset</span><span class="hl-1">(</span><span class="hl-9">20</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">limit</span><span class="hl-1">(</span><span class="hl-9">10</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-0">execute</span><span class="hl-1">();</span>
+</code><button type="button">Copy</button></pre>
 
-      .toolbar {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        align-items: center;
-        padding: 18px 22px;
-        border-bottom: 1px solid var(--border);
-        background: rgba(247, 247, 251, 0.8);
-        flex-wrap: wrap;
-      }
+<h3 id="index-and-range-acceleration" class="tsd-anchor-link">Index and range acceleration<a href="#index-and-range-acceleration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>When a field is indexed, you can constrain the initial IDB candidate set at the storage layer before in-memory filtering begins:</p>
+<pre><code class="typescript"><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Product</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">useIndex</span><span class="hl-1">(</span><span class="hl-2">&#39;price&#39;</span><span class="hl-1">).</span><span class="hl-0">range</span><span class="hl-1">(</span><span class="hl-9">10</span><span class="hl-1">, </span><span class="hl-9">100</span><span class="hl-1">).</span><span class="hl-0">execute</span><span class="hl-1">();</span>
+</code><button type="button">Copy</button></pre>
 
-      .toolbar strong {
-        font-size: 0.95rem;
-      }
+<h3 id="aggregations" class="tsd-anchor-link">Aggregations<a href="#aggregations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">where</span><span class="hl-1">(</span><span class="hl-2">&#39;status&#39;</span><span class="hl-1">).</span><span class="hl-0">equals</span><span class="hl-1">(</span><span class="hl-2">&#39;paid&#39;</span><span class="hl-1">).</span><span class="hl-0">count</span><span class="hl-1">();</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">sum</span><span class="hl-1">(</span><span class="hl-2">&#39;amount&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">avg</span><span class="hl-1">(</span><span class="hl-2">&#39;price&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">min</span><span class="hl-1">(</span><span class="hl-2">&#39;createdAt&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">max</span><span class="hl-1">(</span><span class="hl-2">&#39;createdAt&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-10">// Grouped count</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">byStatus</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">query</span><span class="hl-1">().</span><span class="hl-0">groupBy</span><span class="hl-1">(</span><span class="hl-2">&#39;status&#39;</span><span class="hl-1">).</span><span class="hl-0">count</span><span class="hl-1">();</span><br/><span class="hl-10">// [{ status: &#39;paid&#39;, count: 42 }, { status: &#39;pending&#39;, count: 7 }]</span>
+</code><button type="button">Copy</button></pre>
 
-      .toolbar span {
-        color: var(--muted);
-        font-size: 0.92rem;
-      }
+<p><code>sum</code> and <code>avg</code> are restricted to numeric fields. <code>min</code> and <code>max</code> accept any comparable field. <code>groupBy(...).count()</code> returns results sorted by group key.</p>
+<hr>
+<h2 id="key-management" class="tsd-anchor-link">Key Management<a href="#key-management" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="auto-increment" class="tsd-anchor-link">Auto-increment<a href="#auto-increment" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Task</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">autoIncrement:</span><span class="hl-1"> </span><span class="hl-4">true</span><span class="hl-1"> })</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">; </span><span class="hl-10">// Assigned by IndexedDB: 1, 2, 3, …</span><br/><br/><span class="hl-1">  </span><span class="hl-6">title</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      #content {
-        padding: clamp(22px, 4vw, 42px);
-        line-height: 1.72;
-        overflow-wrap: anywhere;
-      }
+<h3 id="built-in-generators" class="tsd-anchor-link">Built-in generators<a href="#built-in-generators" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Document</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;uuid&#39;</span><span class="hl-1"> }) </span><span class="hl-10">// RFC 4122 v4</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Event</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;timestamp&#39;</span><span class="hl-1"> }) </span><span class="hl-10">// Date.now()</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Session</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;random&#39;</span><span class="hl-1"> }) </span><span class="hl-10">// Base-36 random string</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      #content h1,
-      #content h2,
-      #content h3,
-      #content h4 {
-        margin-top: 1.8em;
-        line-height: 1.18;
-      }
+<h3 id="custom-generator" class="tsd-anchor-link">Custom generator<a href="#custom-generator" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Invoice</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({</span><br/><span class="hl-1">    </span><span class="hl-0">generator</span><span class="hl-6">:</span><span class="hl-1"> (</span><span class="hl-6">entity</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><br/><span class="hl-1">      </span><span class="hl-2">`INV-</span><span class="hl-4">${</span><span class="hl-6">entity</span><span class="hl-11">.</span><span class="hl-6">year</span><span class="hl-4">}</span><span class="hl-2">-</span><span class="hl-4">${</span><span class="hl-0">String</span><span class="hl-11">(</span><span class="hl-6">entity</span><span class="hl-11">.</span><span class="hl-6">number</span><span class="hl-11">).</span><span class="hl-0">padStart</span><span class="hl-11">(</span><span class="hl-9">4</span><span class="hl-11">, </span><span class="hl-2">&#39;0&#39;</span><span class="hl-11">)</span><span class="hl-4">}</span><span class="hl-2">`</span><span class="hl-1">,</span><br/><span class="hl-1">  })</span><br/><span class="hl-1">  </span><span class="hl-6">invoiceId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">year</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><span class="hl-1">  </span><span class="hl-6">number</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><span class="hl-1">}</span><br/><span class="hl-10">// invoiceId → &quot;INV-2024-0001&quot;</span>
+</code><button type="button">Copy</button></pre>
 
-      #content h1 {
-        font-size: 2.2rem;
-      }
-      #content h2 {
-        font-size: 1.7rem;
-      }
-      #content h3 {
-        font-size: 1.35rem;
-      }
-      #content h4 {
-        font-size: 1.1rem;
-      }
+<h3 id="using-generators-directly" class="tsd-anchor-link">Using generators directly<a href="#using-generators-directly" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-5">import</span><span class="hl-1"> { </span><span class="hl-6">KeyGenerators</span><span class="hl-1"> } </span><span class="hl-5">from</span><span class="hl-1"> </span><span class="hl-2">&#39;idb-ts&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-6">KeyGenerators</span><span class="hl-1">.</span><span class="hl-0">uuid</span><span class="hl-1">(); </span><span class="hl-10">// &quot;a1b2c3d4-...&quot;</span><br/><span class="hl-6">KeyGenerators</span><span class="hl-1">.</span><span class="hl-0">timestamp</span><span class="hl-1">(); </span><span class="hl-10">// 1696118400000</span><br/><span class="hl-6">KeyGenerators</span><span class="hl-1">.</span><span class="hl-0">random</span><span class="hl-1">(); </span><span class="hl-10">// &quot;xyz789abc&quot;</span>
+</code><button type="button">Copy</button></pre>
 
-      #content a {
-        color: var(--accent-2);
-        text-decoration-thickness: 2px;
-        text-underline-offset: 2px;
-      }
+<h3 id="composite-keys" class="tsd-anchor-link">Composite keys<a href="#composite-keys" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">CompositeKeyPath</span><span class="hl-1">([</span><span class="hl-2">&#39;userId&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;projectId&#39;</span><span class="hl-1">])</span><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">UserProject</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-6">userId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">  </span><span class="hl-6">projectId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Index</span><span class="hl-1">()</span><br/><span class="hl-1">  </span><span class="hl-6">role</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">joinedAt</span><span class="hl-1">!: </span><span class="hl-7">Date</span><span class="hl-1">;</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-10">// Create</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">UserProject</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-0">UserProject</span><span class="hl-1">(</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;p1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;developer&#39;</span><span class="hl-1">));</span><br/><br/><span class="hl-10">// Read / update / delete with composite key tuple</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">rel</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">UserProject</span><span class="hl-1">.</span><span class="hl-0">read</span><span class="hl-1">([</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;p1&#39;</span><span class="hl-1">]);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">UserProject</span><span class="hl-1">.</span><span class="hl-0">delete</span><span class="hl-1">([</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;p1&#39;</span><span class="hl-1">]);</span>
+</code><button type="button">Copy</button></pre>
 
-      #content pre {
-        padding: 18px;
-        border-radius: 18px;
-        overflow: auto;
-        background: #0f172a;
-        color: #e2e8f0;
-      }
+<hr>
+<h2 id="field-validation" class="tsd-anchor-link">Field Validation<a href="#field-validation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Validation rules are declared per-property with <code>@Validate</code>. All rules for an entity are evaluated before any write; a single thrown error enumerates every failing rule.</p>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">User</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">()</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Validate</span><span class="hl-1">(</span><br/><span class="hl-1">    (</span><span class="hl-6">v</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-4">typeof</span><span class="hl-1"> </span><span class="hl-6">v</span><span class="hl-1"> === </span><span class="hl-2">&#39;string&#39;</span><span class="hl-1"> &amp;&amp;</span><span class="hl-12"> /</span><span class="hl-13">^</span><span class="hl-14">[^</span><span class="hl-12">\s@</span><span class="hl-14">]</span><span class="hl-15">+</span><span class="hl-12">@</span><span class="hl-14">[^</span><span class="hl-12">\s@</span><span class="hl-14">]</span><span class="hl-15">+</span><span class="hl-16">\.</span><span class="hl-14">[^</span><span class="hl-12">\s@</span><span class="hl-14">]</span><span class="hl-15">+</span><span class="hl-13">$</span><span class="hl-12">/</span><span class="hl-1">.</span><span class="hl-0">test</span><span class="hl-1">(</span><span class="hl-6">v</span><span class="hl-1">),</span><br/><span class="hl-1">    </span><span class="hl-2">&#39;must be a valid email address&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  )</span><br/><span class="hl-1">  </span><span class="hl-6">email</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  @</span><span class="hl-0">Validate</span><span class="hl-1">(</span><br/><span class="hl-1">    (</span><span class="hl-6">v</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-6">Number</span><span class="hl-1">.</span><span class="hl-0">isInteger</span><span class="hl-1">(</span><span class="hl-6">v</span><span class="hl-1">) &amp;&amp; </span><span class="hl-6">v</span><span class="hl-1"> &gt;= </span><span class="hl-9">0</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-2">&#39;must be a non-negative integer&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">  )</span><br/><span class="hl-1">  </span><span class="hl-6">age</span><span class="hl-1">!: </span><span class="hl-7">number</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      #content code {
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 0.92em;
-      }
+<p>Error format on failure:</p>
+<pre><code><span class="hl-6">Validation</span><span class="hl-1"> </span><span class="hl-6">failed</span><span class="hl-1"> </span><span class="hl-6">for</span><span class="hl-1"> </span><span class="hl-17">User</span><span class="hl-1">: </span><span class="hl-17">email</span><span class="hl-1">: </span><span class="hl-6">must</span><span class="hl-1"> </span><span class="hl-6">be</span><span class="hl-1"> </span><span class="hl-6">a</span><span class="hl-1"> </span><span class="hl-6">valid</span><span class="hl-1"> </span><span class="hl-6">email</span><span class="hl-1"> </span><span class="hl-6">address</span><span class="hl-1">; </span><span class="hl-17">age</span><span class="hl-1">: </span><span class="hl-6">must</span><span class="hl-1"> </span><span class="hl-6">be</span><span class="hl-1"> </span><span class="hl-6">a</span><span class="hl-1"> </span><span class="hl-6">non</span><span class="hl-1">-</span><span class="hl-6">negative</span><span class="hl-1"> </span><span class="hl-6">integer</span>
+</code><button>Copy</button></pre>
 
-      #content :not(pre) > code {
-        padding: 0.18rem 0.42rem;
-        border-radius: 8px;
-        background: rgba(15, 23, 42, 0.07);
-      }
+<hr>
+<h2 id="transactions" class="tsd-anchor-link">Transactions<a href="#transactions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="callback-form-recommended" class="tsd-anchor-link">Callback form (recommended)<a href="#callback-form-recommended" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The callback receives a <code>TransactionalDatabase</code> handle. On successful return the transaction is committed automatically. Any thrown error triggers an automatic rollback before rethrowing.</p>
+<pre><code class="typescript"><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">transaction</span><span class="hl-1">(</span><span class="hl-4">async</span><span class="hl-1"> (</span><span class="hl-6">tx</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">user</span><span class="hl-1">);</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">order</span><span class="hl-1">);</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-6">OrderItem</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">item</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code><button type="button">Copy</button></pre>
 
-      #content blockquote {
-        margin: 1.4rem 0;
-        padding: 0.2rem 1rem;
-        border-left: 4px solid var(--accent);
-        background: rgba(15, 118, 110, 0.06);
-        border-radius: 0 14px 14px 0;
-      }
+<h3 id="explicit-form" class="tsd-anchor-link">Explicit form<a href="#explicit-form" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">tx</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">beginTransaction</span><span class="hl-1">([</span><span class="hl-2">&#39;User&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;Order&#39;</span><span class="hl-1">], </span><span class="hl-2">&#39;readwrite&#39;</span><span class="hl-1">);</span><br/><span class="hl-5">try</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">user</span><span class="hl-1">);</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-6">Order</span><span class="hl-1">.</span><span class="hl-0">create</span><span class="hl-1">(</span><span class="hl-6">order</span><span class="hl-1">);</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-0">commit</span><span class="hl-1">();</span><br/><span class="hl-1">} </span><span class="hl-5">catch</span><span class="hl-1"> (</span><span class="hl-6">error</span><span class="hl-1">) {</span><br/><span class="hl-1">  </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">tx</span><span class="hl-1">.</span><span class="hl-0">rollback</span><span class="hl-1">();</span><br/><span class="hl-1">  </span><span class="hl-5">throw</span><span class="hl-1"> </span><span class="hl-6">error</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      #content table {
-        width: 100%;
-        border-collapse: collapse;
-        display: block;
-        overflow: auto;
-      }
+<h3 id="transaction-semantics" class="tsd-anchor-link">Transaction semantics<a href="#transaction-semantics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>All repository operations performed through the <code>tx</code> handle share the same native <code>IDBTransaction</code>, ensuring atomicity. <code>beginTransaction</code> accepts an array of entity names that determines the transaction scope; the callback form spans all registered entities. The default mode is <code>'readwrite'</code>; pass <code>'readonly'</code> for read-only workloads. Use <code>tx.Entity.query()</code> to run queries within the same transaction boundary.</p>
+<hr>
+<h2 id="data-retention" class="tsd-anchor-link">Data Retention<a href="#data-retention" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><code>@RetentionPolicy</code> triggers a background cleanup job that deletes records whose age exceeds the configured threshold.</p>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">RetentionPolicy</span><span class="hl-1">({ </span><span class="hl-6">seconds:</span><span class="hl-1"> </span><span class="hl-9">60</span><span class="hl-1"> * </span><span class="hl-9">60</span><span class="hl-1"> * </span><span class="hl-9">24</span><span class="hl-1"> * </span><span class="hl-9">30</span><span class="hl-1"> }) </span><span class="hl-10">// 30-day retention</span><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">()</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Session</span><span class="hl-1"> {</span><br/><span class="hl-1">  @</span><span class="hl-0">KeyPath</span><span class="hl-1">({ </span><span class="hl-6">generator:</span><span class="hl-1"> </span><span class="hl-2">&#39;uuid&#39;</span><span class="hl-1"> })</span><br/><span class="hl-1">  </span><span class="hl-6">id</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">userId</span><span class="hl-1">!: </span><span class="hl-7">string</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
 
-      #content th,
-      #content td {
-        border: 1px solid var(--border);
-        padding: 10px 12px;
-        text-align: left;
-        vertical-align: top;
-      }
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>seconds</code></td>
+<td><code>number</code></td>
+<td>-</td>
+<td><strong>(Required)</strong> Retention window in seconds. Must be a positive integer.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>boolean</code></td>
+<td><code>true</code></td>
+<td>Set to <code>false</code> to suspend cleanup without removing the policy.</td>
+</tr>
+<tr>
+<td><code>field</code></td>
+<td><code>string</code></td>
+<td><code>'__idb_createdAt'</code></td>
+<td>Numeric timestamp field used to compute record age.</td>
+</tr>
+</tbody>
+</table>
+<p>When multiple entities define retention policies, the cleanup interval is set to the GCD of all configured <code>seconds</code> values in milliseconds, so a single timer satisfies every policy efficiently. The job runs immediately on database open and then on each interval tick, using cursor-based <code>readwrite</code> transactions.</p>
+<hr>
+<h2 id="schema-versioning" class="tsd-anchor-link">Schema Versioning<a href="#schema-versioning" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Increment an entity's <code>version</code> to trigger <code>onupgradeneeded</code> and update its object store on the user's next visit. The effective database version is the maximum across all registered entities, so adding a new high-version entity is sufficient to initiate a migration.</p>
+<pre><code class="typescript"><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">({ </span><span class="hl-6">version:</span><span class="hl-1"> </span><span class="hl-9">1</span><span class="hl-1"> })</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">User</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-10">/* ... */</span><br/><span class="hl-1">}</span><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">({ </span><span class="hl-6">version:</span><span class="hl-1"> </span><span class="hl-9">2</span><span class="hl-1"> })</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Post</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-10">/* ... */</span><br/><span class="hl-1">}</span><br/><span class="hl-1">@</span><span class="hl-0">DataClass</span><span class="hl-1">({ </span><span class="hl-6">version:</span><span class="hl-1"> </span><span class="hl-9">3</span><span class="hl-1"> })</span><br/><span class="hl-4">class</span><span class="hl-1"> </span><span class="hl-7">Comment</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-10">/* ... */</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-10">// Database opens at version 3.</span><br/><span class="hl-10">// If a user was on version 1, only Post (v2) and Comment (v3) stores are</span><br/><span class="hl-10">// created or updated during onupgradeneeded.</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-8">db</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">Database</span><span class="hl-1">.</span><span class="hl-0">build</span><span class="hl-1">(</span><span class="hl-2">&#39;blog&#39;</span><span class="hl-1">, [</span><span class="hl-6">User</span><span class="hl-1">, </span><span class="hl-6">Post</span><span class="hl-1">, </span><span class="hl-6">Comment</span><span class="hl-1">]);</span><br/><br/><span class="hl-6">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-0">getDatabaseVersion</span><span class="hl-1">()); </span><span class="hl-10">// 3</span>
+</code><button type="button">Copy</button></pre>
 
-      #content img {
-        max-width: 100%;
-      }
+<hr>
+<h2 id="bulk-operations" class="tsd-anchor-link">Bulk Operations<a href="#bulk-operations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>All repository bulk helpers iterate the corresponding single-item operation and therefore enforce validation and key generation per item. They are not issued as a single atomic transaction. For atomic batch writes, use the <a href="#transactions">Transaction API</a>.</p>
+<pre><code class="typescript"><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">createMany</span><span class="hl-1">([</span><span class="hl-6">alice</span><span class="hl-1">, </span><span class="hl-6">bob</span><span class="hl-1">, </span><span class="hl-6">charlie</span><span class="hl-1">]);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">updateMany</span><span class="hl-1">([</span><span class="hl-6">alice</span><span class="hl-1">, </span><span class="hl-6">bob</span><span class="hl-1">]);</span><br/><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-6">db</span><span class="hl-1">.</span><span class="hl-6">User</span><span class="hl-1">.</span><span class="hl-0">deleteMany</span><span class="hl-1">([</span><span class="hl-2">&#39;u1&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;u2&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;u3&#39;</span><span class="hl-1">]);</span>
+</code><button type="button">Copy</button></pre>
 
-      footer {
-        text-align: center;
-        color: var(--muted);
-        font-size: 0.9rem;
-        padding: 0 20px 36px;
-      }
-
-      .error {
-        color: #b91c1c;
-        background: #fef2f2;
-        border: 1px solid #fecaca;
-        padding: 16px;
-        border-radius: 16px;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div class="eyebrow">Documentation</div>
-      <h1>idb-ts docs</h1>
-      <p>
-        This page renders the repository markdown so the docs can be browsed
-        directly from GitHub Pages.
-      </p>
-      <div class="actions">
-        <a class="primary" href="../">Back to examples</a>
-        <a href="../../README.md">Open markdown source</a>
-      </div>
-    </header>
-
-    <main>
-      <div class="toolbar">
-        <div>
-          <strong>Rendered from README.md</strong>
-          <div><span>Published as part of the GitHub Pages artifact</span></div>
-        </div>
-        <span id="status">Loading documentation...</span>
-      </div>
-      <div id="content"></div>
-    </main>
-
-    <footer>
-      Markdown is fetched from the published README copy in this docs directory.
-    </footer>
-
-    <script>
-      const statusElement = document.getElementById('status');
-      const contentElement = document.getElementById('content');
-
-      async function loadDocs() {
-        try {
-          const response = await fetch('./README.md', { cache: 'no-store' });
-          if (!response.ok) {
-            throw new Error(`Unable to load README.md (${response.status})`);
-          }
-
-          const markdown = await response.text();
-          contentElement.innerHTML = marked.parse(markdown, {
-            mangle: false,
-            headerIds: true,
-          });
-          statusElement.textContent = 'Ready';
-        } catch (error) {
-          statusElement.textContent = 'Failed to load';
-          contentElement.innerHTML = `<div class="error">${error.message}</div>`;
-        }
-      }
-
-      loadDocs();
-    </script>
-  </body>
-</html>
+<hr>
+<h2 id="useful-links" class="tsd-anchor-link">Useful Links<a href="#useful-links" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><strong>GitHub</strong>: <a href="https://github.com/maifeeulasad/idb-ts">maifeeulasad/idb-ts</a></li>
+<li><strong>NPM</strong>: <a href="https://www.npmjs.com/package/idb-ts">idb-ts</a></li>
+<li><strong>Demos</strong>: <a href="https://maifeeulasad.github.io/idb-ts/">https://maifeeulasad.github.io/idb-ts/</a></li>
+<li><strong>Live Editor</strong>: <a href="https://maifeeulasad.github.io/idb-ts/typescript/">https://maifeeulasad.github.io/idb-ts/typescript/</a></li>
+<li><strong>Code Coverage report</strong>: <a href="https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/">https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/</a></li>
+</ul>
+<p>🎉 <strong>Enjoy seamless IndexedDB integration with TypeScript! Happy coding!</strong> 🚀</p>
+<p>Made by <a href="https://github.com/maifeeulasad">Maifee Ulasad</a> with :heart: and :tea:. Licensed under <a href="media/LICENSE">MIT</a>.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#idb-ts"><span>idb-<wbr/>ts</span></a><ul><li><a href="#introduction"><span>Introduction</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#feature-overview"><span>Feature <wbr/>Overview</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><a href="#defining-entities"><span>Defining <wbr/>Entities</span></a></li><li><ul><li><a href="#decorator-reference"><span>Decorator reference</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><a href="#_-3"><span></span></a></li><li><a href="#_-4"><span></span></a></li><li><a href="#_-5"><span></span></a></li></ul></li></ul></li><li><a href="#database-initialisation"><span>Database <wbr/>Initialisation</span></a></li><li><ul><li><a href="#inspecting-database-metadata"><span>Inspecting database metadata</span></a></li><li><a href="#closing-the-connection"><span>Closing the connection</span></a></li></ul></li><li><a href="#crud-operations"><span>CRUD <wbr/>Operations</span></a></li><li><ul><li><a href="#index-lookups"><span>Index lookups</span></a></li></ul></li><li><a href="#automatic-timestamps"><span>Automatic <wbr/>Timestamps</span></a></li><li><a href="#query-builder"><span>Query <wbr/>Builder</span></a></li><li><ul><li><a href="#filtering"><span>Filtering</span></a></li><li><ul><li><a href="#available-operators"><span>Available operators</span></a></li></ul></li><li><a href="#logical-grouping"><span>Logical grouping</span></a></li><li><a href="#sorting-and-pagination"><span>Sorting and pagination</span></a></li><li><a href="#index-and-range-acceleration"><span>Index and range acceleration</span></a></li><li><a href="#aggregations"><span>Aggregations</span></a></li></ul></li><li><a href="#key-management"><span>Key <wbr/>Management</span></a></li><li><ul><li><a href="#auto-increment"><span>Auto-<wbr/>increment</span></a></li><li><a href="#built-in-generators"><span>Built-<wbr/>in generators</span></a></li><li><a href="#custom-generator"><span>Custom generator</span></a></li><li><a href="#using-generators-directly"><span>Using generators directly</span></a></li><li><a href="#composite-keys"><span>Composite keys</span></a></li></ul></li><li><a href="#field-validation"><span>Field <wbr/>Validation</span></a></li><li><a href="#transactions"><span>Transactions</span></a></li><li><ul><li><a href="#callback-form-recommended"><span>Callback form (recommended)</span></a></li><li><a href="#explicit-form"><span>Explicit form</span></a></li><li><a href="#transaction-semantics"><span>Transaction semantics</span></a></li></ul></li><li><a href="#data-retention"><span>Data <wbr/>Retention</span></a></li><li><a href="#schema-versioning"><span>Schema <wbr/>Versioning</span></a></li><li><a href="#bulk-operations"><span>Bulk <wbr/>Operations</span></a></li><li><a href="#useful-links"><span>Useful <wbr/>Links</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">idb-ts</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
