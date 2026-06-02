@@ -584,7 +584,8 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 - **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
 - **NPM**: [idb-ts](https://www.npmjs.com/package/idb-ts)
-- **Demo**: https://maifeeulasad.github.io/idb-ts/
+- **Demos**: https://maifeeulasad.github.io/idb-ts/
+- **Live Editor**: https://maifeeulasad.github.io/idb-ts/typescript/
 - **Code Coverage report**: https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/
 
 🎉 **Enjoy seamless IndexedDB integration with TypeScript! Happy coding!** 🚀
