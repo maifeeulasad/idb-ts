@@ -580,9 +580,11 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 ---
 
+## Performance
+
 <!-- performance start -->
 
-
+to be generated with github action
 
 <!-- performance end -->
 
