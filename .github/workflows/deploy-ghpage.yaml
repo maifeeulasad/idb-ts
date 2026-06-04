@@ -151,7 +151,7 @@ jobs:
       - name: Install dependencies
         run: npm i -g pnpm && pnpm i --frozen-lockfile
       - name: Generate Performance Results
-        run: pnpm performance:generate > performance-results.md
+        run: pnpm test:performance > performance-results.md
       - name: Add to readme
         run: |
           content=$(cat performance-results.md)
