@@ -137,8 +137,39 @@ jobs:
           path: ./coverage
           retention-days: 1
 
+  generate-performance-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24.x
+      - name: Install dependencies
+        run: npm i -g pnpm && pnpm i --frozen-lockfile
+      - name: Generate Performance Results
+        run: pnpm performance:generate > performance-results.md
+      - name: Add to readme
+        run: |
+          content=$(cat performance-results.md)
+          sed -i '/<!-- performance start -->/,/<!-- performance end -->/c\<!-- performance start -->\n\n'"$content"'\n\n<!-- performance end -->' README.md
+      - name: Clean up performance results file
+        run: rm performance-results.md
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f README.md
+          git commit -m "[report]: updated performance report" || echo "No changes to commit"
+          git push
+
+
   generate-docs:
     runs-on: ubuntu-latest
+    needs:
+      [
+        generate-performance-report,
+      ]
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js 24.x
@@ -183,6 +214,7 @@ jobs:
           name: documentation
           path: ./docs
           retention-days: 1
+
   deploy:
     runs-on: ubuntu-latest
     needs:
@@ -192,6 +224,7 @@ jobs:
         build-typescript,
         generate-coverage,
         generate-docs,
+        generate-performance-report,
       ]
     steps:
       - uses: actions/checkout@v3
