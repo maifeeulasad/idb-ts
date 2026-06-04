@@ -580,6 +580,12 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 ---
 
+<!-- performance start -->
+
+
+
+<!-- performance end -->
+
 ## Useful Links
 
 - **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
