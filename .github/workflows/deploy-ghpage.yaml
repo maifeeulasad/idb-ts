@@ -154,8 +154,24 @@ jobs:
         run: pnpm test:performance > performance-results.md
       - name: Add to readme
         run: |
-          content=$(cat performance-results.md)
-          sed -i '/<!-- performance start -->/,/<!-- performance end -->/c\<!-- performance start -->\n\n'"$content"'\n\n<!-- performance end -->' README.md
+          python3 <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          content = Path('performance-results.md').read_text().strip()
+
+          start = '<!-- performance start -->'
+          end = '<!-- performance end -->'
+          replacement = f"{start}\n\n{content}\n\n{end}"
+
+          text = readme.read_text()
+          if start in text and end in text:
+            before = text.split(start, 1)[0]
+            after = text.split(end, 1)[1]
+            readme.write_text(f"{before}{replacement}{after}")
+          else:
+            readme.write_text(f"{text}\n\n{replacement}\n")
+          PY
       - name: Clean up performance results file
         run: rm performance-results.md
       - name: Commit and push
