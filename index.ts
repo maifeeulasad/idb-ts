@@ -1,5 +1,19 @@
 import 'reflect-metadata';
 
+const PRINT_ENABLED = false;
+
+const printDebug = (...data: any) => {
+  if (!PRINT_ENABLED)
+    return;
+  console.debug('[idb-ts]:DEBUG:', ...data);
+};
+
+const printError = (...error: any) => {
+  if (!PRINT_ENABLED)
+    return;
+  console.error('[idb-ts]:ERROR:', ...error);
+};
+
 /**
  * Specifies the sort direction for query results.
  *
@@ -87,8 +101,8 @@ type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
 type ContainsValue<T> = T extends string
   ? string
   : T extends readonly (infer U)[]
-    ? U
-    : never;
+  ? U
+  : never;
 
 /**
  * All filter operators supported by {@link FieldQueryBuilder} and {@link QueryBuilder}.
@@ -210,7 +224,7 @@ class FieldQueryBuilder<T, K extends QueryFieldKey<T>> {
   constructor(
     private parent: QueryBuilder<T>,
     private field: K,
-  ) {}
+  ) { }
 
   /**
    * Filters records where `field === value`.
@@ -879,8 +893,8 @@ class QueryBuilder<T> {
     const store = this.transaction
       ? this.transaction.objectStore(this.storeName)
       : this.db
-          .transaction(this.storeName, 'readonly')
-          .objectStore(this.storeName);
+        .transaction(this.storeName, 'readonly')
+        .objectStore(this.storeName);
 
     const request = this.createReadRequest(store);
     return new Promise<T[]>((resolve, reject) => {
@@ -1209,10 +1223,10 @@ interface KeyPathOptions {
    *                   `string` or `number`.
    */
   generator?:
-    | 'uuid'
-    | 'timestamp'
-    | 'random'
-    | ((item?: any) => string | number);
+  | 'uuid'
+  | 'timestamp'
+  | 'random'
+  | ((item?: any) => string | number);
 }
 
 /**
@@ -2009,7 +2023,7 @@ class Database {
         const oldVersion = event.oldVersion;
         const newVersion = event.newVersion || this.dbVersion;
 
-        console.debug(
+        printDebug(
           `Database upgrade from version ${oldVersion} to ${newVersion}`,
         );
 
@@ -2027,7 +2041,7 @@ class Database {
           // Only create/update stores for classes whose version is greater than the old DB version
           if (classVersion > oldVersion) {
             if (!db.objectStoreNames.contains(storeName)) {
-              console.debug(
+              printDebug(
                 `Creating object store: ${storeName} (version ${classVersion})`,
               );
 
@@ -2061,7 +2075,7 @@ class Database {
               });
             } else {
               // Store exists, check if we need to update indexes
-              console.debug(
+              printDebug(
                 `Updating object store: ${storeName} (version ${classVersion})`,
               );
               const transaction = request.transaction;
@@ -2079,7 +2093,7 @@ class Database {
                       : (indexField.options ?? { unique: false });
 
                   if (!store.indexNames.contains(indexName)) {
-                    console.debug(`Adding index: ${indexName} to ${storeName}`);
+                    printDebug(`Adding index: ${indexName} to ${storeName}`);
                     store.createIndex(indexName, indexName, indexOptions);
                   }
                 });
@@ -2091,7 +2105,7 @@ class Database {
 
       request.onsuccess = () => {
         this.db = request.result;
-        console.debug(
+        printDebug(
           `Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata('version', cls) || 1})`).join(', ')}`,
         );
         this.startRetentionCleanup();
@@ -2099,7 +2113,7 @@ class Database {
       };
 
       request.onerror = () => {
-        console.error('Error initializing database:', request.error);
+        printError('Error initializing database:', request.error);
         reject(request.error);
       };
     });
@@ -2161,7 +2175,7 @@ class Database {
       return;
     }
 
-    console.debug(
+    printDebug(
       `Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`,
     );
     void this.runRetentionCleanup();
@@ -2182,11 +2196,11 @@ class Database {
 
     this.retentionCleanupRunning = true;
     try {
-      console.debug('Retention cleanup tick started');
+      printDebug('Retention cleanup tick started');
       for (const { storeName, className, policy } of this.retentionPolicies) {
         await this.cleanupExpiredRecords(storeName, className, policy);
       }
-      console.debug('Retention cleanup tick finished');
+      printDebug('Retention cleanup tick finished');
     } finally {
       this.retentionCleanupRunning = false;
     }
@@ -2217,7 +2231,7 @@ class Database {
 
           const value = cursor.value as Record<string, any>;
           const timestamp = value?.[policy.field];
-          console.debug(
+          printDebug(
             `Retention cleanup inspecting ${className}.${policy.field}:`,
             timestamp,
             'cutoff:',
@@ -2226,7 +2240,7 @@ class Database {
           if (typeof timestamp === 'number' && timestamp <= cutoff) {
             const deleteRequest = cursor.delete();
             deleteRequest.onsuccess = () => {
-              console.debug(
+              printDebug(
                 `Retention cleanup removed expired record from ${className}`,
               );
               cursor.continue();
@@ -2234,7 +2248,7 @@ class Database {
             deleteRequest.onerror = () =>
               reject(
                 deleteRequest.error ??
-                  new Error(`Retention cleanup delete failed for ${className}`),
+                new Error(`Retention cleanup delete failed for ${className}`),
               );
             return;
           }
@@ -2246,12 +2260,12 @@ class Database {
         transaction.onerror = () =>
           reject(
             transaction.error ??
-              new Error(`Retention cleanup failed for ${className}`),
+            new Error(`Retention cleanup failed for ${className}`),
           );
         transaction.onabort = () =>
           reject(
             transaction.error ??
-              new Error(`Retention cleanup aborted for ${className}`),
+            new Error(`Retention cleanup aborted for ${className}`),
           );
       } catch (error) {
         reject(error);
@@ -2457,7 +2471,7 @@ class Database {
           'readwrite',
           (store) => {
             return createStoredItem(store, item).then(() => {
-              console.debug(`Item added to ${cls.name}:`, item);
+              printDebug(`Item added to ${cls.name}:`, item);
             });
           },
           transaction,
@@ -2479,7 +2493,7 @@ class Database {
             const request = store.get(key);
             return new Promise<T | undefined>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Item read from ${cls.name}:`, request.result);
+                printDebug(`Item read from ${cls.name}:`, request.result);
                 resolve(request.result as T | undefined);
               };
               request.onerror = () => reject(request.error);
@@ -2497,7 +2511,7 @@ class Database {
           'readwrite',
           (store) => {
             return updateStoredItem(store, item).then(() => {
-              console.debug(`Item updated in ${cls.name}:`, item);
+              printDebug(`Item updated in ${cls.name}:`, item);
             });
           },
           transaction,
@@ -2517,7 +2531,7 @@ class Database {
           'readwrite',
           (store) => {
             return deleteStoredItem(store, key).then(() => {
-              console.debug(`Item deleted from ${cls.name}:`, key);
+              printDebug(`Item deleted from ${cls.name}:`, key);
             });
           },
           transaction,
@@ -2558,7 +2572,7 @@ class Database {
             const request = store.getAll();
             return new Promise<T[]>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`All items from ${cls.name}:`, request.result);
+                printDebug(`All items from ${cls.name}:`, request.result);
                 resolve(request.result as T[]);
               };
               request.onerror = () => reject(request.error);
@@ -2581,7 +2595,7 @@ class Database {
                   (page - 1) * pageSize,
                   page * pageSize,
                 );
-                console.debug(
+                printDebug(
                   `Paginated items from ${cls.name}:`,
                   paginatedItems,
                 );
@@ -2609,7 +2623,7 @@ class Database {
             const request = index.getAll(value);
             return new Promise<T[]>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(
+                printDebug(
                   `Items found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -2640,7 +2654,7 @@ class Database {
             const request = index.get(value);
             return new Promise<T | undefined>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(
+                printDebug(
                   `Item found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -2661,7 +2675,7 @@ class Database {
             const request = store.count();
             return new Promise<number>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Count for ${cls.name}:`, request.result);
+                printDebug(`Count for ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2680,7 +2694,7 @@ class Database {
             return new Promise<boolean>((resolve, reject) => {
               request.onsuccess = () => {
                 const exists = request.result > 0;
-                console.debug(
+                printDebug(
                   `Exists check for ${cls.name} with key ${key}:`,
                   exists,
                 );
@@ -2701,7 +2715,7 @@ class Database {
             const request = store.clear();
             return new Promise<void>((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Cleared all items from ${cls.name}`);
+                printDebug(`Cleared all items from ${cls.name}`);
                 resolve();
               };
               request.onerror = () => reject(request.error);
