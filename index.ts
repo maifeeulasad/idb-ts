@@ -1916,12 +1916,24 @@ class Database {
   }>;
   private printEnabled: boolean;
 
+  /**
+   * Logs a debug message to the console when debug logging is enabled.
+   *
+   * @param data - Values forwarded to `console.debug`.
+   * @internal
+   */
   private printDebug = (...data: any) => {
     if (!this.printEnabled)
       return;
     console.debug('[idb-ts]:DEBUG:', ...data);
   };
 
+  /**
+   * Logs an error message to the console when debug logging is enabled.
+   *
+   * @param error - Values forwarded to `console.error`.
+   * @internal
+   */
   private printError = (...error: any) => {
     if (!this.printEnabled)
       return;
