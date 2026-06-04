@@ -26,6 +26,7 @@
     "test:watch": "jest --watchAll --runInBand --detectOpenHandles",
     "test:coverage": "jest --coverage --runInBand --detectOpenHandles",
     "test:coverage:watch": "jest --coverage --watchAll --runInBand --detectOpenHandles",
+    "test:performance": "npx tsx performance.ts",
     "docs:generate": "typedoc"
   },
   "repository": {
