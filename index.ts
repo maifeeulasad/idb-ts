@@ -1,19 +1,5 @@
 import 'reflect-metadata';
 
-const PRINT_ENABLED = false;
-
-const printDebug = (...data: any) => {
-  if (!PRINT_ENABLED)
-    return;
-  console.debug('[idb-ts]:DEBUG:', ...data);
-};
-
-const printError = (...error: any) => {
-  if (!PRINT_ENABLED)
-    return;
-  console.error('[idb-ts]:ERROR:', ...error);
-};
-
 /**
  * Specifies the sort direction for query results.
  *
@@ -1928,10 +1914,24 @@ class Database {
     storeName: string;
     policy: RetentionPolicyMetadata;
   }>;
+  private printEnabled: boolean;
+
+  private printDebug = (...data: any) => {
+    if (!this.printEnabled)
+      return;
+    console.debug('[idb-ts]:DEBUG:', ...data);
+  };
+
+  private printError = (...error: any) => {
+    if (!this.printEnabled)
+      return;
+    console.error('[idb-ts]:ERROR:', ...error);
+  };
 
   /** @internal Use {@link Database.build} to create instances. */
-  private constructor(dbName: string, classes: Function[]) {
+  private constructor(dbName: string, classes: Function[], printEnabled = false) {
     this.dbName = dbName;
+    this.printEnabled = printEnabled;
     if (!classes.every((cls) => Reflect.getMetadata('dataclass', cls))) {
       throw new Error('All classes should be decorated with @DataClass.');
     }
@@ -2023,7 +2023,7 @@ class Database {
         const oldVersion = event.oldVersion;
         const newVersion = event.newVersion || this.dbVersion;
 
-        printDebug(
+        this.printDebug(
           `Database upgrade from version ${oldVersion} to ${newVersion}`,
         );
 
@@ -2041,7 +2041,7 @@ class Database {
           // Only create/update stores for classes whose version is greater than the old DB version
           if (classVersion > oldVersion) {
             if (!db.objectStoreNames.contains(storeName)) {
-              printDebug(
+              this.printDebug(
                 `Creating object store: ${storeName} (version ${classVersion})`,
               );
 
@@ -2075,7 +2075,7 @@ class Database {
               });
             } else {
               // Store exists, check if we need to update indexes
-              printDebug(
+              this.printDebug(
                 `Updating object store: ${storeName} (version ${classVersion})`,
               );
               const transaction = request.transaction;
@@ -2093,7 +2093,7 @@ class Database {
                       : (indexField.options ?? { unique: false });
 
                   if (!store.indexNames.contains(indexName)) {
-                    printDebug(`Adding index: ${indexName} to ${storeName}`);
+                    this.printDebug(`Adding index: ${indexName} to ${storeName}`);
                     store.createIndex(indexName, indexName, indexOptions);
                   }
                 });
@@ -2105,7 +2105,7 @@ class Database {
 
       request.onsuccess = () => {
         this.db = request.result;
-        printDebug(
+        this.printDebug(
           `Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata('version', cls) || 1})`).join(', ')}`,
         );
         this.startRetentionCleanup();
@@ -2113,7 +2113,7 @@ class Database {
       };
 
       request.onerror = () => {
-        printError('Error initializing database:', request.error);
+        this.printError('Error initializing database:', request.error);
         reject(request.error);
       };
     });
@@ -2175,7 +2175,7 @@ class Database {
       return;
     }
 
-    printDebug(
+    this.printDebug(
       `Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`,
     );
     void this.runRetentionCleanup();
@@ -2196,11 +2196,11 @@ class Database {
 
     this.retentionCleanupRunning = true;
     try {
-      printDebug('Retention cleanup tick started');
+      this.printDebug('Retention cleanup tick started');
       for (const { storeName, className, policy } of this.retentionPolicies) {
         await this.cleanupExpiredRecords(storeName, className, policy);
       }
-      printDebug('Retention cleanup tick finished');
+      this.printDebug('Retention cleanup tick finished');
     } finally {
       this.retentionCleanupRunning = false;
     }
@@ -2231,7 +2231,7 @@ class Database {
 
           const value = cursor.value as Record<string, any>;
           const timestamp = value?.[policy.field];
-          printDebug(
+          this.printDebug(
             `Retention cleanup inspecting ${className}.${policy.field}:`,
             timestamp,
             'cutoff:',
@@ -2240,7 +2240,7 @@ class Database {
           if (typeof timestamp === 'number' && timestamp <= cutoff) {
             const deleteRequest = cursor.delete();
             deleteRequest.onsuccess = () => {
-              printDebug(
+              this.printDebug(
                 `Retention cleanup removed expired record from ${className}`,
               );
               cursor.continue();
@@ -2471,7 +2471,7 @@ class Database {
           'readwrite',
           (store) => {
             return createStoredItem(store, item).then(() => {
-              printDebug(`Item added to ${cls.name}:`, item);
+              this.printDebug(`Item added to ${cls.name}:`, item);
             });
           },
           transaction,
@@ -2493,7 +2493,7 @@ class Database {
             const request = store.get(key);
             return new Promise<T | undefined>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(`Item read from ${cls.name}:`, request.result);
+                this.printDebug(`Item read from ${cls.name}:`, request.result);
                 resolve(request.result as T | undefined);
               };
               request.onerror = () => reject(request.error);
@@ -2511,7 +2511,7 @@ class Database {
           'readwrite',
           (store) => {
             return updateStoredItem(store, item).then(() => {
-              printDebug(`Item updated in ${cls.name}:`, item);
+              this.printDebug(`Item updated in ${cls.name}:`, item);
             });
           },
           transaction,
@@ -2531,7 +2531,7 @@ class Database {
           'readwrite',
           (store) => {
             return deleteStoredItem(store, key).then(() => {
-              printDebug(`Item deleted from ${cls.name}:`, key);
+              this.printDebug(`Item deleted from ${cls.name}:`, key);
             });
           },
           transaction,
@@ -2572,7 +2572,7 @@ class Database {
             const request = store.getAll();
             return new Promise<T[]>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(`All items from ${cls.name}:`, request.result);
+                this.printDebug(`All items from ${cls.name}:`, request.result);
                 resolve(request.result as T[]);
               };
               request.onerror = () => reject(request.error);
@@ -2595,7 +2595,7 @@ class Database {
                   (page - 1) * pageSize,
                   page * pageSize,
                 );
-                printDebug(
+                this.printDebug(
                   `Paginated items from ${cls.name}:`,
                   paginatedItems,
                 );
@@ -2623,7 +2623,7 @@ class Database {
             const request = index.getAll(value);
             return new Promise<T[]>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(
+                this.printDebug(
                   `Items found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -2654,7 +2654,7 @@ class Database {
             const request = index.get(value);
             return new Promise<T | undefined>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(
+                this.printDebug(
                   `Item found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -2675,7 +2675,7 @@ class Database {
             const request = store.count();
             return new Promise<number>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(`Count for ${cls.name}:`, request.result);
+                this.printDebug(`Count for ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2694,7 +2694,7 @@ class Database {
             return new Promise<boolean>((resolve, reject) => {
               request.onsuccess = () => {
                 const exists = request.result > 0;
-                printDebug(
+                this.printDebug(
                   `Exists check for ${cls.name} with key ${key}:`,
                   exists,
                 );
@@ -2715,7 +2715,7 @@ class Database {
             const request = store.clear();
             return new Promise<void>((resolve, reject) => {
               request.onsuccess = () => {
-                printDebug(`Cleared all items from ${cls.name}`);
+                this.printDebug(`Cleared all items from ${cls.name}`);
                 resolve();
               };
               request.onerror = () => reject(request.error);
