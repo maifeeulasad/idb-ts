@@ -420,7 +420,770 @@
 <hr>
 <h2 id="performance" class="tsd-anchor-link">Performance<a href="#performance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <!-- performance start -->
-<p>to be generated with github action</p>
+<p>Already up to date
+Done in 371ms using pnpm v11.5.1</p>
+<h3 id="suite-1-crud-operations" class="tsd-anchor-link">Suite 1: CRUD Operations<a href="#suite-1-crud-operations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>create (single)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">11.452</td>
+<td style="text-align:right">17,464.575</td>
+<td style="text-align:right">0.057</td>
+<td style="text-align:right">0.042</td>
+<td style="text-align:right">0.106</td>
+<td style="text-align:right">0.13</td>
+<td style="text-align:right">0.037</td>
+<td style="text-align:right">0.873</td>
+</tr>
+<tr>
+<td>read (by PK)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">8.747</td>
+<td style="text-align:right">22,864.697</td>
+<td style="text-align:right">0.043</td>
+<td style="text-align:right">0.038</td>
+<td style="text-align:right">0.073</td>
+<td style="text-align:right">0.124</td>
+<td style="text-align:right">0.031</td>
+<td style="text-align:right">0.142</td>
+</tr>
+<tr>
+<td>update (single)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">107.417</td>
+<td style="text-align:right">1,861.908</td>
+<td style="text-align:right">0.537</td>
+<td style="text-align:right">0.492</td>
+<td style="text-align:right">0.846</td>
+<td style="text-align:right">0.996</td>
+<td style="text-align:right">0.422</td>
+<td style="text-align:right">1.837</td>
+</tr>
+<tr>
+<td>findByIndex (email)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">9.161</td>
+<td style="text-align:right">21,831.263</td>
+<td style="text-align:right">0.046</td>
+<td style="text-align:right">0.042</td>
+<td style="text-align:right">0.072</td>
+<td style="text-align:right">0.098</td>
+<td style="text-align:right">0.035</td>
+<td style="text-align:right">0.102</td>
+</tr>
+<tr>
+<td>findOneByIndex (email)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">10.831</td>
+<td style="text-align:right">18,466.266</td>
+<td style="text-align:right">0.054</td>
+<td style="text-align:right">0.048</td>
+<td style="text-align:right">0.062</td>
+<td style="text-align:right">0.079</td>
+<td style="text-align:right">0.041</td>
+<td style="text-align:right">0.818</td>
+</tr>
+<tr>
+<td>count</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">9.418</td>
+<td style="text-align:right">21,235.638</td>
+<td style="text-align:right">0.047</td>
+<td style="text-align:right">0.045</td>
+<td style="text-align:right">0.058</td>
+<td style="text-align:right">0.073</td>
+<td style="text-align:right">0.041</td>
+<td style="text-align:right">0.087</td>
+</tr>
+<tr>
+<td>exists</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">15.159</td>
+<td style="text-align:right">13,193.577</td>
+<td style="text-align:right">0.076</td>
+<td style="text-align:right">0.058</td>
+<td style="text-align:right">0.094</td>
+<td style="text-align:right">0.126</td>
+<td style="text-align:right">0.051</td>
+<td style="text-align:right">2.479</td>
+</tr>
+<tr>
+<td>list (all)</td>
+<td style="text-align:right">50</td>
+<td style="text-align:right">94.742</td>
+<td style="text-align:right">527.749</td>
+<td style="text-align:right">1.894</td>
+<td style="text-align:right">1.563</td>
+<td style="text-align:right">4.379</td>
+<td style="text-align:right">6.68</td>
+<td style="text-align:right">1.439</td>
+<td style="text-align:right">6.68</td>
+</tr>
+<tr>
+<td>listPaginated (1, 20)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">373.165</td>
+<td style="text-align:right">535.956</td>
+<td style="text-align:right">1.865</td>
+<td style="text-align:right">1.569</td>
+<td style="text-align:right">1.993</td>
+<td style="text-align:right">8.988</td>
+<td style="text-align:right">1.415</td>
+<td style="text-align:right">12.812</td>
+</tr>
+<tr>
+<td>query().where().gte().execute()</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">180.633</td>
+<td style="text-align:right">553.61</td>
+<td style="text-align:right">1.806</td>
+<td style="text-align:right">1.519</td>
+<td style="text-align:right">1.985</td>
+<td style="text-align:right">2.312</td>
+<td style="text-align:right">1.462</td>
+<td style="text-align:right">13.98</td>
+</tr>
+<tr>
+<td>delete (single)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">131.658</td>
+<td style="text-align:right">1,519.083</td>
+<td style="text-align:right">0.658</td>
+<td style="text-align:right">0.632</td>
+<td style="text-align:right">0.713</td>
+<td style="text-align:right">0.818</td>
+<td style="text-align:right">0.527</td>
+<td style="text-align:right">4.997</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suite-2-batched-crud-by-batch-size" class="tsd-anchor-link">Suite 2: Batched CRUD (by batch size)<a href="#suite-2-batched-crud-by-batch-size" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>createMany (10)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">1.046</td>
+<td style="text-align:right">2,867.4</td>
+<td style="text-align:right">0.348</td>
+<td style="text-align:right">0.361</td>
+<td style="text-align:right">0.378</td>
+<td style="text-align:right">0.378</td>
+<td style="text-align:right">0.306</td>
+<td style="text-align:right">0.378</td>
+</tr>
+<tr>
+<td>read batch (10 keys)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">0.554</td>
+<td style="text-align:right">5,418.361</td>
+<td style="text-align:right">0.184</td>
+<td style="text-align:right">0.172</td>
+<td style="text-align:right">0.227</td>
+<td style="text-align:right">0.227</td>
+<td style="text-align:right">0.154</td>
+<td style="text-align:right">0.227</td>
+</tr>
+<tr>
+<td>updateMany (10)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">4.395</td>
+<td style="text-align:right">682.573</td>
+<td style="text-align:right">1.464</td>
+<td style="text-align:right">1.258</td>
+<td style="text-align:right">1.878</td>
+<td style="text-align:right">1.878</td>
+<td style="text-align:right">1.258</td>
+<td style="text-align:right">1.878</td>
+</tr>
+<tr>
+<td>deleteMany (10)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">2.865</td>
+<td style="text-align:right">1,047.076</td>
+<td style="text-align:right">0.954</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">1.008</td>
+<td style="text-align:right">1.008</td>
+<td style="text-align:right">0.855</td>
+<td style="text-align:right">1.008</td>
+</tr>
+<tr>
+<td>deleteWhere (10+ match)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">0.84</td>
+<td style="text-align:right">3,570.901</td>
+<td style="text-align:right">0.28</td>
+<td style="text-align:right">0.272</td>
+<td style="text-align:right">0.299</td>
+<td style="text-align:right">0.299</td>
+<td style="text-align:right">0.267</td>
+<td style="text-align:right">0.299</td>
+</tr>
+<tr>
+<td>createMany (50)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">4.187</td>
+<td style="text-align:right">716.558</td>
+<td style="text-align:right">1.395</td>
+<td style="text-align:right">1.404</td>
+<td style="text-align:right">1.441</td>
+<td style="text-align:right">1.441</td>
+<td style="text-align:right">1.339</td>
+<td style="text-align:right">1.441</td>
+</tr>
+<tr>
+<td>read batch (50 keys)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">4.077</td>
+<td style="text-align:right">735.788</td>
+<td style="text-align:right">1.358</td>
+<td style="text-align:right">1.345</td>
+<td style="text-align:right">1.484</td>
+<td style="text-align:right">1.484</td>
+<td style="text-align:right">1.246</td>
+<td style="text-align:right">1.484</td>
+</tr>
+<tr>
+<td>updateMany (50)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">74.328</td>
+<td style="text-align:right">40.362</td>
+<td style="text-align:right">24.775</td>
+<td style="text-align:right">24.348</td>
+<td style="text-align:right">27.021</td>
+<td style="text-align:right">27.021</td>
+<td style="text-align:right">22.956</td>
+<td style="text-align:right">27.021</td>
+</tr>
+<tr>
+<td>deleteMany (50)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">75.39</td>
+<td style="text-align:right">39.793</td>
+<td style="text-align:right">25.129</td>
+<td style="text-align:right">25.188</td>
+<td style="text-align:right">26.75</td>
+<td style="text-align:right">26.75</td>
+<td style="text-align:right">23.449</td>
+<td style="text-align:right">26.75</td>
+</tr>
+<tr>
+<td>deleteWhere (50+ match)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">3.5</td>
+<td style="text-align:right">857.117</td>
+<td style="text-align:right">1.166</td>
+<td style="text-align:right">1.108</td>
+<td style="text-align:right">1.317</td>
+<td style="text-align:right">1.317</td>
+<td style="text-align:right">1.073</td>
+<td style="text-align:right">1.317</td>
+</tr>
+<tr>
+<td>createMany (100)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">9.336</td>
+<td style="text-align:right">321.343</td>
+<td style="text-align:right">3.111</td>
+<td style="text-align:right">3.056</td>
+<td style="text-align:right">3.673</td>
+<td style="text-align:right">3.673</td>
+<td style="text-align:right">2.605</td>
+<td style="text-align:right">3.673</td>
+</tr>
+<tr>
+<td>read batch (100 keys)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">12.635</td>
+<td style="text-align:right">237.428</td>
+<td style="text-align:right">4.211</td>
+<td style="text-align:right">4.237</td>
+<td style="text-align:right">4.515</td>
+<td style="text-align:right">4.515</td>
+<td style="text-align:right">3.881</td>
+<td style="text-align:right">4.515</td>
+</tr>
+<tr>
+<td>updateMany (100)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">244.862</td>
+<td style="text-align:right">12.252</td>
+<td style="text-align:right">81.619</td>
+<td style="text-align:right">81.278</td>
+<td style="text-align:right">82.714</td>
+<td style="text-align:right">82.714</td>
+<td style="text-align:right">80.864</td>
+<td style="text-align:right">82.714</td>
+</tr>
+<tr>
+<td>deleteMany (100)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">254.607</td>
+<td style="text-align:right">11.783</td>
+<td style="text-align:right">84.867</td>
+<td style="text-align:right">84.406</td>
+<td style="text-align:right">93.02</td>
+<td style="text-align:right">93.02</td>
+<td style="text-align:right">77.175</td>
+<td style="text-align:right">93.02</td>
+</tr>
+<tr>
+<td>deleteWhere (100+ match)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">7.163</td>
+<td style="text-align:right">418.824</td>
+<td style="text-align:right">2.387</td>
+<td style="text-align:right">2.313</td>
+<td style="text-align:right">2.61</td>
+<td style="text-align:right">2.61</td>
+<td style="text-align:right">2.238</td>
+<td style="text-align:right">2.61</td>
+</tr>
+<tr>
+<td>createMany (500)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">74.592</td>
+<td style="text-align:right">40.219</td>
+<td style="text-align:right">24.863</td>
+<td style="text-align:right">25.375</td>
+<td style="text-align:right">32.078</td>
+<td style="text-align:right">32.078</td>
+<td style="text-align:right">17.135</td>
+<td style="text-align:right">32.078</td>
+</tr>
+<tr>
+<td>read batch (500 keys)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">127.272</td>
+<td style="text-align:right">23.572</td>
+<td style="text-align:right">42.422</td>
+<td style="text-align:right">40.657</td>
+<td style="text-align:right">49.184</td>
+<td style="text-align:right">49.184</td>
+<td style="text-align:right">37.426</td>
+<td style="text-align:right">49.184</td>
+</tr>
+<tr>
+<td>updateMany (500)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">6,835.912</td>
+<td style="text-align:right">0.439</td>
+<td style="text-align:right">2,278.635</td>
+<td style="text-align:right">2,280.033</td>
+<td style="text-align:right">2,286.256</td>
+<td style="text-align:right">2,286.256</td>
+<td style="text-align:right">2,269.617</td>
+<td style="text-align:right">2,286.256</td>
+</tr>
+<tr>
+<td>deleteMany (500)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">7,376.397</td>
+<td style="text-align:right">0.407</td>
+<td style="text-align:right">2,458.797</td>
+<td style="text-align:right">2,437.771</td>
+<td style="text-align:right">2,704.82</td>
+<td style="text-align:right">2,704.82</td>
+<td style="text-align:right">2,233.8</td>
+<td style="text-align:right">2,704.82</td>
+</tr>
+<tr>
+<td>deleteWhere (500+ match)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">34.386</td>
+<td style="text-align:right">87.244</td>
+<td style="text-align:right">11.461</td>
+<td style="text-align:right">11.211</td>
+<td style="text-align:right">12.336</td>
+<td style="text-align:right">12.336</td>
+<td style="text-align:right">10.837</td>
+<td style="text-align:right">12.336</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suite-3-mixed-crud-operations" class="tsd-anchor-link">Suite 3: Mixed CRUD Operations<a href="#suite-3-mixed-crud-operations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read-heavy mix (70R/15U/10C/5D)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">26.574</td>
+<td style="text-align:right">7,526.246</td>
+<td style="text-align:right">0.133</td>
+<td style="text-align:right">0.024</td>
+<td style="text-align:right">0.551</td>
+<td style="text-align:right">0.561</td>
+<td style="text-align:right">0.013</td>
+<td style="text-align:right">0.571</td>
+</tr>
+<tr>
+<td>Write-heavy mix (20R/15U/50C/15D)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">82.62</td>
+<td style="text-align:right">2,420.71</td>
+<td style="text-align:right">0.413</td>
+<td style="text-align:right">0.067</td>
+<td style="text-align:right">1.91</td>
+<td style="text-align:right">2.095</td>
+<td style="text-align:right">0.001</td>
+<td style="text-align:right">4.229</td>
+</tr>
+<tr>
+<td>Mixed CRUD + queries</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">98.103</td>
+<td style="text-align:right">2,038.669</td>
+<td style="text-align:right">0.49</td>
+<td style="text-align:right">0.031</td>
+<td style="text-align:right">1.896</td>
+<td style="text-align:right">2.197</td>
+<td style="text-align:right">0.011</td>
+<td style="text-align:right">6.57</td>
+</tr>
+<tr>
+<td>Cross-entity mix (User.read + Order.create)</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">6.041</td>
+<td style="text-align:right">33,106.027</td>
+<td style="text-align:right">0.03</td>
+<td style="text-align:right">0.022</td>
+<td style="text-align:right">0.067</td>
+<td style="text-align:right">0.094</td>
+<td style="text-align:right">0.017</td>
+<td style="text-align:right">0.098</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suite-4-mixed-batched-crud" class="tsd-anchor-link">Suite 4: Mixed Batched CRUD<a href="#suite-4-mixed-batched-crud" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cycle: createMany -&gt; readAll -&gt; updateMany -&gt; deleteMany (50)</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">66.669</td>
+<td style="text-align:right">74.998</td>
+<td style="text-align:right">13.333</td>
+<td style="text-align:right">11.728</td>
+<td style="text-align:right">21.48</td>
+<td style="text-align:right">21.48</td>
+<td style="text-align:right">8.506</td>
+<td style="text-align:right">21.48</td>
+</tr>
+<tr>
+<td>createMany  -&gt;  query filter  -&gt;  deleteMany (50)</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">31.257</td>
+<td style="text-align:right">159.963</td>
+<td style="text-align:right">6.251</td>
+<td style="text-align:right">6.591</td>
+<td style="text-align:right">7.251</td>
+<td style="text-align:right">7.251</td>
+<td style="text-align:right">4.913</td>
+<td style="text-align:right">7.251</td>
+</tr>
+<tr>
+<td>5 waves × createMany(50) + deleteMany(50)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">221.312</td>
+<td style="text-align:right">13.555</td>
+<td style="text-align:right">73.77</td>
+<td style="text-align:right">75.679</td>
+<td style="text-align:right">75.901</td>
+<td style="text-align:right">75.901</td>
+<td style="text-align:right">69.73</td>
+<td style="text-align:right">75.901</td>
+</tr>
+<tr>
+<td>Cross-entity batch: createMany(User) + createMany(Order) + deleteMany (×50)</td>
+<td style="text-align:right">3</td>
+<td style="text-align:right">119.524</td>
+<td style="text-align:right">25.1</td>
+<td style="text-align:right">39.84</td>
+<td style="text-align:right">41.353</td>
+<td style="text-align:right">41.413</td>
+<td style="text-align:right">41.413</td>
+<td style="text-align:right">36.755</td>
+<td style="text-align:right">41.413</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suite-5-transaction-operations" class="tsd-anchor-link">Suite 5: Transaction Operations<a href="#suite-5-transaction-operations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tx: single create</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">7.428</td>
+<td style="text-align:right">13,462.663</td>
+<td style="text-align:right">0.074</td>
+<td style="text-align:right">0.059</td>
+<td style="text-align:right">0.138</td>
+<td style="text-align:right">0.218</td>
+<td style="text-align:right">0.056</td>
+<td style="text-align:right">0.567</td>
+</tr>
+<tr>
+<td>tx: create 10 users</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">21.907</td>
+<td style="text-align:right">4,564.804</td>
+<td style="text-align:right">0.219</td>
+<td style="text-align:right">0.208</td>
+<td style="text-align:right">0.272</td>
+<td style="text-align:right">0.385</td>
+<td style="text-align:right">0.195</td>
+<td style="text-align:right">0.428</td>
+</tr>
+<tr>
+<td>tx: read + update</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">153.092</td>
+<td style="text-align:right">653.2</td>
+<td style="text-align:right">1.531</td>
+<td style="text-align:right">1.472</td>
+<td style="text-align:right">1.531</td>
+<td style="text-align:right">2.672</td>
+<td style="text-align:right">1.446</td>
+<td style="text-align:right">5.587</td>
+</tr>
+<tr>
+<td>tx: multi-entity create (User+Order+Session)</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">7.525</td>
+<td style="text-align:right">13,288.812</td>
+<td style="text-align:right">0.075</td>
+<td style="text-align:right">0.068</td>
+<td style="text-align:right">0.129</td>
+<td style="text-align:right">0.152</td>
+<td style="text-align:right">0.064</td>
+<td style="text-align:right">0.155</td>
+</tr>
+<tr>
+<td>tx: 10 reads</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">16.528</td>
+<td style="text-align:right">6,050.469</td>
+<td style="text-align:right">0.165</td>
+<td style="text-align:right">0.139</td>
+<td style="text-align:right">0.262</td>
+<td style="text-align:right">0.294</td>
+<td style="text-align:right">0.131</td>
+<td style="text-align:right">0.354</td>
+</tr>
+<tr>
+<td>tx: batch create 50 users</td>
+<td style="text-align:right">20</td>
+<td style="text-align:right">22.746</td>
+<td style="text-align:right">879.273</td>
+<td style="text-align:right">1.137</td>
+<td style="text-align:right">0.918</td>
+<td style="text-align:right">1.553</td>
+<td style="text-align:right">4.197</td>
+<td style="text-align:right">0.896</td>
+<td style="text-align:right">4.197</td>
+</tr>
+<tr>
+<td>tx: query().where().gte()</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">883.632</td>
+<td style="text-align:right">113.169</td>
+<td style="text-align:right">8.836</td>
+<td style="text-align:right">7.845</td>
+<td style="text-align:right">18.63</td>
+<td style="text-align:right">18.774</td>
+<td style="text-align:right">7.639</td>
+<td style="text-align:right">19.521</td>
+</tr>
+<tr>
+<td>tx (explicit): begin -&gt; create -&gt; commit</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">5.115</td>
+<td style="text-align:right">19,551.978</td>
+<td style="text-align:right">0.051</td>
+<td style="text-align:right">0.049</td>
+<td style="text-align:right">0.065</td>
+<td style="text-align:right">0.079</td>
+<td style="text-align:right">0.047</td>
+<td style="text-align:right">0.08</td>
+</tr>
+</tbody>
+</table>
+<h3 id="suite-6-mixed-transactions" class="tsd-anchor-link">Suite 6: Mixed Transactions<a href="#suite-6-mixed-transactions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th style="text-align:right">Ops</th>
+<th style="text-align:right">Total ms</th>
+<th style="text-align:right">Ops/s</th>
+<th style="text-align:right">Avg ms</th>
+<th style="text-align:right">P50</th>
+<th style="text-align:right">P95</th>
+<th style="text-align:right">P99</th>
+<th style="text-align:right">Min</th>
+<th style="text-align:right">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tx mixed: read User  -&gt;  create Order  -&gt;  update User</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">47.215</td>
+<td style="text-align:right">2,117.983</td>
+<td style="text-align:right">0.472</td>
+<td style="text-align:right">0.365</td>
+<td style="text-align:right">0.403</td>
+<td style="text-align:right">0.616</td>
+<td style="text-align:right">0.345</td>
+<td style="text-align:right">10.325</td>
+</tr>
+<tr>
+<td>tx mixed: query User + read Order + create Session</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">107.901</td>
+<td style="text-align:right">926.778</td>
+<td style="text-align:right">1.079</td>
+<td style="text-align:right">0.999</td>
+<td style="text-align:right">1.043</td>
+<td style="text-align:right">1.162</td>
+<td style="text-align:right">0.984</td>
+<td style="text-align:right">8.352</td>
+</tr>
+<tr>
+<td>tx multi-entity: create User+Order+Session</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">18.548</td>
+<td style="text-align:right">5,391.352</td>
+<td style="text-align:right">0.185</td>
+<td style="text-align:right">0.085</td>
+<td style="text-align:right">0.109</td>
+<td style="text-align:right">0.215</td>
+<td style="text-align:right">0.08</td>
+<td style="text-align:right">9.694</td>
+</tr>
+<tr>
+<td>tx batched: create 20 Users + 40 Orders + 20 Sessions</td>
+<td style="text-align:right">10</td>
+<td style="text-align:right">11.005</td>
+<td style="text-align:right">908.716</td>
+<td style="text-align:right">1.1</td>
+<td style="text-align:right">1.071</td>
+<td style="text-align:right">1.323</td>
+<td style="text-align:right">1.323</td>
+<td style="text-align:right">1.052</td>
+<td style="text-align:right">1.323</td>
+</tr>
+<tr>
+<td>tx mixed: delete old orders  -&gt;  create new orders</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">99.606</td>
+<td style="text-align:right">1,003.955</td>
+<td style="text-align:right">0.996</td>
+<td style="text-align:right">0.911</td>
+<td style="text-align:right">1.033</td>
+<td style="text-align:right">1.441</td>
+<td style="text-align:right">0.786</td>
+<td style="text-align:right">8.421</td>
+</tr>
+<tr>
+<td>tx mixed: count Orders  -&gt;  conditional create</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">9.774</td>
+<td style="text-align:right">10,230.797</td>
+<td style="text-align:right">0.098</td>
+<td style="text-align:right">0.068</td>
+<td style="text-align:right">0.097</td>
+<td style="text-align:right">0.116</td>
+<td style="text-align:right">0.065</td>
+<td style="text-align:right">2.669</td>
+</tr>
+<tr>
+<td>tx complex: read User+Orders  -&gt;  aggregate  -&gt;  create Session</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">12.089</td>
+<td style="text-align:right">8,271.708</td>
+<td style="text-align:right">0.121</td>
+<td style="text-align:right">0.115</td>
+<td style="text-align:right">0.141</td>
+<td style="text-align:right">0.197</td>
+<td style="text-align:right">0.105</td>
+<td style="text-align:right">0.256</td>
+</tr>
+</tbody>
+</table>
 <!-- performance end -->
 <h2 id="useful-links" class="tsd-anchor-link">Useful Links<a href="#useful-links" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
 <ul>
@@ -432,4 +1195,4 @@
 </ul>
 <p>🎉 <strong>Enjoy seamless IndexedDB integration with TypeScript! Happy coding!</strong> 🚀</p>
 <p>Made by <a href="https://github.com/maifeeulasad">Maifee Ulasad</a> with :heart: and :tea:. Licensed under <a href="media/LICENSE">MIT</a>.</p>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#idb-ts"><span>idb-<wbr/>ts</span></a><ul><li><a href="#introduction"><span>Introduction</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#feature-overview"><span>Feature <wbr/>Overview</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><a href="#defining-entities"><span>Defining <wbr/>Entities</span></a></li><li><ul><li><a href="#decorator-reference"><span>Decorator reference</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><a href="#_-3"><span></span></a></li><li><a href="#_-4"><span></span></a></li><li><a href="#_-5"><span></span></a></li></ul></li></ul></li><li><a href="#database-initialisation"><span>Database <wbr/>Initialisation</span></a></li><li><ul><li><a href="#inspecting-database-metadata"><span>Inspecting database metadata</span></a></li><li><a href="#closing-the-connection"><span>Closing the connection</span></a></li></ul></li><li><a href="#crud-operations"><span>CRUD <wbr/>Operations</span></a></li><li><ul><li><a href="#index-lookups"><span>Index lookups</span></a></li></ul></li><li><a href="#automatic-timestamps"><span>Automatic <wbr/>Timestamps</span></a></li><li><a href="#query-builder"><span>Query <wbr/>Builder</span></a></li><li><ul><li><a href="#filtering"><span>Filtering</span></a></li><li><ul><li><a href="#available-operators"><span>Available operators</span></a></li></ul></li><li><a href="#logical-grouping"><span>Logical grouping</span></a></li><li><a href="#sorting-and-pagination"><span>Sorting and pagination</span></a></li><li><a href="#index-and-range-acceleration"><span>Index and range acceleration</span></a></li><li><a href="#aggregations"><span>Aggregations</span></a></li></ul></li><li><a href="#key-management"><span>Key <wbr/>Management</span></a></li><li><ul><li><a href="#auto-increment"><span>Auto-<wbr/>increment</span></a></li><li><a href="#built-in-generators"><span>Built-<wbr/>in generators</span></a></li><li><a href="#custom-generator"><span>Custom generator</span></a></li><li><a href="#using-generators-directly"><span>Using generators directly</span></a></li><li><a href="#composite-keys"><span>Composite keys</span></a></li></ul></li><li><a href="#field-validation"><span>Field <wbr/>Validation</span></a></li><li><a href="#transactions"><span>Transactions</span></a></li><li><ul><li><a href="#callback-form-recommended"><span>Callback form (recommended)</span></a></li><li><a href="#explicit-form"><span>Explicit form</span></a></li><li><a href="#transaction-semantics"><span>Transaction semantics</span></a></li></ul></li><li><a href="#data-retention"><span>Data <wbr/>Retention</span></a></li><li><a href="#schema-versioning"><span>Schema <wbr/>Versioning</span></a></li><li><a href="#bulk-operations"><span>Bulk <wbr/>Operations</span></a></li><li><a href="#performance"><span>Performance</span></a></li><li><a href="#useful-links"><span>Useful <wbr/>Links</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">idb-ts</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#idb-ts"><span>idb-<wbr/>ts</span></a><ul><li><a href="#introduction"><span>Introduction</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#feature-overview"><span>Feature <wbr/>Overview</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><a href="#defining-entities"><span>Defining <wbr/>Entities</span></a></li><li><ul><li><a href="#decorator-reference"><span>Decorator reference</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><a href="#_-3"><span></span></a></li><li><a href="#_-4"><span></span></a></li><li><a href="#_-5"><span></span></a></li></ul></li></ul></li><li><a href="#database-initialisation"><span>Database <wbr/>Initialisation</span></a></li><li><ul><li><a href="#inspecting-database-metadata"><span>Inspecting database metadata</span></a></li><li><a href="#closing-the-connection"><span>Closing the connection</span></a></li></ul></li><li><a href="#crud-operations"><span>CRUD <wbr/>Operations</span></a></li><li><ul><li><a href="#index-lookups"><span>Index lookups</span></a></li></ul></li><li><a href="#automatic-timestamps"><span>Automatic <wbr/>Timestamps</span></a></li><li><a href="#query-builder"><span>Query <wbr/>Builder</span></a></li><li><ul><li><a href="#filtering"><span>Filtering</span></a></li><li><ul><li><a href="#available-operators"><span>Available operators</span></a></li></ul></li><li><a href="#logical-grouping"><span>Logical grouping</span></a></li><li><a href="#sorting-and-pagination"><span>Sorting and pagination</span></a></li><li><a href="#index-and-range-acceleration"><span>Index and range acceleration</span></a></li><li><a href="#aggregations"><span>Aggregations</span></a></li></ul></li><li><a href="#key-management"><span>Key <wbr/>Management</span></a></li><li><ul><li><a href="#auto-increment"><span>Auto-<wbr/>increment</span></a></li><li><a href="#built-in-generators"><span>Built-<wbr/>in generators</span></a></li><li><a href="#custom-generator"><span>Custom generator</span></a></li><li><a href="#using-generators-directly"><span>Using generators directly</span></a></li><li><a href="#composite-keys"><span>Composite keys</span></a></li></ul></li><li><a href="#field-validation"><span>Field <wbr/>Validation</span></a></li><li><a href="#transactions"><span>Transactions</span></a></li><li><ul><li><a href="#callback-form-recommended"><span>Callback form (recommended)</span></a></li><li><a href="#explicit-form"><span>Explicit form</span></a></li><li><a href="#transaction-semantics"><span>Transaction semantics</span></a></li></ul></li><li><a href="#data-retention"><span>Data <wbr/>Retention</span></a></li><li><a href="#schema-versioning"><span>Schema <wbr/>Versioning</span></a></li><li><a href="#bulk-operations"><span>Bulk <wbr/>Operations</span></a></li><li><a href="#performance"><span>Performance</span></a></li><li><ul><li><a href="#suite-1-crud-operations"><span>Suite 1: <wbr/>CRUD <wbr/>Operations</span></a></li><li><a href="#suite-2-batched-crud-by-batch-size"><span>Suite 2: <wbr/>Batched <wbr/>CRUD (by batch size)</span></a></li><li><a href="#suite-3-mixed-crud-operations"><span>Suite 3: <wbr/>Mixed <wbr/>CRUD <wbr/>Operations</span></a></li><li><a href="#suite-4-mixed-batched-crud"><span>Suite 4: <wbr/>Mixed <wbr/>Batched <wbr/>CRUD</span></a></li><li><a href="#suite-5-transaction-operations"><span>Suite 5: <wbr/>Transaction <wbr/>Operations</span></a></li><li><a href="#suite-6-mixed-transactions"><span>Suite 6: <wbr/>Mixed <wbr/>Transactions</span></a></li></ul></li><li><a href="#useful-links"><span>Useful <wbr/>Links</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">idb-ts</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
