@@ -18,7 +18,7 @@ import { performance as nodePerformance } from 'perf_hooks';
 if (typeof (globalThis as any).performance === 'undefined') {
   (globalThis as any).performance = nodePerformance;
 }
-import { Database, DataClass, KeyPath, Index, Validate } from './index';
+import { Database, DataClass, KeyPath, Index, Validate } from '../index';
 // Polyfill IndexedDB for Node.js
 import 'fake-indexeddb/auto';
 
