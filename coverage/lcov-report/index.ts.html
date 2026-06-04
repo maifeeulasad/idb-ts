@@ -32,30 +32,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.03% </span>
+                <span class="strong">87.62% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>618/702</span>
+                <span class='fraction'>623/711</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.2% </span>
+                <span class="strong">71.75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>252/349</span>
+                <span class='fraction'>254/354</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.58% </span>
+                <span class="strong">84.31% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>214/253</span>
+                <span class='fraction'>215/255</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90.01% </span>
+                <span class="strong">89.55% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>595/661</span>
+                <span class='fraction'>600/670</span>
             </div>
         
             
@@ -3052,7 +3052,21 @@
 <a name='L2978'></a><a href='#L2978'>2978</a>
 <a name='L2979'></a><a href='#L2979'>2979</a>
 <a name='L2980'></a><a href='#L2980'>2980</a>
-<a name='L2981'></a><a href='#L2981'>2981</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">13x</span>
+<a name='L2981'></a><a href='#L2981'>2981</a>
+<a name='L2982'></a><a href='#L2982'>2982</a>
+<a name='L2983'></a><a href='#L2983'>2983</a>
+<a name='L2984'></a><a href='#L2984'>2984</a>
+<a name='L2985'></a><a href='#L2985'>2985</a>
+<a name='L2986'></a><a href='#L2986'>2986</a>
+<a name='L2987'></a><a href='#L2987'>2987</a>
+<a name='L2988'></a><a href='#L2988'>2988</a>
+<a name='L2989'></a><a href='#L2989'>2989</a>
+<a name='L2990'></a><a href='#L2990'>2990</a>
+<a name='L2991'></a><a href='#L2991'>2991</a>
+<a name='L2992'></a><a href='#L2992'>2992</a>
+<a name='L2993'></a><a href='#L2993'>2993</a>
+<a name='L2994'></a><a href='#L2994'>2994</a>
+<a name='L2995'></a><a href='#L2995'>2995</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -4970,7 +4984,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-yes">457x</span>
+<span class="cline-any cline-yes">457x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42x</span>
 <span class="cline-any cline-yes">42x</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -6121,8 +6149,8 @@ type ArrayElement&lt;T&gt; = T extends readonly (infer U)[] ? U : never;
 type ContainsValue&lt;T&gt; = T extends string
   ? string
   : T extends readonly (infer U)[]
-    ? U
-    : never;
+  ? U
+  : never;
 &nbsp;
 /**
  * All filter operators supported by {@link FieldQueryBuilder} and {@link QueryBuilder}.
@@ -6244,7 +6272,7 @@ class FieldQueryBuilder&lt;T, K extends QueryFieldKey&lt;T&gt;&gt; {
   constructor(
     private parent: QueryBuilder&lt;T&gt;,
     private field: K,
-  ) {}
+  ) { }
 &nbsp;
   /**
    * Filters records where `field === value`.
@@ -6913,8 +6941,8 @@ class QueryBuilder&lt;T&gt; {
     const store = this.transaction
       ? <span class="branch-0 cbranch-no" title="branch not covered" >this.transaction.objectStore(this.storeName)</span>
       : this.db
-          .transaction(this.storeName, 'readonly')
-          .objectStore(this.storeName);
+        .transaction(this.storeName, 'readonly')
+        .objectStore(this.storeName);
 &nbsp;
     const request = this.createReadRequest(store);
     return new Promise&lt;T[]&gt;((resolve, reject) =&gt; {
@@ -7243,10 +7271,10 @@ interface KeyPathOptions {
    *                   `string` or `number`.
    */
   generator?:
-    | 'uuid'
-    | 'timestamp'
-    | 'random'
-    | ((item?: any) =&gt; string | number);
+  | 'uuid'
+  | 'timestamp'
+  | 'random'
+  | ((item?: any) =&gt; string | number);
 }
 &nbsp;
 /**
@@ -7948,10 +7976,24 @@ class Database {
     storeName: string;
     policy: RetentionPolicyMetadata;
   }&gt;;
+  private printEnabled: boolean;
+&nbsp;
+  private printDebug = (...data: any) =&gt; {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!this.printEnabled)
+      return;
+<span class="cstat-no" title="statement not covered" >    console.debug('[idb-ts]:DEBUG:', ...data);</span>
+  };
+&nbsp;
+  private printError = <span class="fstat-no" title="function not covered" >(.</span>..error: any) =&gt; {
+<span class="cstat-no" title="statement not covered" >    if (!this.printEnabled)</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+<span class="cstat-no" title="statement not covered" >    console.error('[idb-ts]:ERROR:', ...error);</span>
+  };
 &nbsp;
   /** @internal Use {@link Database.build} to create instances. */
-  private constructor(dbName: string, classes: Function[]) {
+  private constructor(dbName: string, classes: Function[], printEnabled = false) {
     this.dbName = dbName;
+    this.printEnabled = printEnabled;
     if (!classes.every((cls) =&gt; Reflect.getMetadata('dataclass', cls))) {
       throw new Error('All classes should be decorated with @DataClass.');
     }
@@ -8043,7 +8085,7 @@ class Database {
         const oldVersion = event.oldVersion;
         const newVersion = event.newVersion || <span class="branch-1 cbranch-no" title="branch not covered" >this.dbVersion;</span>
 &nbsp;
-        console.debug(
+        this.printDebug(
           `Database upgrade from version ${oldVersion} to ${newVersion}`,
         );
 &nbsp;
@@ -8061,7 +8103,7 @@ class Database {
           // Only create/update stores for classes whose version is greater than the old DB version
           <span class="missing-if-branch" title="else path not taken" >E</span>if (classVersion &gt; oldVersion) {
             if (!db.objectStoreNames.contains(storeName)) {
-              console.debug(
+              this.printDebug(
                 `Creating object store: ${storeName} (version ${classVersion})`,
               );
 &nbsp;
@@ -8095,7 +8137,7 @@ class Database {
               });
             } else <span class="missing-if-branch" title="else path not taken" >E</span>{
               // Store exists, check if we need to update indexes
-<span class="cstat-no" title="statement not covered" >              console.debug(</span>
+<span class="cstat-no" title="statement not covered" >              this.printDebug(</span>
                 `Updating object store: ${storeName} (version ${classVersion})`,
               );
               const transaction = <span class="cstat-no" title="statement not covered" >request.transaction;</span>
@@ -8113,7 +8155,7 @@ class Database {
                       : (indexField.options ?? { unique: false });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >                  if (!store.indexNames.contains(indexName)) {</span>
-<span class="cstat-no" title="statement not covered" >                    console.debug(`Adding index: ${indexName} to ${storeName}`);</span>
+<span class="cstat-no" title="statement not covered" >                    this.printDebug(`Adding index: ${indexName} to ${storeName}`);</span>
 <span class="cstat-no" title="statement not covered" >                    store.createIndex(indexName, indexName, indexOptions);</span>
                   }
                 });
@@ -8125,7 +8167,7 @@ class Database {
 &nbsp;
       request.onsuccess = () =&gt; {
         this.db = request.result;
-        console.debug(
+        this.printDebug(
           `Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) =&gt; `${cls.name}(v${Reflect.getMetadata('version', cls) || <span class="branch-1 cbranch-no" title="branch not covered" >1}</span>)`).join(', ')}`,
         );
         this.startRetentionCleanup();
@@ -8133,7 +8175,7 @@ class Database {
       };
 &nbsp;
       request.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt; {
-<span class="cstat-no" title="statement not covered" >        console.error('Error initializing database:', request.error);</span>
+<span class="cstat-no" title="statement not covered" >        this.printError('Error initializing database:', request.error);</span>
 <span class="cstat-no" title="statement not covered" >        reject(request.error);</span>
       };
     });
@@ -8195,7 +8237,7 @@ class Database {
       return;
     }
 &nbsp;
-    console.debug(
+    this.printDebug(
       `Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`,
     );
     void this.runRetentionCleanup();
@@ -8216,11 +8258,11 @@ class Database {
 &nbsp;
     this.retentionCleanupRunning = true;
     try {
-      console.debug('Retention cleanup tick started');
+      this.printDebug('Retention cleanup tick started');
       for (const { storeName, className, policy } of this.retentionPolicies) {
         await this.cleanupExpiredRecords(storeName, className, policy);
       }
-      console.debug('Retention cleanup tick finished');
+      this.printDebug('Retention cleanup tick finished');
     } finally {
       this.retentionCleanupRunning = false;
     }
@@ -8251,7 +8293,7 @@ class Database {
 &nbsp;
           const value = cursor.value as Record&lt;string, any&gt;;
           const timestamp = value<span class="branch-0 cbranch-no" title="branch not covered" >?.[p</span>olicy.field];
-          console.debug(
+          this.printDebug(
             `Retention cleanup inspecting ${className}.${policy.field}:`,
             timestamp,
             'cutoff:',
@@ -8260,7 +8302,7 @@ class Database {
           if (typeof timestamp === 'number' &amp;&amp; timestamp &lt;= cutoff) {
             const deleteRequest = cursor.delete();
             deleteRequest.onsuccess = () =&gt; {
-              console.debug(
+              this.printDebug(
                 `Retention cleanup removed expired record from ${className}`,
               );
               cursor.continue();
@@ -8268,7 +8310,7 @@ class Database {
             deleteRequest.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt;
 <span class="cstat-no" title="statement not covered" >              reject(</span>
                 deleteRequest.error ??
-                  new Error(`Retention cleanup delete failed for ${className}`),
+                new Error(`Retention cleanup delete failed for ${className}`),
               );
             return;
           }
@@ -8280,12 +8322,12 @@ class Database {
         transaction.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt;
 <span class="cstat-no" title="statement not covered" >          reject(</span>
             transaction.error ??
-              new Error(`Retention cleanup failed for ${className}`),
+            new Error(`Retention cleanup failed for ${className}`),
           );
         transaction.onabort = <span class="fstat-no" title="function not covered" >() =</span>&gt;
 <span class="cstat-no" title="statement not covered" >          reject(</span>
             transaction.error ??
-              new Error(`Retention cleanup aborted for ${className}`),
+            new Error(`Retention cleanup aborted for ${className}`),
           );
       } catch (error) {
 <span class="cstat-no" title="statement not covered" >        reject(error);</span>
@@ -8491,7 +8533,7 @@ class Database {
           'readwrite',
           (store) =&gt; {
             return createStoredItem(store, item).then(() =&gt; {
-              console.debug(`Item added to ${cls.name}:`, item);
+              this.printDebug(`Item added to ${cls.name}:`, item);
             });
           },
           transaction,
@@ -8513,7 +8555,7 @@ class Database {
             const request = store.get(key);
             return new Promise&lt;T | undefined&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(`Item read from ${cls.name}:`, request.result);
+                this.printDebug(`Item read from ${cls.name}:`, request.result);
                 resolve(request.result as T | undefined);
               };
               request.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reject(request.error);</span>
@@ -8531,7 +8573,7 @@ class Database {
           'readwrite',
           (store) =&gt; {
             return updateStoredItem(store, item).then(() =&gt; {
-              console.debug(`Item updated in ${cls.name}:`, item);
+              this.printDebug(`Item updated in ${cls.name}:`, item);
             });
           },
           transaction,
@@ -8551,7 +8593,7 @@ class Database {
           'readwrite',
           (store) =&gt; {
             return deleteStoredItem(store, key).then(() =&gt; {
-              console.debug(`Item deleted from ${cls.name}:`, key);
+              this.printDebug(`Item deleted from ${cls.name}:`, key);
             });
           },
           transaction,
@@ -8592,7 +8634,7 @@ class Database {
             const request = store.getAll();
             return new Promise&lt;T[]&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(`All items from ${cls.name}:`, request.result);
+                this.printDebug(`All items from ${cls.name}:`, request.result);
                 resolve(request.result as T[]);
               };
               request.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reject(request.error);</span>
@@ -8615,7 +8657,7 @@ class Database {
                   (page - 1) * pageSize,
                   page * pageSize,
                 );
-                console.debug(
+                this.printDebug(
                   `Paginated items from ${cls.name}:`,
                   paginatedItems,
                 );
@@ -8643,7 +8685,7 @@ class Database {
             const request = index.getAll(value);
             return new Promise&lt;T[]&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(
+                this.printDebug(
                   `Items found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -8674,7 +8716,7 @@ class Database {
             const request = index.get(value);
             return new Promise&lt;T | undefined&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(
+                this.printDebug(
                   `Item found by index ${indexName} with value ${value}:`,
                   request.result,
                 );
@@ -8695,7 +8737,7 @@ class Database {
             const request = store.count();
             return new Promise&lt;number&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(`Count for ${cls.name}:`, request.result);
+                this.printDebug(`Count for ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reject(request.error);</span>
@@ -8714,7 +8756,7 @@ class Database {
             return new Promise&lt;boolean&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
                 const exists = request.result &gt; 0;
-                console.debug(
+                this.printDebug(
                   `Exists check for ${cls.name} with key ${key}:`,
                   exists,
                 );
@@ -8735,7 +8777,7 @@ class Database {
             const request = store.clear();
             return new Promise&lt;void&gt;((resolve, reject) =&gt; {
               request.onsuccess = () =&gt; {
-                console.debug(`Cleared all items from ${cls.name}`);
+                this.printDebug(`Cleared all items from ${cls.name}`);
                 resolve();
               };
               request.onerror = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reject(request.error);</span>
@@ -9019,7 +9061,7 @@ export type {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-04T10:29:47.974Z
+                at 2026-06-04T11:26:38.403Z
             </div>
         <script src="prettify.js"></script>
         <script>
