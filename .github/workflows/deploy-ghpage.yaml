@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   build-react:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -30,6 +31,7 @@ jobs:
           retention-days: 1
 
   build-vue:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -51,6 +53,7 @@ jobs:
           retention-days: 1
 
   build-typescript:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -72,6 +75,7 @@ jobs:
           retention-days: 1
 
   generate-coverage:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -141,6 +145,7 @@ jobs:
           retention-days: 1
 
   generate-performance-report:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -184,6 +189,7 @@ jobs:
 
 
   generate-docs:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     needs:
       [
@@ -235,6 +241,7 @@ jobs:
           retention-days: 1
 
   deploy:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     needs:
       [
