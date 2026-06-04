@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["index.ts", "jest.setup.ts", "__tests__/querybuilder.compile.ts"]
+  "include": [
+    "index.ts",
+    "jest.setup.ts",
+    "__tests__/querybuilder.compile.ts",
+    "__tests__/performance.ts"
+  ]
 }
