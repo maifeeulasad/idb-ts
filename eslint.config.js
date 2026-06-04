@@ -22,7 +22,7 @@ const lengthRules = {
 
 export default [
   {
-    ignores: ['lib/**', 'coverage/**', 'examples/**', 'node_modules/**', 'docs/**'],
+    ignores: ['lib/**', 'coverage/**', 'examples/**', 'node_modules/**', 'docs/**', 'performance.test.ts'],
   },
   js.configs.recommended,
   {
