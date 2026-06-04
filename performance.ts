@@ -237,7 +237,7 @@ const fmt = (n: number) => n.toLocaleString(undefined, {
 });
 
 function printResultsMarkdown(title: string, results: BenchResult[]) {
-  console.log(`\n## ${title}\n`);
+  console.log(`\n### ${title}\n`);
   console.log(
     '| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |',
   );
