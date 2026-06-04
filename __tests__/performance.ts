@@ -18,7 +18,7 @@ import { performance as nodePerformance } from 'perf_hooks';
 if (typeof (globalThis as any).performance === 'undefined') {
   (globalThis as any).performance = nodePerformance;
 }
-import { Database, DataClass, KeyPath, Index, Validate } from '../index';
+import { Database, DataClass, KeyPath, Index, Validate, EntityRepository } from '../index';
 // Polyfill IndexedDB for Node.js
 import 'fake-indexeddb/auto';
 
@@ -138,41 +138,41 @@ const randInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
 function makeUser(
-  overrides?: Partial<User>,
-): Omit<User, 'id'> & { id?: string } {
-  const id = uid();
-  return {
-    id,
-    email: `${id}@test.dev`,
-    name: `User ${id}`,
-    age: randInt(18, 80),
-    status: ['active', 'inactive', 'banned'][randInt(0, 2)],
-    tags: ['tag-' + randInt(1, 10), 'tag-' + randInt(11, 20)],
-    ...overrides,
-  };
-}
+   overrides?: Partial<User>,
+ ): User {
+   const id = uid();
+   return {
+     id,
+     email: `${id}@test.dev`,
+     name: `User ${id}`,
+     age: randInt(18, 80),
+     status: ['active', 'inactive', 'banned'][randInt(0, 2)],
+     tags: ['tag-' + randInt(1, 10), 'tag-' + randInt(11, 20)],
+     ...overrides,
+   } as User;
+ }
 
-function makeOrder(userId: string): Omit<Order, 'id'> & { id?: string } {
-  const id = uid();
-  return {
-    id,
-    userId,
-    amount: Math.round(Math.random() * 50000) / 100,
-    status: ['pending', 'paid', 'shipped', 'delivered'][randInt(0, 3)],
-    items: [`item-${randInt(1, 50)}`, `item-${randInt(1, 50)}`],
-    createdAt: Date.now(),
-  };
-}
+function makeOrder(userId: string): Order {
+   const id = uid();
+   return {
+     id,
+     userId,
+     amount: Math.round(Math.random() * 50000) / 100,
+     status: ['pending', 'paid', 'shipped', 'delivered'][randInt(0, 3)],
+     items: [`item-${randInt(1, 50)}`, `item-${randInt(1, 50)}`],
+     createdAt: Date.now(),
+   } as Order;
+ }
 
-function makeSession(userId: string): Omit<Session, 'id'> & { id?: string } {
-  const id = uid();
-  return {
-    id,
-    userId,
-    token: Math.random().toString(36).slice(2),
-    expiresAt: Date.now() + randInt(3600, 86400) * 1000,
-  };
-}
+function makeSession(userId: string): Session {
+   const id = uid();
+   return {
+     id,
+     userId,
+     token: Math.random().toString(36).slice(2),
+     expiresAt: Date.now() + randInt(3600, 86400) * 1000,
+   } as Session;
+ }
 
 function makeUsers(n: number) {
   return Array.from({ length: n }, () => makeUser());
@@ -262,13 +262,10 @@ function freshDbName(): string {
   return `perf-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-async function seedUsers(
-  db: Database,
-  count: number,
-): Promise<ReturnType<typeof makeUsers>> {
-  const users = makeUsers(count);
-  await db.User.createMany(users as any);
-  return users;
+async function seedUsers(db: { User: EntityRepository<User> }, count: number): Promise<User[]> {
+    const users = makeUsers(count);
+    await db.User.createMany(users as any);
+    return users;
 }
 
 // ─────────────────────────────────────────────
@@ -278,8 +275,8 @@ async function seedUsers(
 async function suiteCrud() {
   const ITERS = 200;
   const db = await Database.build<{
-    User: InstanceType<typeof User> extends infer U ? any : any;
-    Order: any;
+    User: EntityRepository<User>;
+    Order: EntityRepository<Order>;
   }>(freshDbName(), [User, Order]);
 
   const results: BenchResult[] = [];
@@ -406,7 +403,10 @@ async function suiteBatchedCrud() {
   const BATCH_SIZES = [10, 50, 100, 500];
 
   for (const size of BATCH_SIZES) {
-    const db = await Database.build(freshDbName(), [User, Order]);
+    const db = await Database.build<{
+      User: EntityRepository<User>;
+      Order: EntityRepository<Order>;
+    }>(freshDbName(), [User, Order]);
 
     const users = makeUsers(size);
 
@@ -507,9 +507,12 @@ async function suiteBatchedCrud() {
 // ─────────────────────────────────────────────
 
 async function suiteMixedCrud() {
-  const ITERS = 200;
-  const db = await Database.build(freshDbName(), [User, Order]);
-  const results: BenchResult[] = [];
+    const ITERS = 200;
+    const db = await Database.build<{
+      User: EntityRepository<User>;
+      Order: EntityRepository<Order>;
+    }>(freshDbName(), [User, Order]);
+    const results: BenchResult[] = [];
 
   // Seed baseline
   const baseline = await seedUsers(db, 500);
@@ -637,10 +640,13 @@ async function suiteMixedCrud() {
 // ─────────────────────────────────────────────
 
 async function suiteMixedBatchedCrud() {
-  const results: BenchResult[] = [];
-  const BATCH = 50;
+    const results: BenchResult[] = [];
+    const BATCH = 50;
 
-  const db = await Database.build(freshDbName(), [User, Order]);
+    const db = await Database.build<{
+      User: EntityRepository<User>;
+      Order: EntityRepository<Order>;
+    }>(freshDbName(), [User, Order]);
 
   // --- Batched create + read + update cycle ---
   {
@@ -747,7 +753,11 @@ async function suiteMixedBatchedCrud() {
 
 async function suiteTransactions() {
   const ITERS = 100;
-  const db = await Database.build(freshDbName(), [User, Order, Session]);
+  const db = await Database.build<{
+    User: EntityRepository<User>;
+    Order: EntityRepository<Order>;
+    Session: EntityRepository<Session>;
+  }>(freshDbName(), [User, Order, Session]);
   const results: BenchResult[] = [];
 
   const seeded = await seedUsers(db, 200);
@@ -863,7 +873,11 @@ async function suiteTransactions() {
 
 async function suiteMixedTransactions() {
   const ITERS = 100;
-  const db = await Database.build(freshDbName(), [User, Order, Session]);
+  const db = await Database.build<{
+    User: EntityRepository<User>;
+    Order: EntityRepository<Order>;
+    Session: EntityRepository<Session>;
+  }>(freshDbName(), [User, Order, Session]);
   const results: BenchResult[] = [];
 
   const seeded = await seedUsers(db, 300);
