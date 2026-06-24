@@ -110,6 +110,17 @@
             },
         }
     </script>
+    <script>
+        fetch("https://api.github.com/repos/maifeeulasad/idb-ts")
+            .then((res) => res.json())
+            .then((data) => {
+                const stars = data.stargazers_count;
+                document.getElementById("stargazer-count").textContent = stars;
+            })
+            .catch((err) => {
+                console.error("Error fetching GitHub stars:", err);
+            });
+    </script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -199,7 +210,7 @@
                 <button
                     class="px-lg py-sm border border-outline text-on-surface font-semibold rounded-lg hover:bg-surface-variant/10 transition-colors flex items-center gap-xs">
                     <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
-                    GitHub <span class="opacity-60 text-sm">2.4k</span>
+                    GitHub <span id="stargazer-count" class="opacity-60 text-sm">loading...</span>
                 </button>
             </div>
             <!-- Installation Command -->
