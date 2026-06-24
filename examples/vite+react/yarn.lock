@@ -3224,10 +3224,10 @@ hasown@^2.0.2, hasown@^2.0.3, hasown@^2.0.4:
   dependencies:
     function-bind "^1.1.2"
 
-idb-ts@3.13.0:
-  version "3.13.0"
-  resolved "https://registry.yarnpkg.com/idb-ts/-/idb-ts-3.13.0.tgz#c102e7ac7836aa973bae56f9e6ebd2944565d158"
-  integrity sha512-R/SdALx61Ey9NZIShzN5XdeOXPWKQ54qe2xcLKDgPXHg/sSFWANuxIqN1R5FZq2balahGABnwutaxESgDt9OzQ==
+idb-ts@3.15.0:
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/idb-ts/-/idb-ts-3.15.0.tgz#f5359bcfb79ac99b1ce46f050de94047f1fce184"
+  integrity sha512-gUWw4/2LDXOMmpTcF1sLAkwDvgsfAw4h42VYOfw0jrFq8Q/VJLvm8C9la6GELLg5mohFnLC79NMlrWtI0VWtmA==
 
 ignore@^5.2.0:
   version "5.3.2"
