@@ -89,7 +89,7 @@ jobs:
         run: pnpm i --frozen-lockfile
         working-directory: ./examples/angular
       - name: Build Angular App
-        run: pnpm run build -- --prod
+        run: pnpm build
         working-directory: ./examples/angular
       - name: Upload Angular Build Artifacts
         uses: actions/upload-artifact@v4
