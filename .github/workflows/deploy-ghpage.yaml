@@ -74,6 +74,30 @@ jobs:
           path: ./examples/typescript/build
           retention-days: 1
 
+  build-angular:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install build tools
+        run: npm i -g pnpm
+      - name: Install dependencies
+        run: pnpm i --frozen-lockfile
+        working-directory: ./examples/angular
+      - name: Build Angular App
+        run: pnpm run build -- --prod
+        working-directory: ./examples/angular
+      - name: Upload Angular Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: angular-build
+          path: ./examples/angular/dist/angular/browser
+          retention-days: 1
+
   generate-coverage:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
@@ -248,6 +272,7 @@ jobs:
         build-react,
         build-vue,
         build-typescript,
+        build-angular,
         generate-coverage,
         generate-docs,
         # generate-performance-report,
@@ -268,6 +293,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: typescript-build
+          path: ./public
+      - name: Download Angular Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: angular-build
           path: ./public
       - name: Copy index.html to public directory
         run: cp ./examples/index.html ./public/index.html
