@@ -133,6 +133,18 @@
                 console.error("Error fetching GitHub stars:", err);
             });
     </script>
+    <script>
+        fetch("https://api.github.com/repos/maifeeulasad/idb-ts/releases/latest")
+            .then((res) => res.json())
+            .then((data) => {
+                const version = data.tag_name;
+                document.getElementById("latest-version").textContent = version;
+            })
+            .catch((err) => {
+                console.error("Error fetching latest release:", err);
+            });
+    </script>
+
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -202,7 +214,7 @@
             <div
                 class="inline-flex items-center px-sm py-1 bg-surface-container-high rounded-full border border-outline-variant/30 mb-md">
                 <span class="text-primary font-label-caps text-label-caps mr-xs">NEW</span>
-                <span class="text-on-surface-variant font-body-md text-sm">v3.15.0 just released with lots of new
+                <span class="text-on-surface-variant font-body-md text-sm"><span id="latest-version">v3.15.0</span> just released with lots of new
                     features
                     & performance improvements</span>
             </div>
