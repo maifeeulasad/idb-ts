@@ -35,6 +35,9 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.2.1
+      idb-ts:
+        specifier: ^3.15.0
+        version: 3.15.0(reflect-metadata@0.2.2)(tslib@2.8.1)
       rxjs:
         specifier: ~7.8.0
         version: 7.8.2
@@ -2035,6 +2038,12 @@ packages:
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
+
+  idb-ts@3.15.0:
+    resolution: {integrity: sha512-gUWw4/2LDXOMmpTcF1sLAkwDvgsfAw4h42VYOfw0jrFq8Q/VJLvm8C9la6GELLg5mohFnLC79NMlrWtI0VWtmA==}
+    peerDependencies:
+      reflect-metadata: ^0.2.2
+      tslib: ^2.8.1
 
   ignore-walk@8.0.0:
     resolution: {integrity: sha512-FCeMZT4NiRQGh+YkeKMtWrOmBgWjHjMJ26WQWrRQyoyzqevdaGSakUaJW5xQYmjLlUVk2qUnCjYVBax9EKKg8A==}
@@ -4787,6 +4796,11 @@ snapshots:
   iconv-lite@0.7.2:
     dependencies:
       safer-buffer: 2.1.2
+
+  idb-ts@3.15.0(reflect-metadata@0.2.2)(tslib@2.8.1):
+    dependencies:
+      reflect-metadata: 0.2.2
+      tslib: 2.8.1
 
   ignore-walk@8.0.0:
     dependencies:
