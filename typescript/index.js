@@ -1627,12 +1627,23 @@
     };
   }
   var Database = class _Database {
-    constructor(dbName, classes) {
+    constructor(dbName, classes, printEnabled = false) {
       this.db = null;
       this.entityRepositories = /* @__PURE__ */ new Map();
       this.retentionTimer = null;
       this.retentionCleanupRunning = false;
+      this.printDebug = (...data) => {
+        if (!this.printEnabled)
+          return;
+        console.debug("[idb-ts]:DEBUG:", ...data);
+      };
+      this.printError = (...error) => {
+        if (!this.printEnabled)
+          return;
+        console.error("[idb-ts]:ERROR:", ...error);
+      };
       this.dbName = dbName;
+      this.printEnabled = printEnabled;
       if (!classes.every((cls) => Reflect.getMetadata("dataclass", cls))) {
         throw new Error("All classes should be decorated with @DataClass.");
       }
@@ -1670,7 +1681,7 @@
             const db = request.result;
             const oldVersion = event.oldVersion;
             const newVersion = event.newVersion || this.dbVersion;
-            console.debug(`Database upgrade from version ${oldVersion} to ${newVersion}`);
+            this.printDebug(`Database upgrade from version ${oldVersion} to ${newVersion}`);
             this.classes.forEach((cls) => {
               var _a;
               const keyPathMetadata = Reflect.getMetadata("keypath", cls);
@@ -1679,7 +1690,7 @@
               const storeName = cls.name.toLowerCase();
               if (classVersion > oldVersion) {
                 if (!db.objectStoreNames.contains(storeName)) {
-                  console.debug(`Creating object store: ${storeName} (version ${classVersion})`);
+                  this.printDebug(`Creating object store: ${storeName} (version ${classVersion})`);
                   const storeOptions = {};
                   if (keyPathMetadata) {
                     storeOptions.keyPath = keyPathMetadata.fields;
@@ -1697,7 +1708,7 @@
                     }
                   });
                 } else {
-                  console.debug(`Updating object store: ${storeName} (version ${classVersion})`);
+                  this.printDebug(`Updating object store: ${storeName} (version ${classVersion})`);
                   const transaction = request.transaction;
                   if (transaction) {
                     const store = transaction.objectStore(storeName);
@@ -1706,7 +1717,7 @@
                       const indexName = typeof indexField === "string" ? indexField : indexField.field;
                       const indexOptions = typeof indexField === "string" ? { unique: false } : (_a2 = indexField.options) !== null && _a2 !== void 0 ? _a2 : { unique: false };
                       if (!store.indexNames.contains(indexName)) {
-                        console.debug(`Adding index: ${indexName} to ${storeName}`);
+                        this.printDebug(`Adding index: ${indexName} to ${storeName}`);
                         store.createIndex(indexName, indexName, indexOptions);
                       }
                     });
@@ -1717,12 +1728,12 @@
           };
           request.onsuccess = () => {
             this.db = request.result;
-            console.debug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
+            this.printDebug(`Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata("version", cls) || 1})`).join(", ")}`);
             this.startRetentionCleanup();
             resolve();
           };
           request.onerror = () => {
-            console.error("Error initializing database:", request.error);
+            this.printError("Error initializing database:", request.error);
             reject(request.error);
           };
         });
@@ -1763,7 +1774,7 @@
       if (!cleanupIntervalMs || !this.db || this.retentionTimer) {
         return;
       }
-      console.debug(`Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`);
+      this.printDebug(`Retention cleanup enabled for ${this.retentionPolicies.length} entities every ${cleanupIntervalMs}ms`);
       void this.runRetentionCleanup();
       this.retentionTimer = setInterval(() => {
         void this.runRetentionCleanup();
@@ -1776,11 +1787,11 @@
         }
         this.retentionCleanupRunning = true;
         try {
-          console.debug("Retention cleanup tick started");
+          this.printDebug("Retention cleanup tick started");
           for (const { storeName, className, policy } of this.retentionPolicies) {
             yield this.cleanupExpiredRecords(storeName, className, policy);
           }
-          console.debug("Retention cleanup tick finished");
+          this.printDebug("Retention cleanup tick finished");
         } finally {
           this.retentionCleanupRunning = false;
         }
@@ -1803,11 +1814,11 @@
             }
             const value = cursor.value;
             const timestamp = value === null || value === void 0 ? void 0 : value[policy.field];
-            console.debug(`Retention cleanup inspecting ${className}.${policy.field}:`, timestamp, "cutoff:", cutoff);
+            this.printDebug(`Retention cleanup inspecting ${className}.${policy.field}:`, timestamp, "cutoff:", cutoff);
             if (typeof timestamp === "number" && timestamp <= cutoff) {
               const deleteRequest = cursor.delete();
               deleteRequest.onsuccess = () => {
-                console.debug(`Retention cleanup removed expired record from ${className}`);
+                this.printDebug(`Retention cleanup removed expired record from ${className}`);
                 cursor.continue();
               };
               deleteRequest.onerror = () => {
@@ -1958,7 +1969,7 @@
           applyTimestampFields(item);
           return this.performOperation(cls.name, "readwrite", (store) => {
             return createStoredItem(store, item).then(() => {
-              console.debug(`Item added to ${cls.name}:`, item);
+              this.printDebug(`Item added to ${cls.name}:`, item);
             });
           }, transaction);
         }),
@@ -1973,7 +1984,7 @@
             const request = store.get(key);
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Item read from ${cls.name}:`, request.result);
+                this.printDebug(`Item read from ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -1984,7 +1995,7 @@
           validateItem(item);
           return this.performOperation(cls.name, "readwrite", (store) => {
             return updateStoredItem(store, item).then(() => {
-              console.debug(`Item updated in ${cls.name}:`, item);
+              this.printDebug(`Item updated in ${cls.name}:`, item);
             });
           }, transaction);
         }),
@@ -1997,7 +2008,7 @@
         delete: (key) => __awaiter(this, void 0, void 0, function* () {
           return this.performOperation(cls.name, "readwrite", (store) => {
             return deleteStoredItem(store, key).then(() => {
-              console.debug(`Item deleted from ${cls.name}:`, key);
+              this.printDebug(`Item deleted from ${cls.name}:`, key);
             });
           }, transaction);
         }),
@@ -2021,7 +2032,7 @@
             const request = store.getAll();
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`All items from ${cls.name}:`, request.result);
+                this.printDebug(`All items from ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2035,7 +2046,7 @@
               request.onsuccess = () => {
                 const items = request.result;
                 const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
-                console.debug(`Paginated items from ${cls.name}:`, paginatedItems);
+                this.printDebug(`Paginated items from ${cls.name}:`, paginatedItems);
                 resolve(paginatedItems);
               };
               request.onerror = () => reject(request.error);
@@ -2051,7 +2062,7 @@
             const request = index.getAll(value);
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Items found by index ${indexName} with value ${value}:`, request.result);
+                this.printDebug(`Items found by index ${indexName} with value ${value}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2067,7 +2078,7 @@
             const request = index.get(value);
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Item found by index ${indexName} with value ${value}:`, request.result);
+                this.printDebug(`Item found by index ${indexName} with value ${value}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2079,7 +2090,7 @@
             const request = store.count();
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Count for ${cls.name}:`, request.result);
+                this.printDebug(`Count for ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
@@ -2092,7 +2103,7 @@
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
                 const exists = request.result > 0;
-                console.debug(`Exists check for ${cls.name} with key ${key}:`, exists);
+                this.printDebug(`Exists check for ${cls.name} with key ${key}:`, exists);
                 resolve(exists);
               };
               request.onerror = () => reject(request.error);
@@ -2104,7 +2115,7 @@
             const request = store.clear();
             return new Promise((resolve, reject) => {
               request.onsuccess = () => {
-                console.debug(`Cleared all items from ${cls.name}`);
+                this.printDebug(`Cleared all items from ${cls.name}`);
                 resolve();
               };
               request.onerror = () => reject(request.error);
