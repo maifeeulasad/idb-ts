@@ -86,7 +86,7 @@ jobs:
       - name: Install build tools
         run: npm i -g pnpm && npm i -g @angular/cli
       - name: Install dependencies
-        run: pnpm i --frozen-lockfile
+        run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/angular
       - name: Build Angular App
         run: pnpm build
