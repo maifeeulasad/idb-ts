@@ -298,7 +298,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: angular-build
-          path: ./public
+          path: ./public/angular
       - name: Copy index.html to public directory
         run: cp ./examples/index.html ./public/index.html
       - name: Clean up old documentation and coverage directories
