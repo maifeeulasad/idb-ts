@@ -84,7 +84,7 @@ jobs:
         with:
           node-version: 24.x
       - name: Install build tools
-        run: npm i -g pnpm
+        run: npm i -g pnpm && npm i -g @angular/cli
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
         working-directory: ./examples/angular
