@@ -236,6 +236,7 @@ await db.User.deleteWhere((q) => q.where('age').lt(18));
 // Utilities
 const count = await db.User.count();
 const exists = await db.User.exists('u1');
+const keys = await db.User.getKeys(); // primary keys only, no record values
 await db.User.clear();
 ```
 
