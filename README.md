@@ -335,6 +335,23 @@ await db.User.query()
   .execute();
 ```
 
+### Reusing builders
+
+A builder accumulates state: every `where`/`orderBy`/`limit` call mutates the same instance, so chaining more conditions onto an already-executed builder narrows it further. To derive variations from a shared base use `clone()`; to start over with the same instance use `reset()`:
+
+```typescript
+const adults = db.User.query().where('age').gte(18);
+
+// Independent variations - neither affects the other or the base
+const admins = await adults.clone().where('role').equals('admin').execute();
+const guests = await adults.clone().where('role').equals('guest').execute();
+
+// Reuse one instance from scratch
+const query = db.User.query();
+await query.where('role').equals('admin').execute();
+await query.reset().where('age').lt(18).execute(); // fresh state
+```
+
 ### Index and range acceleration
 
 When a field is indexed, you can constrain the initial IDB candidate set at the storage layer before in-memory filtering begins:
