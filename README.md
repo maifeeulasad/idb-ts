@@ -678,6 +678,65 @@ Done in 383ms using pnpm v11.9.0
 
 <!-- performance end -->
 
+## LLM / AI Assistant Instructions
+
+Building with an AI coding assistant? Paste the block below into your assistant's context (system prompt, rules file, `CLAUDE.md`, `.cursorrules`, etc.) so it generates correct idb-ts code on the first try.
+
+```text
+idb-ts cheat sheet (TypeScript ORM for IndexedDB, zero runtime deps):
+
+Setup
+- import 'reflect-metadata' once at the app entry point.
+- tsconfig: "experimentalDecorators": true, "emitDecoratorMetadata": true.
+
+Entities
+- Decorate classes with @DataClass({ version?: number }).
+- Exactly one primary key: @KeyPath({ autoIncrement?, generator? }) on a
+  property, or @CompositeKeyPath(['fieldA','fieldB']) on the class
+  (written BELOW @DataClass - decorators apply bottom-up).
+- generator: 'uuid' | 'timestamp' | 'random' | (item) => string | number.
+- Secondary indexes: @Index({ unique?: boolean }) on properties.
+- Validation: @Validate((value, item) => boolean, 'message') on properties.
+- Auto-expiry: @RetentionPolicy({ seconds, field?, enabled? }) on the class.
+
+Database
+- const db = await Database.build<{ User: EntityRepository<User> }>('name', [User]);
+- Repositories are attached by class name: db.User, db.Order, ...
+- db.close() when done. db.getDatabaseVersion(), db.getAvailableEntities().
+
+Repository API (all Promise-based)
+- create(item), createMany(items), read(key), update(item), updateMany(items)
+- delete(key), deleteMany(keys), deleteWhere(q => q.where(...))
+- list(), listPaginated(page, pageSize), count(), exists(key), clear()
+- findByIndex(indexName, value), findOneByIndex(indexName, value)
+- query() -> QueryBuilder
+
+QueryBuilder (chainable)
+- .where('field').equals/gt/gte/lt/lte/startsWith/endsWith/contains/
+  matches/between/notBetween/in/notIn/containsAny/containsAll(...)
+- .and('field')... / .or().where('field')...
+- Nested groups: .where(qb => qb.where('a').equals(1).or().where('b').equals(2))
+- .orderBy(field, 'asc'|'desc'), .limit(n), .offset(n)
+- .useIndex(indexName).range(start, end) for IDB-level narrowing
+- Terminals: .execute(), .count(), .sum(f), .avg(f), .min(f), .max(f),
+  .groupBy(f).count()
+
+Transactions
+- await db.transaction(async tx => { await tx.User.create(u); ... })  // auto commit/rollback
+- const tx = await db.beginTransaction(['User','Order']); await tx.commit() / tx.rollback()
+
+Gotchas
+- Store names are lower-cased class names; renaming a class = new store.
+- Every write injects __idb_createdAt / __idb_updatedAt (ms timestamps).
+- where() filters run in memory after candidates are fetched; use
+  useIndex()+range() to narrow at the IndexedDB layer first.
+- Composite keys are passed as arrays: db.UserProject.read(['u1','p1']).
+```
+
+### For contributors (and their assistants)
+
+Working on idb-ts itself: the entire library lives in `index.ts`; tests are in `__tests__/` (Jest + fake-indexeddb). Key workflows: `pnpm test` (type check + Jest), `pnpm lint`, `pnpm build` (tsc + rollup into `lib/`, which is the only published artifact). Keep changes minimal, always add tests, and document user-facing behaviour in this README rather than separate files.
+
 ## Useful Links
 
 - **GitHub**: [maifeeulasad/idb-ts](https://github.com/maifeeulasad/idb-ts)
