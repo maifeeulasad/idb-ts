@@ -7,6 +7,21 @@ name: Test and Coverage
     branches:
       - main
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install build tools
+        run: npm i -g pnpm
+      - name: Install dependencies
+        run: pnpm i --frozen-lockfile
+      - name: Run linter
+        run: pnpm lint
+        
   test:
     runs-on: ubuntu-latest
     steps:
