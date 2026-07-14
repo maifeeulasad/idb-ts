@@ -2918,6 +2918,114 @@ class Database {
   }
 
   /**
+   * Exports every registered entity store as a plain, JSON-serialisable
+   * object keyed by entity class name.
+   *
+   * Records are exported verbatim, including the internal
+   * `__idb_createdAt` / `__idb_updatedAt` timestamp fields, so a subsequent
+   * {@link Database.importDatabase} restores them exactly.
+   *
+   * @returns A promise resolving to `{ EntityName: records[] }`.
+   *
+   * @example
+   * ```ts
+   * const dump = await db.exportDatabase();
+   * localStorage.setItem('backup', JSON.stringify(dump));
+   * ```
+   */
+  async exportDatabase(): Promise<Record<string, unknown[]>> {
+    const dump: Record<string, unknown[]> = {};
+
+    for (const cls of this.classes) {
+      const repository = this.entityRepositories.get(cls.name) as
+        | EntityRepository<unknown>
+        | undefined;
+      if (repository) {
+        dump[cls.name] = await repository.list();
+      }
+    }
+
+    return dump;
+  }
+
+  /**
+   * Imports a dump produced by {@link Database.exportDatabase}.
+   *
+   * Records are written verbatim with `put` semantics: records whose primary
+   * key already exists are overwritten, all others are inserted. Existing
+   * records not present in the dump are kept unless `options.clear` is set.
+   * Validation, key generation, and timestamp injection are intentionally
+   * bypassed so the imported data matches the exported data exactly.
+   *
+   * Dump entries whose entity name is not registered in this database are
+   * skipped (a debug message is logged).
+   *
+   * @param dump    - `{ EntityName: records[] }` as returned by `exportDatabase`.
+   * @param options - Set `clear: true` to empty each store before importing.
+   *
+   * @example
+   * ```ts
+   * await db.importDatabase(JSON.parse(backupJson));
+   * await db.importDatabase(dump, { clear: true }); // replace instead of merge
+   * ```
+   */
+  async importDatabase(
+    dump: Record<string, unknown[]>,
+    options: { clear?: boolean } = {},
+  ): Promise<void> {
+    for (const [entityName, records] of Object.entries(dump)) {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (!entityClass) {
+        this.printDebug(
+          `Skipping import for unregistered entity '${entityName}'.`,
+        );
+        continue;
+      }
+
+      if (!Array.isArray(records)) {
+        this.printDebug(
+          `Skipping import for '${entityName}': expected an array of records.`,
+        );
+        continue;
+      }
+
+      await this.performOperation(entityName, 'readwrite', (store) => {
+        return new Promise<void>((resolve, reject) => {
+          const writeRecords = () => {
+            let pending = records.length;
+            if (!pending) {
+              resolve();
+              return;
+            }
+
+            records.forEach((record) => {
+              const request = store.put(record);
+              request.onsuccess = () => {
+                pending -= 1;
+                if (!pending) resolve();
+              };
+              request.onerror = () => reject(request.error);
+            });
+          };
+
+          if (options.clear) {
+            const clearRequest = store.clear();
+            clearRequest.onsuccess = () => writeRecords();
+            clearRequest.onerror = () => reject(clearRequest.error);
+            return;
+          }
+
+          writeRecords();
+        });
+      });
+
+      this.printDebug(
+        `Imported ${records.length} record(s) into '${entityName}'.`,
+      );
+    }
+  }
+
+  /**
    * Closes the underlying IDB connection and stops the retention cleanup timer.
    * The instance must not be used after calling this method.
    *
