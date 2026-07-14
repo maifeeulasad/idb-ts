@@ -2716,7 +2716,6 @@ class Database {
     cls: Function,
     transaction?: IDBTransaction,
   ): EntityRepository<T> {
-    const self = this;
     const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
     const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
     const validators = (Reflect.getMetadata('validators', cls) ||
@@ -2875,10 +2874,10 @@ class Database {
     };
 
     return {
-      query(): QueryBuilder<T> {
-        if (!self.db) throw new Error('Database not initialized.');
+      query: (): QueryBuilder<T> => {
+        if (!this.db) throw new Error('Database not initialized.');
         const storeName = cls.name.toLowerCase();
-        return new QueryBuilder<T>(self.db, storeName, transaction);
+        return new QueryBuilder<T>(this.db, storeName, transaction);
       },
 
       create: async (item: T): Promise<void> => {
