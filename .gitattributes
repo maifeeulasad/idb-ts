@@ -1,0 +1,17 @@
+# Normalize line endings: store LF in the repository and check out LF
+# everywhere, so diffs never show "line endings changed from LF to CRLF"
+# noise regardless of the contributor's OS or core.autocrlf setting.
+* text=auto eol=lf
+
+# Windows-specific scripts genuinely require CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets - never touch line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
