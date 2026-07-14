@@ -345,6 +345,13 @@ When a field is indexed, you can constrain the initial IDB candidate set at the 
 await db.Product.query().useIndex('price').range(10, 100).execute();
 ```
 
+The two mechanisms are deliberately distinct:
+
+- `useIndex(...).range(start, end)` narrows candidates **natively at the IndexedDB layer** via an `IDBKeyRange` — fast, but limited to one indexed field.
+- `.where(...)` conditions are evaluated **in memory** after the candidates are fetched. They can target any field (including one different from the index), at the cost of scanning the fetched candidates.
+
+Mixing them is valid and useful — the index range prunes the bulk, `where()` refines the rest. Calling `range()` **without** `useIndex()` throws at execution time instead of silently ignoring the bounds; express such bounds as `where(field).between(start, end)` instead.
+
 ### Aggregations
 
 ```typescript
