@@ -659,6 +659,28 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 ---
 
+## Export / Import
+
+Snapshot every registered store to a plain serialisable object, and load such a snapshot back - useful for backups, test fixtures, and moving data between environments.
+
+```typescript
+// Export: { EntityName: records[] } for every registered entity
+const dump = await db.exportDatabase();
+localStorage.setItem('backup', JSON.stringify(dump));
+
+// Import: writes records verbatim (timestamps preserved), upserting by key
+await db.importDatabase(JSON.parse(localStorage.getItem('backup')!));
+
+// Replace instead of merge
+await db.importDatabase(dump, { clear: true });
+```
+
+- Records are written with `put`, so importing over existing keys overwrites those records; other records are kept unless `clear: true` is passed.
+- Dump entries whose entity is not registered in this database are skipped.
+- Internal `__idb_createdAt` / `__idb_updatedAt` fields survive the round-trip verbatim; validation and key generation are bypassed so the restored data matches the exported data exactly.
+
+---
+
 ## Performance
 
 <!-- performance start -->
