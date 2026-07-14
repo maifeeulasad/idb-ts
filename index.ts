@@ -87,8 +87,8 @@ type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
 type ContainsValue<T> = T extends string
   ? string
   : T extends readonly (infer U)[]
-  ? U
-  : never;
+    ? U
+    : never;
 
 /**
  * All filter operators supported by {@link FieldQueryBuilder} and {@link QueryBuilder}.
@@ -210,7 +210,7 @@ class FieldQueryBuilder<T, K extends QueryFieldKey<T>> {
   constructor(
     private parent: QueryBuilder<T>,
     private field: K,
-  ) { }
+  ) {}
 
   /**
    * Filters records where `field === value`.
@@ -505,8 +505,8 @@ class QueryBuilder<T> {
   private limitCount?: number;
   private offsetCount?: number;
   private indexName?: string;
-  private rangeStart?: any;
-  private rangeEnd?: any;
+  private rangeStart?: IDBValidKey;
+  private rangeEnd?: IDBValidKey;
   private currentField?: string;
   private groupField?: Extract<keyof T, string>;
   private pendingConnector: QueryConnector = 'and';
@@ -841,13 +841,19 @@ class QueryBuilder<T> {
 
   /**
    * Constrains the IDB key range used when reading via {@link QueryBuilder.useIndex}.
-   * Has no effect unless `useIndex` has been called.
+   *
+   * Unlike {@link QueryBuilder.where} conditions - which are evaluated
+   * **in memory** after candidates are fetched - the range is applied natively
+   * at the IndexedDB layer, so it narrows the candidate set before any
+   * in-memory filtering runs. Because a range is meaningless without an index
+   * to apply it to, executing a query that sets a range without calling
+   * `useIndex` throws instead of silently ignoring the bounds.
    *
    * @param start - Inclusive lower bound of the key range, or `undefined` for an open lower bound.
    * @param end   - Inclusive upper bound of the key range, or `undefined` for an open upper bound.
    * @returns `this` for chaining.
    */
-  range(start: any, end: any) {
+  range(start: IDBValidKey | undefined, end: IDBValidKey | undefined) {
     this.rangeStart = start;
     this.rangeEnd = end;
     return this;
@@ -874,13 +880,73 @@ class QueryBuilder<T> {
     };
   }
 
+  /**
+   * Returns an independent copy of this builder carrying all accumulated
+   * state (filter clauses, ordering, pagination, index and range settings).
+   *
+   * Use it to derive query variations from a shared base without the
+   * variations mutating each other - appending clauses to the clone never
+   * affects the original, and vice versa.
+   *
+   * @returns A new {@link QueryBuilder} with identical state.
+   *
+   * @example
+   * ```ts
+   * const adults = db.User.query().where('age').gte(18);
+   * const admins  = adults.clone().where('role').equals('admin');
+   * const guests  = adults.clone().where('role').equals('guest');
+   * ```
+   */
+  clone(): QueryBuilder<T> {
+    const copy = new QueryBuilder<T>(this.db, this.storeName, this.transaction);
+    copy.clauses = [...this.clauses];
+    copy.orderField = this.orderField;
+    copy.orderDirection = this.orderDirection;
+    copy.limitCount = this.limitCount;
+    copy.offsetCount = this.offsetCount;
+    copy.indexName = this.indexName;
+    copy.rangeStart = this.rangeStart;
+    copy.rangeEnd = this.rangeEnd;
+    copy.groupField = this.groupField;
+    copy.pendingConnector = this.pendingConnector;
+    return copy;
+  }
+
+  /**
+   * Clears every accumulated clause and setting, returning the builder to
+   * its freshly-created state so it can be reused safely.
+   *
+   * @returns `this` for chaining.
+   *
+   * @example
+   * ```ts
+   * const query = db.User.query();
+   * const admins = await query.where('role').equals('admin').execute();
+   * const everyone = await query.reset().execute();
+   * ```
+   */
+  reset(): this {
+    this.clauses = [];
+    this.orderField = undefined;
+    this.orderDirection = 'asc';
+    this.limitCount = undefined;
+    this.offsetCount = undefined;
+    this.indexName = undefined;
+    this.rangeStart = undefined;
+    this.rangeEnd = undefined;
+    this.currentField = undefined;
+    this.groupField = undefined;
+    this.pendingConnector = 'and';
+    return this;
+  }
+
   /** @internal */
   private async loadCandidates(): Promise<T[]> {
     const store = this.transaction
       ? this.transaction.objectStore(this.storeName)
       : this.db
-        .transaction(this.storeName, 'readonly')
-        .objectStore(this.storeName);
+          .transaction(this.storeName, 'readonly')
+          .objectStore(this.storeName);
 
     const request = this.createReadRequest(store);
     return new Promise<T[]>((resolve, reject) => {
@@ -892,6 +958,15 @@ class QueryBuilder<T> {
   /** @internal */
   private createReadRequest(store: IDBObjectStore): IDBRequest {
     if (!this.indexName) {
+      if (this.rangeStart !== undefined || this.rangeEnd !== undefined) {
+        throw new Error(
+          'range() requires useIndex(): key ranges are applied at the ' +
+          'IndexedDB layer through an index. Either call useIndex(indexName) ' +
+          'before range(), or express the bounds as in-memory filters via ' +
+          'where(field).between(start, end) / gte() / lte().',
+        );
+      }
+
       return store.getAll();
     }
 
@@ -1211,12 +1286,12 @@ interface KeyPathOptions {
    *                   `string` or `number`.
    */
   generator?:
-  | 'uuid'
-  | 'uuidv4'
-  | 'uuidv6'
-  | 'timestamp'
-  | 'random'
-  | ((item?: any) => string | number);
+    | 'uuid'
+    | 'uuidv4'
+    | 'uuidv6'
+    | 'timestamp'
+    | 'random'
+    | ((item?: any) => string | number);
 }
 
 /**
@@ -1498,17 +1573,22 @@ function KeyPath(options?: KeyPathOptions): PropertyDecorator {
  * of fields rather than a single property.
  *
  * @param fields  - An ordered array of field names that together form the key.
- * @param options - Optional key generation configuration (note: auto-generated
- *   keys are not supported for composite keys).
+ * @param options - Optional key path configuration. Key generation is **not
+ *   supported** for composite keys: passing `generator` or `autoIncrement`
+ *   throws immediately at decoration time instead of being silently ignored.
  *
  * @remarks
- * Apply `@CompositeKeyPath` **before** `@DataClass` (decorators execute
- * bottom-up). `@KeyPath` must **not** also be used on the same class.
+ * `@CompositeKeyPath` must execute **before** `@DataClass`. Decorators are
+ * applied bottom-up, so write it *below* `@DataClass` (closer to the `class`
+ * keyword). `@KeyPath` must **not** also be used on the same class.
+ *
+ * @throws `Error` - At decoration time when `options.generator` or
+ *   `options.autoIncrement` is provided.
  *
  * @example
  * ```ts
- * @CompositeKeyPath(['userId', 'projectId'])
  * @DataClass()
+ * @CompositeKeyPath(['userId', 'projectId'])
  * class UserProject {
  *   userId!: string;
  *   projectId!: string;
@@ -1524,6 +1604,18 @@ function CompositeKeyPath(
   options?: KeyPathOptions,
 ): ClassDecorator {
   return (target: Function) => {
+    if (options?.generator) {
+      throw new Error(
+        `Key generators are not supported for composite keys on class ${target.name}. ` +
+        'Provide all key fields explicitly before calling create().',
+      );
+    }
+    if (options?.autoIncrement) {
+      throw new Error(
+        `autoIncrement is not supported for composite keys on class ${target.name}.`,
+      );
+    }
+
     const metadata: KeyPathMetadata = {
       fields: fields,
       options: options,
@@ -1608,6 +1700,65 @@ function Validate<T = any>(
       { field: propertyKey as string, predicate, message } as ValidationRule<T>,
     ];
     Reflect.defineMetadata('validators', nextRules, constructor);
+  };
+}
+
+/**
+ * Describes a calculated field registered via {@link Calculated}.
+ *
+ * @typeParam T - The entity type the field belongs to.
+ * @internal
+ */
+interface CalculatedFieldMetadata<T = any> {
+  /** Name of the field that receives the computed value. */
+  field: string;
+  /** Derives the field value from the rest of the entity. */
+  compute: (item: T) => any;
+}
+
+/**
+ * Property decorator that derives the decorated field's value from the rest
+ * of the entity on every write.
+ *
+ * The compute function runs on each {@link EntityRepository.create} and
+ * {@link EntityRepository.update} **before** validation and timestamps, so:
+ *
+ * - any value assigned to the field by the caller is overwritten,
+ * - `@Validate` rules on the same field see the computed value,
+ * - the computed value is persisted and therefore works with indexes and
+ *   the query builder like any ordinary field.
+ *
+ * Because the value is computed at write time, it reflects the entity state
+ * as of the last write - change an input field and the calculated field
+ * refreshes on the next `update`.
+ *
+ * @typeParam T - The entity class the field belongs to.
+ * @param compute - Function deriving the field value from the entity.
+ *
+ * @example
+ * ```ts
+ * @DataClass()
+ * class OrderLine {
+ *   @KeyPath({ generator: 'uuid' })
+ *   id!: string;
+ *
+ *   quantity!: number;
+ *   unitPrice!: number;
+ *
+ *   @Calculated<OrderLine>((line) => line.quantity * line.unitPrice)
+ *   total!: number;
+ * }
+ * ```
+ */
+function Calculated<T = any>(compute: (item: T) => any): PropertyDecorator {
+  return (target: Object, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    const existing = Reflect.getMetadata('calculated', constructor) || [];
+    const nextFields = [
+      ...existing,
+      { field: propertyKey as string, compute } as CalculatedFieldMetadata<T>,
+    ];
+    Reflect.defineMetadata('calculated', nextFields, constructor);
   };
 }
 
@@ -1839,20 +1990,25 @@ interface EntityRepository<T> {
    * Returns all records whose indexed field equals `value`.
    *
    * @param indexName - The name of the IDB index to query.
-   * @param value     - The index key to look up.
+   * @param value     - The index key to look up. Must be a valid IndexedDB
+   *   key (`string`, `number`, `Date`, `ArrayBuffer` view, or an array of
+   *   those); booleans and plain objects are rejected at compile time.
    * @throws `Error` if the named index does not exist.
    */
-  findByIndex(indexName: string, value: any): Promise<T[]>;
+  findByIndex(indexName: string, value: IDBValidKey): Promise<T[]>;
 
   /**
    * Returns the first record whose indexed field equals `value`, or
    * `undefined` if none is found.
    *
    * @param indexName - The name of the IDB index to query.
-   * @param value     - The index key to look up.
+   * @param value     - The index key to look up. Must be a valid IndexedDB key.
    * @throws `Error` if the named index does not exist.
    */
-  findOneByIndex(indexName: string, value: any): Promise<T | undefined>;
+  findOneByIndex(
+    indexName: string,
+    value: IDBValidKey,
+  ): Promise<T | undefined>;
 
   /**
    * Returns the total number of records in the store.
@@ -1862,12 +2018,23 @@ interface EntityRepository<T> {
   count(): Promise<number>;
 
   /**
+   * Returns the primary keys of all records in the store, without loading
+   * the record values.
+   *
+   * @returns A promise resolving to an array of primary keys, in the
+   *   store's natural key order.
+   */
+  getKeys(): Promise<IDBValidKey[]>;
+
+  /**
    * Returns whether a record with the given primary key exists.
    *
-   * @param key - The primary key to check.
+   * @param key - The primary key to check. Accepts the same key shapes as
+   *   {@link EntityRepository.read}: a string, a number, or an array for
+   *   composite keys.
    * @returns `true` if a matching record exists, `false` otherwise.
    */
-  exists(key: string): Promise<boolean>;
+  exists(key: string | string[] | number): Promise<boolean>;
 
   /**
    * Deletes **all** records from the store.
@@ -1982,6 +2149,247 @@ interface SyncAdapter {
   pull(entityName: string): Promise<unknown[] | undefined>;
 }
 
+// ─── Schema Migration ────────────────────────────────────────────────────────
+
+/**
+ * Normalised index definition carried by an {@link EntitySchema}.
+ *
+ * @internal
+ */
+interface EntityIndexSchema {
+  /** Index (and covered field) name. */
+  name: string;
+  /** Resolved IDB index parameters. */
+  options: IDBIndexParameters;
+}
+
+/**
+ * Immutable, declarative description of the IndexedDB object store an entity
+ * class expects. Built once from decorator metadata and treated as the single
+ * source of truth during migration, replacing scattered `Reflect.getMetadata`
+ * reads.
+ *
+ * @internal
+ */
+class EntitySchema {
+  private constructor(
+    /** Entity class name, e.g. `User`. */
+    readonly className: string,
+    /** Object store name (lower-cased class name). */
+    readonly storeName: string,
+    /** Declared schema version (defaults to `1`). */
+    readonly version: number,
+    /** Declared key path, or `undefined` for out-of-line keys. */
+    readonly keyPath: string | string[] | undefined,
+    /** Whether the store uses an IDB key generator. */
+    readonly autoIncrement: boolean,
+    /** Declared secondary indexes. */
+    readonly indexes: ReadonlyArray<EntityIndexSchema>,
+  ) {}
+
+  /** Builds the schema for a `@DataClass`-decorated constructor. */
+  static fromClass(cls: Function): EntitySchema {
+    const keyPathMetadata = Reflect.getMetadata('keypath', cls) as
+      | KeyPathMetadata
+      | undefined;
+    const rawIndexes = (Reflect.getMetadata('indexes', cls) || []) as Array<
+      string | IndexMetadata
+    >;
+    const indexes = rawIndexes.map((entry) =>
+      typeof entry === 'string'
+        ? { name: entry, options: { unique: false } }
+        : { name: entry.field, options: entry.options ?? { unique: false } },
+    );
+
+    return new EntitySchema(
+      cls.name,
+      cls.name.toLowerCase(),
+      Reflect.getMetadata('version', cls) || 1,
+      keyPathMetadata?.fields,
+      keyPathMetadata?.options?.autoIncrement === true,
+      indexes,
+    );
+  }
+
+  /** Whether this schema declares an index with the given name. */
+  hasIndex(name: string): boolean {
+    return this.indexes.some((index) => index.name === name);
+  }
+}
+
+/**
+ * Applies a set of {@link EntitySchema} definitions to an IndexedDB database.
+ *
+ * The migrator is fully declarative and idempotent: inside a version-change
+ * transaction it reconciles the *actual* schema with the *declared* one -
+ * creating missing stores, adding missing indexes, and **removing indexes that
+ * are no longer declared**. Because the sync no longer depends on per-entity
+ * version comparisons, schema changes are honoured even when the author
+ * forgets to bump an entity's `version`.
+ *
+ * Changes that cannot be applied without data loss (key-path or
+ * auto-increment changes, stores with no registered entity) are never
+ * performed automatically; they are surfaced through the error logger so the
+ * application author can migrate the data explicitly.
+ *
+ * @internal
+ */
+class SchemaMigrator {
+  constructor(
+    private readonly schemas: ReadonlyArray<EntitySchema>,
+    private readonly logDebug: (...data: any[]) => void,
+    private readonly logWarn: (...data: any[]) => void,
+  ) {}
+
+  /** Highest declared entity version - the minimum database version. */
+  get targetVersion(): number {
+    return Math.max(1, ...this.schemas.map((schema) => schema.version));
+  }
+
+  /**
+   * Reconciles every declared schema against the open database. Must be
+   * called from within an `onupgradeneeded` handler.
+   *
+   * @param db          - The database being upgraded.
+   * @param transaction - The active version-change transaction.
+   */
+  applyTo(db: IDBDatabase, transaction: IDBTransaction | null): void {
+    this.schemas.forEach((schema) => {
+      if (!db.objectStoreNames.contains(schema.storeName)) {
+        this.createStore(db, schema);
+      } else if (transaction) {
+        this.syncStore(transaction.objectStore(schema.storeName), schema);
+      }
+    });
+
+    this.reportOrphanedStores(db);
+  }
+
+  /**
+   * Compares the actual database schema against the declared one and returns
+   * a description of every difference that a re-run of {@link applyTo} can
+   * repair (missing stores, missing indexes, stale indexes).
+   *
+   * Differences that require destructive action (key-path changes, orphaned
+   * stores) are intentionally excluded so callers do not loop attempting to
+   * fix the unfixable.
+   *
+   * @param db - An open database connection.
+   * @returns Human-readable drift descriptions; empty when in sync.
+   */
+  detectFixableDrift(db: IDBDatabase): string[] {
+    const drift: string[] = [];
+    const existing = this.schemas.filter((schema) =>
+      db.objectStoreNames.contains(schema.storeName),
+    );
+
+    this.schemas.forEach((schema) => {
+      if (!db.objectStoreNames.contains(schema.storeName)) {
+        drift.push(`missing object store '${schema.storeName}'`);
+      }
+    });
+
+    if (existing.length) {
+      const transaction = db.transaction(
+        existing.map((schema) => schema.storeName),
+        'readonly',
+      );
+
+      existing.forEach((schema) => {
+        const store = transaction.objectStore(schema.storeName);
+
+        schema.indexes.forEach(({ name }) => {
+          if (!store.indexNames.contains(name)) {
+            drift.push(`missing index '${name}' on '${schema.storeName}'`);
+          }
+        });
+
+        Array.from(store.indexNames).forEach((name) => {
+          if (!schema.hasIndex(name)) {
+            drift.push(`stale index '${name}' on '${schema.storeName}'`);
+          }
+        });
+      });
+    }
+
+    return drift;
+  }
+
+  /** @internal */
+  private createStore(db: IDBDatabase, schema: EntitySchema): void {
+    const options: IDBObjectStoreParameters = {};
+    if (schema.keyPath !== undefined) {
+      options.keyPath = schema.keyPath as string | string[];
+    }
+    if (schema.autoIncrement) {
+      options.autoIncrement = true;
+    }
+
+    const store = db.createObjectStore(schema.storeName, options);
+    schema.indexes.forEach(({ name, options: indexOptions }) => {
+      store.createIndex(name, name, indexOptions);
+    });
+
+    this.logDebug(
+      `Created object store '${schema.storeName}' (entity version ${schema.version})`,
+    );
+  }
+
+  /** @internal */
+  private syncStore(store: IDBObjectStore, schema: EntitySchema): void {
+    if (!this.keyPathMatches(store, schema)) {
+      this.logWarn(
+        `Key path of object store '${schema.storeName}' differs from the ` +
+          `declaration on ${schema.className}. IndexedDB cannot change a ` +
+          'store\'s key path in place; migrate the data to a new entity or ' +
+          'delete the database to apply this change.',
+      );
+    }
+
+    schema.indexes.forEach(({ name, options }) => {
+      if (!store.indexNames.contains(name)) {
+        store.createIndex(name, name, options);
+        this.logDebug(`Added index '${name}' to '${schema.storeName}'`);
+      }
+    });
+
+    Array.from(store.indexNames).forEach((name) => {
+      if (!schema.hasIndex(name)) {
+        store.deleteIndex(name);
+        this.logDebug(
+          `Removed stale index '${name}' from '${schema.storeName}'`,
+        );
+      }
+    });
+  }
+
+  /** @internal */
+  private keyPathMatches(store: IDBObjectStore, schema: EntitySchema): boolean {
+    const normalise = (
+      keyPath: string | string[] | null | undefined,
+    ): string => (Array.isArray(keyPath) ? keyPath.join(',') : (keyPath ?? ''));
+
+    return (
+      normalise(store.keyPath) === normalise(schema.keyPath) &&
+      store.autoIncrement === schema.autoIncrement
+    );
+  }
+
+  /** @internal */
+  private reportOrphanedStores(db: IDBDatabase): void {
+    const declared = new Set(this.schemas.map((schema) => schema.storeName));
+    Array.from(db.objectStoreNames).forEach((storeName) => {
+      if (!declared.has(storeName)) {
+        this.logWarn(
+          `Object store '${storeName}' has no registered entity class. ` +
+            'Its data is preserved; register the entity again or delete the ' +
+            'store manually if it is no longer needed.',
+        );
+      }
+    });
+  }
+}
+
 // ─── Database ────────────────────────────────────────────────────────────────
 
 /**
@@ -1993,11 +2401,18 @@ interface SyncAdapter {
  * is private.
  *
  * @remarks
- * **Schema versioning.** The effective database version is the highest
- * `version` value across all registered `@DataClass` entities. On each
- * `onupgradeneeded` event, only stores whose `version` exceeds the previous
- * database version are created or updated, so additive schema evolution is
- * handled automatically.
+ * **Schema versioning.** The declared database version is the highest
+ * `version` value across all registered `@DataClass` entities. On every
+ * `onupgradeneeded` event the full declared schema is reconciled against the
+ * actual one: missing stores and indexes are created and indexes that are no
+ * longer declared are removed. If the schema changed without a version bump,
+ * the drift is detected after opening and a follow-up upgrade is triggered
+ * automatically. If the declared version is *lower* than the version stored
+ * on disk (an entity's `version` was decreased), the database opens at the
+ * existing on-disk version instead of failing with a `VersionError` -
+ * IndexedDB cannot downgrade. Changes that would require destructive action
+ * (key-path changes, stores whose entity is no longer registered) are never
+ * applied automatically; they are reported through the error log instead.
  *
  * **Retention cleanup.** When entities declare `@RetentionPolicy`, a periodic
  * `setInterval` job is started after the database opens. The interval is the
@@ -2026,6 +2441,8 @@ interface SyncAdapter {
 class Database {
   private dbName: string;
   private classes: Function[];
+  private schemas: EntitySchema[];
+  private migrator: SchemaMigrator;
   private db: IDBDatabase | null = null;
   private entityRepositories: Map<string, any> = new Map();
   private dbVersion: number;
@@ -2045,8 +2462,7 @@ class Database {
    * @internal
    */
   private printDebug = (...data: any) => {
-    if (!this.printEnabled)
-      return;
+    if (!this.printEnabled) return;
     console.debug('[idb-ts]:DEBUG:', ...data);
   };
 
@@ -2057,8 +2473,7 @@ class Database {
    * @internal
    */
   private printError = (...error: any) => {
-    if (!this.printEnabled)
-      return;
+    if (!this.printEnabled) return;
     console.error('[idb-ts]:ERROR:', ...error);
   };
 
@@ -2074,7 +2489,13 @@ class Database {
       throw new Error('All classes should be decorated with @DataClass.');
     }
     this.classes = classes;
-    this.dbVersion = this.calculateDatabaseVersion();
+    this.schemas = classes.map((cls) => EntitySchema.fromClass(cls));
+    this.migrator = new SchemaMigrator(
+      this.schemas,
+      this.printDebug,
+      this.printError,
+    );
+    this.dbVersion = this.migrator.targetVersion;
     this.retentionPolicies = this.classes
       .map((cls) => {
         const policy = Reflect.getMetadata('retention_policy', cls) as
@@ -2102,18 +2523,77 @@ class Database {
   }
 
   /**
-   * Derives the IDB database version from the highest `version` annotation
-   * across all registered entity classes.
+   * Reads the version currently persisted on disk for this database name
+   * without creating or upgrading it.
    *
-   * @returns The calculated database version number.
+   * Prefers `indexedDB.databases()` where available; otherwise falls back to
+   * a probe `open()` whose version-change transaction is aborted immediately
+   * so a non-existent database is not created as a side effect.
+   *
+   * @returns The persisted version, or `0` when the database does not exist.
    * @internal
    */
-  private calculateDatabaseVersion(): number {
-    // Calculate the database version based on the highest schema version
-    const versions = this.classes.map(
-      (cls) => Reflect.getMetadata('version', cls) || 1,
-    );
-    return Math.max(...versions);
+  private async readPersistedVersion(): Promise<number> {
+    const databasesFn = (indexedDB as any).databases as
+      | (() => Promise<Array<{ name?: string; version?: number }>>)
+      | undefined;
+
+    if (typeof databasesFn === 'function') {
+      try {
+        const infos = await databasesFn.call(indexedDB);
+        const info = infos.find((entry) => entry.name === this.dbName);
+        return info?.version ?? 0;
+      } catch {
+        // Fall through to the probe strategy below.
+      }
+    }
+
+    return new Promise<number>((resolve) => {
+      const request = indexedDB.open(this.dbName);
+
+      request.onupgradeneeded = () => {
+        // The database does not exist; abort so the probe leaves no trace.
+        request.transaction?.abort();
+        resolve(0);
+      };
+      request.onsuccess = () => {
+        const version = request.result.version;
+        request.result.close();
+        resolve(version);
+      };
+      request.onerror = () => resolve(0);
+    });
+  }
+
+  /**
+   * Opens the database at the given version, delegating schema work to the
+   * {@link SchemaMigrator} when an upgrade is required.
+   *
+   * @internal
+   */
+  private openConnection(version: number): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, version);
+
+      request.onupgradeneeded = (event) => {
+        this.printDebug(
+          `Database upgrade from version ${event.oldVersion} to ${event.newVersion ?? version}`,
+        );
+        this.migrator.applyTo(request.result, request.transaction);
+      };
+
+      request.onblocked = () => {
+        this.printDebug(
+          `Opening '${this.dbName}' at version ${version} is blocked by another open connection.`,
+        );
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => {
+        this.printError('Error initializing database:', request.error);
+        reject(request.error);
+      };
+    });
   }
 
   /**
@@ -2151,110 +2631,51 @@ class Database {
     return instance as DatabaseWithRepositories<T>;
   }
 
-  /** @internal */
+  /**
+   * Opens the database using a downgrade-safe, drift-aware strategy:
+   *
+   * 1. Read the version persisted on disk and open at
+   *    `max(declaredVersion, persistedVersion)`. This makes lowering an
+   *    entity's `version` a non-fatal no-op instead of a `VersionError` -
+   *    IndexedDB cannot downgrade a database.
+   * 2. After opening, compare the actual schema against the declared one.
+   *    If a fixable difference exists (an index was added or removed without
+   *    a version bump), close and reopen at `version + 1` so the
+   *    {@link SchemaMigrator} can reconcile inside an upgrade transaction.
+   *
+   * @internal
+   */
   private async initDB(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
+    const persistedVersion = await this.readPersistedVersion();
+    if (persistedVersion > this.dbVersion) {
+      this.printDebug(
+        `Declared schema version ${this.dbVersion} is lower than the ` +
+          `persisted database version ${persistedVersion}. IndexedDB cannot ` +
+          `downgrade; opening at version ${persistedVersion}.`,
+      );
+    }
 
-      request.onupgradeneeded = (event) => {
-        const db = request.result;
-        const oldVersion = event.oldVersion;
-        const newVersion = event.newVersion || this.dbVersion;
+    let db = await this.openConnection(
+      Math.max(this.dbVersion, persistedVersion),
+    );
 
-        this.printDebug(
-          `Database upgrade from version ${oldVersion} to ${newVersion}`,
-        );
+    const drift = this.migrator.detectFixableDrift(db);
+    if (drift.length > 0) {
+      this.printDebug(
+        `Schema drift detected without a version bump: ${drift.join('; ')}. ` +
+          `Reopening at version ${db.version + 1} to reconcile.`,
+      );
+      const nextVersion = db.version + 1;
+      db.close();
+      db = await this.openConnection(nextVersion);
+    }
 
-        // Handle schema evolution based on versions
-        this.classes.forEach((cls) => {
-          const keyPathMetadata = Reflect.getMetadata(
-            'keypath',
-            cls,
-          ) as KeyPathMetadata;
-          const indexFields = Reflect.getMetadata('indexes', cls) || [];
-          const classVersion = Reflect.getMetadata('version', cls) || 1;
-
-          const storeName = cls.name.toLowerCase();
-
-          // Only create/update stores for classes whose version is greater than the old DB version
-          if (classVersion > oldVersion) {
-            if (!db.objectStoreNames.contains(storeName)) {
-              this.printDebug(
-                `Creating object store: ${storeName} (version ${classVersion})`,
-              );
-
-              // Determine store options based on keypath metadata
-              const storeOptions: IDBObjectStoreParameters = {};
-
-              if (keyPathMetadata) {
-                storeOptions.keyPath = keyPathMetadata.fields;
-
-                // Handle auto-increment option
-                if (keyPathMetadata.options?.autoIncrement) {
-                  storeOptions.autoIncrement = true;
-                }
-              }
-
-              const store = db.createObjectStore(storeName, storeOptions);
-
-              indexFields.forEach((indexField: string | IndexMetadata) => {
-                const indexName =
-                  typeof indexField === 'string'
-                    ? indexField
-                    : indexField.field;
-                const indexOptions =
-                  typeof indexField === 'string'
-                    ? { unique: false }
-                    : (indexField.options ?? { unique: false });
-
-                if (!store.indexNames.contains(indexName)) {
-                  store.createIndex(indexName, indexName, indexOptions);
-                }
-              });
-            } else {
-              // Store exists, check if we need to update indexes
-              this.printDebug(
-                `Updating object store: ${storeName} (version ${classVersion})`,
-              );
-              const transaction = request.transaction;
-              if (transaction) {
-                const store = transaction.objectStore(storeName);
-
-                indexFields.forEach((indexField: string | IndexMetadata) => {
-                  const indexName =
-                    typeof indexField === 'string'
-                      ? indexField
-                      : indexField.field;
-                  const indexOptions =
-                    typeof indexField === 'string'
-                      ? { unique: false }
-                      : (indexField.options ?? { unique: false });
-
-                  if (!store.indexNames.contains(indexName)) {
-                    this.printDebug(`Adding index: ${indexName} to ${storeName}`);
-                    store.createIndex(indexName, indexName, indexOptions);
-                  }
-                });
-              }
-            }
-          }
-        });
-      };
-
-      request.onsuccess = () => {
-        this.db = request.result;
-        this.printDebug(
-          `Database initialized (version ${this.dbVersion}) with object stores for: ${this.classes.map((cls) => `${cls.name}(v${Reflect.getMetadata('version', cls) || 1})`).join(', ')}`,
-        );
-        this.startRetentionCleanup();
-        resolve();
-      };
-
-      request.onerror = () => {
-        this.printError('Error initializing database:', request.error);
-        reject(request.error);
-      };
-    });
+    this.db = db;
+    this.dbVersion = db.version;
+    this.printDebug(
+      `Database initialized (version ${this.dbVersion}) with object stores for: ${this.schemas.map((schema) => `${schema.className}(v${schema.version})`).join(', ')}`,
+    );
+    this.startRetentionCleanup();
   }
 
   /** @internal */
@@ -2386,7 +2807,7 @@ class Database {
             deleteRequest.onerror = () =>
               reject(
                 deleteRequest.error ??
-                new Error(`Retention cleanup delete failed for ${className}`),
+                  new Error(`Retention cleanup delete failed for ${className}`),
               );
             return;
           }
@@ -2398,12 +2819,12 @@ class Database {
         transaction.onerror = () =>
           reject(
             transaction.error ??
-            new Error(`Retention cleanup failed for ${className}`),
+              new Error(`Retention cleanup failed for ${className}`),
           );
         transaction.onabort = () =>
           reject(
             transaction.error ??
-            new Error(`Retention cleanup aborted for ${className}`),
+              new Error(`Retention cleanup aborted for ${className}`),
           );
       } catch (error) {
         reject(error);
@@ -2416,11 +2837,18 @@ class Database {
     cls: Function,
     transaction?: IDBTransaction,
   ): EntityRepository<T> {
-    const self = this;
     const creationTimestampField = INTERNAL_CREATED_AT_FIELD;
     const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
     const validators = (Reflect.getMetadata('validators', cls) ||
       []) as ValidationRule<T>[];
+    const calculatedFields = (Reflect.getMetadata('calculated', cls) ||
+      []) as CalculatedFieldMetadata<T>[];
+
+    const applyCalculatedFields = (item: T): void => {
+      calculatedFields.forEach(({ field, compute }) => {
+        (item as any)[field] = compute(item);
+      });
+    };
 
     const validateItem = (item: T): void => {
       const failures: string[] = [];
@@ -2575,10 +3003,10 @@ class Database {
     };
 
     return {
-      query(): QueryBuilder<T> {
-        if (!self.db) throw new Error('Database not initialized.');
+      query: (): QueryBuilder<T> => {
+        if (!this.db) throw new Error('Database not initialized.');
         const storeName = cls.name.toLowerCase();
-        return new QueryBuilder<T>(self.db, storeName, transaction);
+        return new QueryBuilder<T>(this.db, storeName, transaction);
       },
 
       create: async (item: T): Promise<void> => {
@@ -2604,6 +3032,7 @@ class Database {
           }
         }
 
+        applyCalculatedFields(item);
         validateItem(item);
         applyTimestampFields(item);
 
@@ -2645,6 +3074,7 @@ class Database {
       },
 
       update: async (item: T): Promise<void> => {
+        applyCalculatedFields(item);
         validateItem(item);
 
         return this.performOperation(
@@ -2749,7 +3179,10 @@ class Database {
         );
       },
 
-      findByIndex: async (indexName: string, value: any): Promise<T[]> => {
+      findByIndex: async (
+        indexName: string,
+        value: IDBValidKey,
+      ): Promise<T[]> => {
         return this.performOperation(
           cls.name,
           'readonly',
@@ -2779,7 +3212,7 @@ class Database {
 
       findOneByIndex: async (
         indexName: string,
-        value: any,
+        value: IDBValidKey,
       ): Promise<T | undefined> => {
         return this.performOperation(
           cls.name,
@@ -2826,7 +3259,25 @@ class Database {
         );
       },
 
-      exists: async (key: string): Promise<boolean> => {
+      getKeys: async (): Promise<IDBValidKey[]> => {
+        return this.performOperation(
+          cls.name,
+          'readonly',
+          (store) => {
+            const request = store.getAllKeys();
+            return new Promise<IDBValidKey[]>((resolve, reject) => {
+              request.onsuccess = () => {
+                this.printDebug(`Keys for ${cls.name}:`, request.result);
+                resolve(request.result);
+              };
+              request.onerror = () => reject(request.error);
+            });
+          },
+          transaction,
+        );
+      },
+
+      exists: async (key: string | string[] | number): Promise<boolean> => {
         return this.performOperation(
           cls.name,
           'readonly',
@@ -3047,6 +3498,114 @@ class Database {
   }
 
   /**
+   * Exports every registered entity store as a plain, JSON-serialisable
+   * object keyed by entity class name.
+   *
+   * Records are exported verbatim, including the internal
+   * `__idb_createdAt` / `__idb_updatedAt` timestamp fields, so a subsequent
+   * {@link Database.importDatabase} restores them exactly.
+   *
+   * @returns A promise resolving to `{ EntityName: records[] }`.
+   *
+   * @example
+   * ```ts
+   * const dump = await db.exportDatabase();
+   * localStorage.setItem('backup', JSON.stringify(dump));
+   * ```
+   */
+  async exportDatabase(): Promise<Record<string, unknown[]>> {
+    const dump: Record<string, unknown[]> = {};
+
+    for (const cls of this.classes) {
+      const repository = this.entityRepositories.get(cls.name) as
+        | EntityRepository<unknown>
+        | undefined;
+      if (repository) {
+        dump[cls.name] = await repository.list();
+      }
+    }
+
+    return dump;
+  }
+
+  /**
+   * Imports a dump produced by {@link Database.exportDatabase}.
+   *
+   * Records are written verbatim with `put` semantics: records whose primary
+   * key already exists are overwritten, all others are inserted. Existing
+   * records not present in the dump are kept unless `options.clear` is set.
+   * Validation, key generation, and timestamp injection are intentionally
+   * bypassed so the imported data matches the exported data exactly.
+   *
+   * Dump entries whose entity name is not registered in this database are
+   * skipped (a debug message is logged).
+   *
+   * @param dump    - `{ EntityName: records[] }` as returned by `exportDatabase`.
+   * @param options - Set `clear: true` to empty each store before importing.
+   *
+   * @example
+   * ```ts
+   * await db.importDatabase(JSON.parse(backupJson));
+   * await db.importDatabase(dump, { clear: true }); // replace instead of merge
+   * ```
+   */
+  async importDatabase(
+    dump: Record<string, unknown[]>,
+    options: { clear?: boolean } = {},
+  ): Promise<void> {
+    for (const [entityName, records] of Object.entries(dump)) {
+      const entityClass = this.classes.find((cls) => cls.name === entityName);
+      if (!entityClass) {
+        this.printDebug(
+          `Skipping import for unregistered entity '${entityName}'.`,
+        );
+        continue;
+      }
+
+      if (!Array.isArray(records)) {
+        this.printDebug(
+          `Skipping import for '${entityName}': expected an array of records.`,
+        );
+        continue;
+      }
+
+      await this.performOperation(entityName, 'readwrite', (store) => {
+        return new Promise<void>((resolve, reject) => {
+          const writeRecords = () => {
+            let pending = records.length;
+            if (!pending) {
+              resolve();
+              return;
+            }
+
+            records.forEach((record) => {
+              const request = store.put(record);
+              request.onsuccess = () => {
+                pending -= 1;
+                if (!pending) resolve();
+              };
+              request.onerror = () => reject(request.error);
+            });
+          };
+
+          if (options.clear) {
+            const clearRequest = store.clear();
+            clearRequest.onsuccess = () => writeRecords();
+            clearRequest.onerror = () => reject(clearRequest.error);
+            return;
+          }
+
+          writeRecords();
+        });
+      });
+
+      this.printDebug(
+        `Imported ${records.length} record(s) into '${entityName}'.`,
+      );
+    }
+  }
+
+  /**
    * Pushes the full contents of every registered entity store to the given
    * {@link SyncAdapter}, one `adapter.push(entityName, records)` call per
    * entity.
@@ -3164,8 +3723,12 @@ class Database {
   }
 
   /**
-   * Returns the current IDB database version, derived from the highest
-   * `version` annotation across all registered entities.
+   * Returns the actual version of the open IDB database.
+   *
+   * This is usually the highest `version` annotation across all registered
+   * entities, but can be higher when the on-disk database was created at a
+   * greater version (downgrades are ignored) or when a schema change without
+   * a version bump triggered an automatic reconciliation upgrade.
    *
    * @returns The database version number.
    */
@@ -3208,6 +3771,7 @@ export {
   DataClass,
   Index,
   Validate,
+  Calculated,
   RetentionPolicy,
   EntityRepository,
   KeyGenerators,
