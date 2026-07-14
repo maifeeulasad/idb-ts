@@ -1704,6 +1704,65 @@ function Validate<T = any>(
 }
 
 /**
+ * Describes a calculated field registered via {@link Calculated}.
+ *
+ * @typeParam T - The entity type the field belongs to.
+ * @internal
+ */
+interface CalculatedFieldMetadata<T = any> {
+  /** Name of the field that receives the computed value. */
+  field: string;
+  /** Derives the field value from the rest of the entity. */
+  compute: (item: T) => any;
+}
+
+/**
+ * Property decorator that derives the decorated field's value from the rest
+ * of the entity on every write.
+ *
+ * The compute function runs on each {@link EntityRepository.create} and
+ * {@link EntityRepository.update} **before** validation and timestamps, so:
+ *
+ * - any value assigned to the field by the caller is overwritten,
+ * - `@Validate` rules on the same field see the computed value,
+ * - the computed value is persisted and therefore works with indexes and
+ *   the query builder like any ordinary field.
+ *
+ * Because the value is computed at write time, it reflects the entity state
+ * as of the last write - change an input field and the calculated field
+ * refreshes on the next `update`.
+ *
+ * @typeParam T - The entity class the field belongs to.
+ * @param compute - Function deriving the field value from the entity.
+ *
+ * @example
+ * ```ts
+ * @DataClass()
+ * class OrderLine {
+ *   @KeyPath({ generator: 'uuid' })
+ *   id!: string;
+ *
+ *   quantity!: number;
+ *   unitPrice!: number;
+ *
+ *   @Calculated<OrderLine>((line) => line.quantity * line.unitPrice)
+ *   total!: number;
+ * }
+ * ```
+ */
+function Calculated<T = any>(compute: (item: T) => any): PropertyDecorator {
+  return (target: Object, propertyKey: string | symbol) => {
+    const constructor = target.constructor as Function;
+    const existing = Reflect.getMetadata('calculated', constructor) || [];
+    const nextFields = [
+      ...existing,
+      { field: propertyKey as string, compute } as CalculatedFieldMetadata<T>,
+    ];
+    Reflect.defineMetadata('calculated', nextFields, constructor);
+  };
+}
+
+/**
  * Class decorator that configures an automatic data retention policy for
  * the entity. When one or more entities define a retention policy, the
  * {@link Database} runs a background cleanup job that periodically deletes
@@ -2736,6 +2795,14 @@ class Database {
     const updateTimestampField = INTERNAL_UPDATED_AT_FIELD;
     const validators = (Reflect.getMetadata('validators', cls) ||
       []) as ValidationRule<T>[];
+    const calculatedFields = (Reflect.getMetadata('calculated', cls) ||
+      []) as CalculatedFieldMetadata<T>[];
+
+    const applyCalculatedFields = (item: T): void => {
+      calculatedFields.forEach(({ field, compute }) => {
+        (item as any)[field] = compute(item);
+      });
+    };
 
     const validateItem = (item: T): void => {
       const failures: string[] = [];
@@ -2919,6 +2986,7 @@ class Database {
           }
         }
 
+        applyCalculatedFields(item);
         validateItem(item);
         applyTimestampFields(item);
 
@@ -2960,6 +3028,7 @@ class Database {
       },
 
       update: async (item: T): Promise<void> => {
+        applyCalculatedFields(item);
         validateItem(item);
 
         return this.performOperation(
@@ -3461,6 +3530,7 @@ export {
   DataClass,
   Index,
   Validate,
+  Calculated,
   RetentionPolicy,
   EntityRepository,
   KeyGenerators,
