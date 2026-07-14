@@ -505,8 +505,8 @@ class QueryBuilder<T> {
   private limitCount?: number;
   private offsetCount?: number;
   private indexName?: string;
-  private rangeStart?: any;
-  private rangeEnd?: any;
+  private rangeStart?: IDBValidKey;
+  private rangeEnd?: IDBValidKey;
   private currentField?: string;
   private groupField?: Extract<keyof T, string>;
   private pendingConnector: QueryConnector = 'and';
@@ -853,7 +853,7 @@ class QueryBuilder<T> {
    * @param end   - Inclusive upper bound of the key range, or `undefined` for an open upper bound.
    * @returns `this` for chaining.
    */
-  range(start: any, end: any) {
+  range(start: IDBValidKey | undefined, end: IDBValidKey | undefined) {
     this.rangeStart = start;
     this.rangeEnd = end;
     return this;
@@ -1931,20 +1931,25 @@ interface EntityRepository<T> {
    * Returns all records whose indexed field equals `value`.
    *
    * @param indexName - The name of the IDB index to query.
-   * @param value     - The index key to look up.
+   * @param value     - The index key to look up. Must be a valid IndexedDB
+   *   key (`string`, `number`, `Date`, `ArrayBuffer` view, or an array of
+   *   those); booleans and plain objects are rejected at compile time.
    * @throws `Error` if the named index does not exist.
    */
-  findByIndex(indexName: string, value: any): Promise<T[]>;
+  findByIndex(indexName: string, value: IDBValidKey): Promise<T[]>;
 
   /**
    * Returns the first record whose indexed field equals `value`, or
    * `undefined` if none is found.
    *
    * @param indexName - The name of the IDB index to query.
-   * @param value     - The index key to look up.
+   * @param value     - The index key to look up. Must be a valid IndexedDB key.
    * @throws `Error` if the named index does not exist.
    */
-  findOneByIndex(indexName: string, value: any): Promise<T | undefined>;
+  findOneByIndex(
+    indexName: string,
+    value: IDBValidKey,
+  ): Promise<T | undefined>;
 
   /**
    * Returns the total number of records in the store.
@@ -1956,10 +1961,12 @@ interface EntityRepository<T> {
   /**
    * Returns whether a record with the given primary key exists.
    *
-   * @param key - The primary key to check.
+   * @param key - The primary key to check. Accepts the same key shapes as
+   *   {@link EntityRepository.read}: a string, a number, or an array for
+   *   composite keys.
    * @returns `true` if a matching record exists, `false` otherwise.
    */
-  exists(key: string): Promise<boolean>;
+  exists(key: string | string[] | number): Promise<boolean>;
 
   /**
    * Deletes **all** records from the store.
@@ -3048,7 +3055,10 @@ class Database {
         );
       },
 
-      findByIndex: async (indexName: string, value: any): Promise<T[]> => {
+      findByIndex: async (
+        indexName: string,
+        value: IDBValidKey,
+      ): Promise<T[]> => {
         return this.performOperation(
           cls.name,
           'readonly',
@@ -3078,7 +3088,7 @@ class Database {
 
       findOneByIndex: async (
         indexName: string,
-        value: any,
+        value: IDBValidKey,
       ): Promise<T | undefined> => {
         return this.performOperation(
           cls.name,
@@ -3125,7 +3135,7 @@ class Database {
         );
       },
 
-      exists: async (key: string): Promise<boolean> => {
+      exists: async (key: string | string[] | number): Promise<boolean> => {
         return this.performOperation(
           cls.name,
           'readonly',

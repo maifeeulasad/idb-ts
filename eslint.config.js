@@ -46,6 +46,7 @@ export default [
         IDBObjectStoreParameters: 'readonly',
         IDBIndexParameters: 'readonly',
         IDBTransactionMode: 'readonly',
+        IDBValidKey: 'readonly',
       },
     },
     plugins: {
