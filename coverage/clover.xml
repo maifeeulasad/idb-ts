@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1783996718872" clover="3.2.0">
-  <project timestamp="1783996718872" name="All files">
+<coverage generated="1783996769627" clover="3.2.0">
+  <project timestamp="1783996769627" name="All files">
     <metrics statements="876" coveredstatements="759" conditionals="445" coveredconditionals="331" methods="321" coveredmethods="269" elements="1642" coveredelements="1359" complexity="0" loc="876" ncloc="876" packages="1" files="1" classes="1"/>
     <file name="index.ts" path="/home/runner/work/idb-ts/idb-ts/index.ts">
       <metrics statements="876" coveredstatements="759" conditionals="445" coveredconditionals="331" methods="321" coveredmethods="269"/>
