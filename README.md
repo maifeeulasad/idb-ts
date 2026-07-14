@@ -580,6 +580,38 @@ await db.User.deleteMany(['u1', 'u2', 'u3']);
 
 ---
 
+## Sync Adapters (experimental)
+
+Bridge the local IndexedDB with any backend by implementing the two-method `SyncAdapter` interface. The library stays transport-agnostic - REST, WebSocket, or in-memory adapters all work the same way.
+
+```typescript
+import type { SyncAdapter } from 'idb-ts';
+
+class RestAdapter implements SyncAdapter {
+  async push(entityName: string, records: unknown[]): Promise<void> {
+    await fetch(`/api/sync/${entityName}`, {
+      method: 'PUT',
+      body: JSON.stringify(records),
+    });
+  }
+
+  async pull(entityName: string): Promise<unknown[] | undefined> {
+    const response = await fetch(`/api/sync/${entityName}`);
+    return response.ok ? response.json() : undefined;
+  }
+}
+
+const adapter = new RestAdapter();
+await db.pushTo(adapter); // sends every entity's records to the adapter
+await db.pullFrom(adapter); // upserts records returned by the adapter
+```
+
+- `pushTo` calls `adapter.push(entityName, records)` once per registered entity.
+- `pullFrom` calls `adapter.pull(entityName)` per entity and upserts the returned records by primary key; returning `undefined` leaves that store untouched.
+- Conflict resolution is intentionally left to the adapter/backend - locally, pulled records win by primary key.
+
+---
+
 ## Performance
 
 <!-- performance start -->
