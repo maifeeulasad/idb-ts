@@ -2103,6 +2103,52 @@ type TransactionalDatabase<T extends Record<string, EntityRepository<any>>> =
  */
 type DatabaseWithRepositories<T extends Record<string, any>> = Database & T;
 
+/**
+ * Transport-agnostic adapter bridging the local IndexedDB with any backend.
+ *
+ * Implement these two methods over your transport of choice (REST,
+ * WebSocket, in-memory, ...) and pass the adapter to
+ * {@link Database.pushTo} / {@link Database.pullFrom}. The library never
+ * assumes anything about the transport; conflict resolution is left to the
+ * adapter/backend (locally, pulled records win by primary key).
+ *
+ * @example
+ * ```ts
+ * class RestAdapter implements SyncAdapter {
+ *   async push(entityName: string, records: unknown[]): Promise<void> {
+ *     await fetch(`/api/sync/${entityName}`, {
+ *       method: 'PUT',
+ *       body: JSON.stringify(records),
+ *     });
+ *   }
+ *
+ *   async pull(entityName: string): Promise<unknown[] | undefined> {
+ *     const response = await fetch(`/api/sync/${entityName}`);
+ *     return response.ok ? response.json() : undefined;
+ *   }
+ * }
+ * ```
+ */
+interface SyncAdapter {
+  /**
+   * Receives the full record list of one entity store during
+   * {@link Database.pushTo}.
+   *
+   * @param entityName - The entity class name, e.g. `"User"`.
+   * @param records    - All records currently in that entity's store.
+   */
+  push(entityName: string, records: unknown[]): Promise<void>;
+
+  /**
+   * Supplies records for one entity store during {@link Database.pullFrom}.
+   *
+   * @param entityName - The entity class name, e.g. `"User"`.
+   * @returns The records to upsert locally, or `undefined` to leave the
+   *   local store untouched.
+   */
+  pull(entityName: string): Promise<unknown[] | undefined>;
+}
+
 // ─── Schema Migration ────────────────────────────────────────────────────────
 
 /**
@@ -3560,6 +3606,93 @@ class Database {
   }
 
   /**
+   * Pushes the full contents of every registered entity store to the given
+   * {@link SyncAdapter}, one `adapter.push(entityName, records)` call per
+   * entity.
+   *
+   * @param adapter - The sync adapter receiving the records.
+   *
+   * @example
+   * ```ts
+   * await db.pushTo(new RestAdapter());
+   * ```
+   */
+  async pushTo(adapter: SyncAdapter): Promise<void> {
+    for (const cls of this.classes) {
+      const repository = this.entityRepositories.get(cls.name) as
+        | EntityRepository<unknown>
+        | undefined;
+      if (!repository) {
+        continue;
+      }
+
+      const records = await repository.list();
+      await adapter.push(cls.name, records);
+      this.printDebug(
+        `Pushed ${records.length} record(s) of '${cls.name}' to adapter.`,
+      );
+    }
+  }
+
+  /**
+   * Pulls records from the given {@link SyncAdapter} and upserts them into
+   * the local stores by primary key.
+   *
+   * For each registered entity, `adapter.pull(entityName)` is called once.
+   * Returned records are written verbatim with `put` semantics (existing
+   * keys are overwritten, other local records are kept). When the adapter
+   * returns `undefined` for an entity, its local store is left untouched.
+   *
+   * Conflict resolution is intentionally delegated to the adapter/backend -
+   * locally, pulled records win by primary key.
+   *
+   * @param adapter - The sync adapter supplying the records.
+   *
+   * @example
+   * ```ts
+   * await db.pullFrom(new RestAdapter());
+   * ```
+   */
+  async pullFrom(adapter: SyncAdapter): Promise<void> {
+    for (const cls of this.classes) {
+      const records = await adapter.pull(cls.name);
+      if (records === undefined) {
+        continue;
+      }
+
+      if (!Array.isArray(records)) {
+        this.printDebug(
+          `Skipping pull for '${cls.name}': adapter did not return an array.`,
+        );
+        continue;
+      }
+
+      await this.performOperation(cls.name, 'readwrite', (store) => {
+        return new Promise<void>((resolve, reject) => {
+          let pending = records.length;
+          if (!pending) {
+            resolve();
+            return;
+          }
+
+          records.forEach((record) => {
+            const request = store.put(record);
+            request.onsuccess = () => {
+              pending -= 1;
+              if (!pending) resolve();
+            };
+            request.onerror = () => reject(request.error);
+          });
+        });
+      });
+
+      this.printDebug(
+        `Pulled ${records.length} record(s) of '${cls.name}' from adapter.`,
+      );
+    }
+  }
+
+  /**
    * Closes the underlying IDB connection and stops the retention cleanup timer.
    * The instance must not be used after calling this method.
    *
@@ -3650,4 +3783,5 @@ export type {
   KeyPathMetadata,
   RetentionPolicyOptions,
   RetentionPolicyMetadata,
+  SyncAdapter,
 };
