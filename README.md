@@ -174,6 +174,10 @@ Creates an IDB index on the decorated field, enabling efficient lookups via `fin
 
 Attaches a validation rule to the decorated property. Rules are enforced on every `create` and `update` call. If any rule fails, the operation throws with a message listing all failing fields.
 
+#### `@Calculated(compute)`
+
+Derives the decorated property from the rest of the entity on every `create` and `update`. See [Calculated Fields](#calculated-fields).
+
 #### `@RetentionPolicy(options)`
 
 Class-level decorator that configures automatic expiry and deletion of records. See [Data Retention](#data-retention) for full details.
@@ -478,6 +482,38 @@ Error format on failure:
 ```
 Validation failed for User: email: must be a valid email address; age: must be a non-negative integer
 ```
+
+---
+
+## Calculated Fields
+
+`@Calculated` derives a property from the rest of the entity on every write. The compute function runs on `create` and `update`, **before** validation and timestamps:
+
+```typescript
+import { Calculated } from 'idb-ts';
+
+@DataClass()
+class OrderLine {
+  @KeyPath({ generator: 'uuid' })
+  id!: string;
+
+  quantity!: number;
+  unitPrice!: number;
+
+  @Calculated<OrderLine>((line) => line.quantity * line.unitPrice)
+  total!: number;
+}
+
+await db.OrderLine.create({ id: '', quantity: 3, unitPrice: 9.5 } as OrderLine);
+(await db.OrderLine.read(id))!.total; // 28.5 - computed and persisted
+```
+
+Semantics:
+
+- Any value the caller assigns to a calculated field is **overwritten** by the compute function on write.
+- `@Validate` rules on the same field see the computed value.
+- The value is persisted, so it can be indexed with `@Index` and queried like any ordinary field.
+- It reflects entity state as of the **last write** - update the inputs and the field recomputes on the next `update`.
 
 ---
 
