@@ -2017,7 +2017,11 @@ class Database {
   };
 
   /** @internal Use {@link Database.build} to create instances. */
-  private constructor(dbName: string, classes: Function[], printEnabled = false) {
+  private constructor(
+    dbName: string,
+    classes: Function[],
+    printEnabled = false,
+  ) {
     this.dbName = dbName;
     this.printEnabled = printEnabled;
     if (!classes.every((cls) => Reflect.getMetadata('dataclass', cls))) {
