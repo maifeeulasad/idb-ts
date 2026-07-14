@@ -150,11 +150,13 @@ Designates the decorated property as the primary key of the object store. Exactl
 
 #### `@CompositeKeyPath(fields, options?)`
 
-Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`.
+Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`. Write it *below* `@DataClass` (decorators are applied bottom-up, and the key path must be registered before `@DataClass` validates it).
+
+Key generation is not supported for composite keys: passing `generator` or `autoIncrement` throws at decoration time. Provide every key field explicitly before `create()`.
 
 ```typescript
-@CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
+@CompositeKeyPath(['userId', 'projectId'])
 class UserProject {
   userId!: string;
   projectId!: string;
@@ -189,9 +191,9 @@ const db = await Database.build<{
 }>('shop', [User, Order]);
 ```
 
-`Database.build` opens (or upgrades) the IDB database, creates object stores and indexes for any entity whose version exceeds the stored database version, starts background retention jobs if applicable, and attaches typed repository properties to the returned object.
+`Database.build` opens (or upgrades) the IDB database, reconciles the declared schema against the stored one (creating missing stores and indexes and removing indexes that are no longer declared), starts background retention jobs if applicable, and attaches typed repository properties to the returned object.
 
-The effective database version is the highest `version` value declared across all registered entities.
+The declared database version is the highest `version` value across all registered entities; see [Migration behaviour](#migration-behaviour) for how drift and downgrades are handled.
 
 ### Inspecting database metadata
 
@@ -336,6 +338,23 @@ await db.User.query()
   .execute();
 ```
 
+### Reusing builders
+
+A builder accumulates state: every `where`/`orderBy`/`limit` call mutates the same instance, so chaining more conditions onto an already-executed builder narrows it further. To derive variations from a shared base use `clone()`; to start over with the same instance use `reset()`:
+
+```typescript
+const adults = db.User.query().where('age').gte(18);
+
+// Independent variations - neither affects the other or the base
+const admins = await adults.clone().where('role').equals('admin').execute();
+const guests = await adults.clone().where('role').equals('guest').execute();
+
+// Reuse one instance from scratch
+const query = db.User.query();
+await query.where('role').equals('admin').execute();
+await query.reset().where('age').lt(18).execute(); // fresh state
+```
+
 ### Index and range acceleration
 
 When a field is indexed, you can constrain the initial IDB candidate set at the storage layer before in-memory filtering begins:
@@ -343,6 +362,13 @@ When a field is indexed, you can constrain the initial IDB candidate set at the 
 ```typescript
 await db.Product.query().useIndex('price').range(10, 100).execute();
 ```
+
+The two mechanisms are deliberately distinct:
+
+- `useIndex(...).range(start, end)` narrows candidates **natively at the IndexedDB layer** via an `IDBKeyRange` — fast, but limited to one indexed field.
+- `.where(...)` conditions are evaluated **in memory** after the candidates are fetched. They can target any field (including one different from the index), at the cost of scanning the fetched candidates.
+
+Mixing them is valid and useful — the index range prunes the bulk, `where()` refines the rest. Calling `range()` **without** `useIndex()` throws at execution time instead of silently ignoring the bounds; express such bounds as `where(field).between(start, end)` instead.
 
 ### Aggregations
 
@@ -427,9 +453,11 @@ KeyGenerators.random(); // "xyz789abc"
 
 ### Composite keys
 
+Key generation (`generator` / `autoIncrement`) is not supported for composite keys and throws at decoration time.
+
 ```typescript
-@CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
+@CompositeKeyPath(['userId', 'projectId'])
 class UserProject {
   userId!: string;
   projectId!: string;
@@ -543,7 +571,7 @@ When multiple entities define retention policies, the cleanup interval is set to
 
 ## Schema Versioning
 
-Increment an entity's `version` to trigger `onupgradeneeded` and update its object store on the user's next visit. The effective database version is the maximum across all registered entities, so adding a new high-version entity is sufficient to initiate a migration.
+Increment an entity's `version` to trigger `onupgradeneeded` and update its object store on the user's next visit. The declared database version is the maximum across all registered entities, so adding a new high-version entity is sufficient to initiate a migration.
 
 ```typescript
 @DataClass({ version: 1 })
@@ -559,13 +587,27 @@ class Comment {
   /* ... */
 }
 
-// Database opens at version 3.
-// If a user was on version 1, only Post (v2) and Comment (v3) stores are
-// created or updated during onupgradeneeded.
+// Database opens at version 3 and reconciles the full declared schema
+// (stores + indexes) inside the upgrade transaction.
 const db = await Database.build('blog', [User, Post, Comment]);
 
 console.log(db.getDatabaseVersion()); // 3
 ```
+
+### Migration behaviour
+
+Migration is **declarative**: on every upgrade the actual IndexedDB schema is reconciled against the schema declared by your decorators.
+
+| Change                                      | Handling                                                                                                                                                               |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| New entity / store                          | Created automatically.                                                                                                                                                 |
+| Index added (even without a version bump)   | Detected as schema drift after opening; the database is reopened one version higher and the index is created. Existing records are re-indexed by IndexedDB.            |
+| Index removed (even without a version bump) | Detected as drift; the stale index is deleted. Record data is not affected.                                                                                            |
+| Entity `version` lowered                    | IndexedDB cannot downgrade. The database opens at the existing on-disk version instead of throwing `VersionError`; `getDatabaseVersion()` reports the on-disk version. |
+| Key path / `autoIncrement` changed          | **Not applied** — IndexedDB cannot change a store's key path in place. A warning is logged; migrate the data to a new entity or delete the database.                   |
+| Entity no longer registered                 | Its store and data are **preserved** and a warning is logged. Re-register the entity to access the data again, or delete the store manually.                           |
+
+> Because drift detection may reopen the database one version higher than declared, `getDatabaseVersion()` returns the _actual_ IndexedDB version, which can exceed the highest entity `version`.
 
 ---
 
@@ -590,92 +632,87 @@ Done in 383ms using pnpm v11.9.0
 
 ### Suite 1: CRUD Operations
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| create (single) | 200 | 11.668 | 17,141.483 | 0.058 | 0.044 | 0.103 | 0.13 | 0.039 | 0.883 |
-| read (by PK) | 200 | 7.972 | 25,087.351 | 0.039 | 0.036 | 0.062 | 0.091 | 0.03 | 0.113 |
-| update (single) | 200 | 133.17 | 1,501.843 | 0.665 | 0.615 | 1.01 | 1.184 | 0.545 | 2.036 |
-| findByIndex (email) | 200 | 8.942 | 22,365.168 | 0.044 | 0.041 | 0.073 | 0.086 | 0.034 | 0.111 |
-| findOneByIndex (email) | 200 | 10.246 | 19,519.677 | 0.051 | 0.044 | 0.057 | 0.072 | 0.039 | 0.998 |
-| count | 200 | 8.28 | 24,155.266 | 0.041 | 0.04 | 0.049 | 0.055 | 0.037 | 0.079 |
-| exists | 200 | 13.325 | 15,009.758 | 0.066 | 0.052 | 0.09 | 0.118 | 0.046 | 2.085 |
-| list (all) | 50 | 96.56 | 517.814 | 1.931 | 1.771 | 4.279 | 6.013 | 1.515 | 6.013 |
-| listPaginated (1, 20) | 200 | 398.616 | 501.736 | 1.993 | 1.765 | 3.022 | 8.919 | 1.51 | 10.708 |
-| query().where().gte().execute() | 100 | 181.336 | 551.463 | 1.813 | 1.599 | 1.896 | 2.042 | 1.524 | 14.147 |
-| delete (single) | 200 | 161.278 | 1,240.095 | 0.806 | 0.773 | 0.896 | 1.019 | 0.64 | 6.043 |
-
+| Operation                       | Ops | Total ms |      Ops/s | Avg ms |   P50 |   P95 |   P99 |   Min |    Max |
+| ------------------------------- | --: | -------: | ---------: | -----: | ----: | ----: | ----: | ----: | -----: |
+| create (single)                 | 200 |   11.668 | 17,141.483 |  0.058 | 0.044 | 0.103 |  0.13 | 0.039 |  0.883 |
+| read (by PK)                    | 200 |    7.972 | 25,087.351 |  0.039 | 0.036 | 0.062 | 0.091 |  0.03 |  0.113 |
+| update (single)                 | 200 |   133.17 |  1,501.843 |  0.665 | 0.615 |  1.01 | 1.184 | 0.545 |  2.036 |
+| findByIndex (email)             | 200 |    8.942 | 22,365.168 |  0.044 | 0.041 | 0.073 | 0.086 | 0.034 |  0.111 |
+| findOneByIndex (email)          | 200 |   10.246 | 19,519.677 |  0.051 | 0.044 | 0.057 | 0.072 | 0.039 |  0.998 |
+| count                           | 200 |     8.28 | 24,155.266 |  0.041 |  0.04 | 0.049 | 0.055 | 0.037 |  0.079 |
+| exists                          | 200 |   13.325 | 15,009.758 |  0.066 | 0.052 |  0.09 | 0.118 | 0.046 |  2.085 |
+| list (all)                      |  50 |    96.56 |    517.814 |  1.931 | 1.771 | 4.279 | 6.013 | 1.515 |  6.013 |
+| listPaginated (1, 20)           | 200 |  398.616 |    501.736 |  1.993 | 1.765 | 3.022 | 8.919 |  1.51 | 10.708 |
+| query().where().gte().execute() | 100 |  181.336 |    551.463 |  1.813 | 1.599 | 1.896 | 2.042 | 1.524 | 14.147 |
+| delete (single)                 | 200 |  161.278 |  1,240.095 |  0.806 | 0.773 | 0.896 | 1.019 |  0.64 |  6.043 |
 
 ### Suite 2: Batched CRUD (by batch size)
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| createMany (10) | 3 | 1.421 | 2,111.564 | 0.473 | 0.513 | 0.528 | 0.528 | 0.377 | 0.528 |
-| read batch (10 keys) | 3 | 0.5 | 5,998.488 | 0.166 | 0.16 | 0.189 | 0.189 | 0.151 | 0.189 |
-| updateMany (10) | 3 | 4.472 | 670.902 | 1.49 | 1.452 | 1.646 | 1.646 | 1.37 | 1.646 |
-| deleteMany (10) | 3 | 3.163 | 948.378 | 1.054 | 1.054 | 1.139 | 1.139 | 0.969 | 1.139 |
-| deleteWhere (10+ match) | 3 | 0.841 | 3,566.321 | 0.28 | 0.278 | 0.312 | 0.312 | 0.249 | 0.312 |
-| createMany (50) | 3 | 4.301 | 697.531 | 1.433 | 1.433 | 1.477 | 1.477 | 1.39 | 1.477 |
-| read batch (50 keys) | 3 | 3.931 | 763.202 | 1.31 | 1.296 | 1.421 | 1.421 | 1.212 | 1.421 |
-| updateMany (50) | 3 | 87.877 | 34.138 | 29.291 | 29.002 | 31.244 | 31.244 | 27.628 | 31.244 |
-| deleteMany (50) | 3 | 93.633 | 32.04 | 31.21 | 31.53 | 33.2 | 33.2 | 28.899 | 33.2 |
-| deleteWhere (50+ match) | 3 | 3.446 | 870.695 | 1.148 | 1.127 | 1.241 | 1.241 | 1.075 | 1.241 |
-| createMany (100) | 3 | 9.571 | 313.443 | 3.19 | 3.074 | 3.8 | 3.8 | 2.695 | 3.8 |
-| read batch (100 keys) | 3 | 12.769 | 234.949 | 4.255 | 4.077 | 5.665 | 5.665 | 3.023 | 5.665 |
-| updateMany (100) | 3 | 314.564 | 9.537 | 104.853 | 104.907 | 104.963 | 104.963 | 104.69 | 104.963 |
-| deleteMany (100) | 3 | 331.429 | 9.052 | 110.474 | 108.426 | 121.766 | 121.766 | 101.228 | 121.766 |
-| deleteWhere (100+ match) | 3 | 6.954 | 431.435 | 2.317 | 2.254 | 2.481 | 2.481 | 2.216 | 2.481 |
-| createMany (500) | 3 | 88.569 | 33.872 | 29.522 | 27.663 | 42.007 | 42.007 | 18.894 | 42.007 |
-| read batch (500 keys) | 3 | 118.5 | 25.316 | 39.498 | 36.064 | 51.839 | 51.839 | 30.592 | 51.839 |
-| updateMany (500) | 3 | 8,577.818 | 0.35 | 2,859.271 | 2,855.88 | 2,877.442 | 2,877.442 | 2,844.49 | 2,877.442 |
-| deleteMany (500) | 3 | 9,452.42 | 0.317 | 3,150.804 | 3,097.544 | 3,450.784 | 3,450.784 | 2,904.084 | 3,450.784 |
-| deleteWhere (500+ match) | 3 | 35.488 | 84.535 | 11.828 | 11.745 | 12.529 | 12.529 | 11.21 | 12.529 |
-
+| Operation                | Ops |  Total ms |     Ops/s |    Avg ms |       P50 |       P95 |       P99 |       Min |       Max |
+| ------------------------ | --: | --------: | --------: | --------: | --------: | --------: | --------: | --------: | --------: |
+| createMany (10)          |   3 |     1.421 | 2,111.564 |     0.473 |     0.513 |     0.528 |     0.528 |     0.377 |     0.528 |
+| read batch (10 keys)     |   3 |       0.5 | 5,998.488 |     0.166 |      0.16 |     0.189 |     0.189 |     0.151 |     0.189 |
+| updateMany (10)          |   3 |     4.472 |   670.902 |      1.49 |     1.452 |     1.646 |     1.646 |      1.37 |     1.646 |
+| deleteMany (10)          |   3 |     3.163 |   948.378 |     1.054 |     1.054 |     1.139 |     1.139 |     0.969 |     1.139 |
+| deleteWhere (10+ match)  |   3 |     0.841 | 3,566.321 |      0.28 |     0.278 |     0.312 |     0.312 |     0.249 |     0.312 |
+| createMany (50)          |   3 |     4.301 |   697.531 |     1.433 |     1.433 |     1.477 |     1.477 |      1.39 |     1.477 |
+| read batch (50 keys)     |   3 |     3.931 |   763.202 |      1.31 |     1.296 |     1.421 |     1.421 |     1.212 |     1.421 |
+| updateMany (50)          |   3 |    87.877 |    34.138 |    29.291 |    29.002 |    31.244 |    31.244 |    27.628 |    31.244 |
+| deleteMany (50)          |   3 |    93.633 |     32.04 |     31.21 |     31.53 |      33.2 |      33.2 |    28.899 |      33.2 |
+| deleteWhere (50+ match)  |   3 |     3.446 |   870.695 |     1.148 |     1.127 |     1.241 |     1.241 |     1.075 |     1.241 |
+| createMany (100)         |   3 |     9.571 |   313.443 |      3.19 |     3.074 |       3.8 |       3.8 |     2.695 |       3.8 |
+| read batch (100 keys)    |   3 |    12.769 |   234.949 |     4.255 |     4.077 |     5.665 |     5.665 |     3.023 |     5.665 |
+| updateMany (100)         |   3 |   314.564 |     9.537 |   104.853 |   104.907 |   104.963 |   104.963 |    104.69 |   104.963 |
+| deleteMany (100)         |   3 |   331.429 |     9.052 |   110.474 |   108.426 |   121.766 |   121.766 |   101.228 |   121.766 |
+| deleteWhere (100+ match) |   3 |     6.954 |   431.435 |     2.317 |     2.254 |     2.481 |     2.481 |     2.216 |     2.481 |
+| createMany (500)         |   3 |    88.569 |    33.872 |    29.522 |    27.663 |    42.007 |    42.007 |    18.894 |    42.007 |
+| read batch (500 keys)    |   3 |     118.5 |    25.316 |    39.498 |    36.064 |    51.839 |    51.839 |    30.592 |    51.839 |
+| updateMany (500)         |   3 | 8,577.818 |      0.35 | 2,859.271 |  2,855.88 | 2,877.442 | 2,877.442 |  2,844.49 | 2,877.442 |
+| deleteMany (500)         |   3 |  9,452.42 |     0.317 | 3,150.804 | 3,097.544 | 3,450.784 | 3,450.784 | 2,904.084 | 3,450.784 |
+| deleteWhere (500+ match) |   3 |    35.488 |    84.535 |    11.828 |    11.745 |    12.529 |    12.529 |     11.21 |    12.529 |
 
 ### Suite 3: Mixed CRUD Operations
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| Read-heavy mix (70R/15U/10C/5D) | 200 | 38.005 | 5,262.407 | 0.19 | 0.031 | 0.716 | 0.737 | 0.001 | 0.745 |
-| Write-heavy mix (20R/15U/50C/15D) | 200 | 44.985 | 4,445.915 | 0.225 | 0.035 | 0.707 | 0.739 | 0.001 | 3.708 |
-| Mixed CRUD + queries | 200 | 83.386 | 2,398.49 | 0.417 | 0.033 | 2.061 | 2.141 | 0.011 | 6.234 |
-| Cross-entity mix (User.read + Order.create) | 200 | 6.295 | 31,770.944 | 0.031 | 0.024 | 0.058 | 0.076 | 0.018 | 0.095 |
-
+| Operation                                   | Ops | Total ms |      Ops/s | Avg ms |   P50 |   P95 |   P99 |   Min |   Max |
+| ------------------------------------------- | --: | -------: | ---------: | -----: | ----: | ----: | ----: | ----: | ----: |
+| Read-heavy mix (70R/15U/10C/5D)             | 200 |   38.005 |  5,262.407 |   0.19 | 0.031 | 0.716 | 0.737 | 0.001 | 0.745 |
+| Write-heavy mix (20R/15U/50C/15D)           | 200 |   44.985 |  4,445.915 |  0.225 | 0.035 | 0.707 | 0.739 | 0.001 | 3.708 |
+| Mixed CRUD + queries                        | 200 |   83.386 |   2,398.49 |  0.417 | 0.033 | 2.061 | 2.141 | 0.011 | 6.234 |
+| Cross-entity mix (User.read + Order.create) | 200 |    6.295 | 31,770.944 |  0.031 | 0.024 | 0.058 | 0.076 | 0.018 | 0.095 |
 
 ### Suite 4: Mixed Batched CRUD
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| Cycle: createMany -> readAll -> updateMany -> deleteMany (50) | 5 | 104.266 | 47.954 | 20.852 | 15.473 | 36.333 | 36.333 | 9.223 | 36.333 |
-| createMany  ->  query filter  ->  deleteMany (50) | 5 | 33.079 | 151.155 | 6.615 | 6.368 | 9.824 | 9.824 | 4.751 | 9.824 |
-| 5 waves × createMany(50) + deleteMany(50) | 3 | 292.584 | 10.253 | 97.527 | 94.694 | 108.554 | 108.554 | 89.333 | 108.554 |
-| Cross-entity batch: createMany(User) + createMany(Order) + deleteMany (×50) | 3 | 136.071 | 22.047 | 45.356 | 43.887 | 49.364 | 49.364 | 42.816 | 49.364 |
-
+| Operation                                                                   | Ops | Total ms |   Ops/s | Avg ms |    P50 |     P95 |     P99 |    Min |     Max |
+| --------------------------------------------------------------------------- | --: | -------: | ------: | -----: | -----: | ------: | ------: | -----: | ------: |
+| Cycle: createMany -> readAll -> updateMany -> deleteMany (50)               |   5 |  104.266 |  47.954 | 20.852 | 15.473 |  36.333 |  36.333 |  9.223 |  36.333 |
+| createMany -> query filter -> deleteMany (50)                               |   5 |   33.079 | 151.155 |  6.615 |  6.368 |   9.824 |   9.824 |  4.751 |   9.824 |
+| 5 waves × createMany(50) + deleteMany(50)                                   |   3 |  292.584 |  10.253 | 97.527 | 94.694 | 108.554 | 108.554 | 89.333 | 108.554 |
+| Cross-entity batch: createMany(User) + createMany(Order) + deleteMany (×50) |   3 |  136.071 |  22.047 | 45.356 | 43.887 |  49.364 |  49.364 | 42.816 |  49.364 |
 
 ### Suite 5: Transaction Operations
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| tx: single create | 100 | 7.5 | 13,332.676 | 0.075 | 0.063 | 0.121 | 0.209 | 0.06 | 0.37 |
-| tx: create 10 users | 100 | 23.044 | 4,339.529 | 0.23 | 0.219 | 0.27 | 0.413 | 0.207 | 0.455 |
-| tx: read + update | 100 | 194.689 | 513.64 | 1.947 | 1.906 | 1.986 | 3.09 | 1.836 | 5.522 |
-| tx: multi-entity create (User+Order+Session) | 100 | 7.336 | 13,632.137 | 0.073 | 0.07 | 0.098 | 0.114 | 0.066 | 0.159 |
-| tx: 10 reads | 100 | 15.108 | 6,618.828 | 0.151 | 0.141 | 0.176 | 0.272 | 0.135 | 0.364 |
-| tx: batch create 50 users | 20 | 23.258 | 859.911 | 1.163 | 0.953 | 1.68 | 4.091 | 0.926 | 4.091 |
-| tx: query().where().gte() | 100 | 946.761 | 105.623 | 9.467 | 8.473 | 18.988 | 19.246 | 8.265 | 19.705 |
-| tx (explicit): begin -> create -> commit | 100 | 5.381 | 18,582.249 | 0.054 | 0.052 | 0.067 | 0.078 | 0.049 | 0.081 |
-
+| Operation                                    | Ops | Total ms |      Ops/s | Avg ms |   P50 |    P95 |    P99 |   Min |    Max |
+| -------------------------------------------- | --: | -------: | ---------: | -----: | ----: | -----: | -----: | ----: | -----: |
+| tx: single create                            | 100 |      7.5 | 13,332.676 |  0.075 | 0.063 |  0.121 |  0.209 |  0.06 |   0.37 |
+| tx: create 10 users                          | 100 |   23.044 |  4,339.529 |   0.23 | 0.219 |   0.27 |  0.413 | 0.207 |  0.455 |
+| tx: read + update                            | 100 |  194.689 |     513.64 |  1.947 | 1.906 |  1.986 |   3.09 | 1.836 |  5.522 |
+| tx: multi-entity create (User+Order+Session) | 100 |    7.336 | 13,632.137 |  0.073 |  0.07 |  0.098 |  0.114 | 0.066 |  0.159 |
+| tx: 10 reads                                 | 100 |   15.108 |  6,618.828 |  0.151 | 0.141 |  0.176 |  0.272 | 0.135 |  0.364 |
+| tx: batch create 50 users                    |  20 |   23.258 |    859.911 |  1.163 | 0.953 |   1.68 |  4.091 | 0.926 |  4.091 |
+| tx: query().where().gte()                    | 100 |  946.761 |    105.623 |  9.467 | 8.473 | 18.988 | 19.246 | 8.265 | 19.705 |
+| tx (explicit): begin -> create -> commit     | 100 |    5.381 | 18,582.249 |  0.054 | 0.052 |  0.067 |  0.078 | 0.049 |  0.081 |
 
 ### Suite 6: Mixed Transactions
 
-| Operation | Ops | Total ms | Ops/s | Avg ms | P50 | P95 | P99 | Min | Max |
-|-----------|-----:|---------:|------:|-------:|----:|----:|----:|----:|----:|
-| tx mixed: read User  ->  create Order  ->  update User | 100 | 53.926 | 1,854.389 | 0.539 | 0.437 | 0.462 | 0.59 | 0.41 | 10.318 |
-| tx mixed: query User + read Order + create Session | 100 | 113.792 | 878.798 | 1.138 | 1.055 | 1.088 | 1.139 | 1.03 | 8.959 |
-| tx multi-entity: create User+Order+Session | 100 | 8.889 | 11,250.085 | 0.089 | 0.087 | 0.102 | 0.106 | 0.082 | 0.132 |
-| tx batched: create 20 Users + 40 Orders + 20 Sessions | 10 | 20.246 | 493.934 | 2.024 | 1.136 | 9.953 | 9.953 | 1.096 | 9.953 |
-| tx mixed: delete old orders  ->  create new orders | 100 | 122.343 | 817.377 | 1.223 | 1.145 | 1.309 | 1.386 | 0.981 | 8.579 |
-| tx mixed: count Orders  ->  conditional create | 100 | 7.079 | 14,125.357 | 0.071 | 0.069 | 0.083 | 0.099 | 0.065 | 0.103 |
-| tx complex: read User+Orders  ->  aggregate  ->  create Session | 100 | 15.71 | 6,365.173 | 0.157 | 0.117 | 0.216 | 0.33 | 0.107 | 2.822 |
+| Operation                                                   | Ops | Total ms |      Ops/s | Avg ms |   P50 |   P95 |   P99 |   Min |    Max |
+| ----------------------------------------------------------- | --: | -------: | ---------: | -----: | ----: | ----: | ----: | ----: | -----: |
+| tx mixed: read User -> create Order -> update User          | 100 |   53.926 |  1,854.389 |  0.539 | 0.437 | 0.462 |  0.59 |  0.41 | 10.318 |
+| tx mixed: query User + read Order + create Session          | 100 |  113.792 |    878.798 |  1.138 | 1.055 | 1.088 | 1.139 |  1.03 |  8.959 |
+| tx multi-entity: create User+Order+Session                  | 100 |    8.889 | 11,250.085 |  0.089 | 0.087 | 0.102 | 0.106 | 0.082 |  0.132 |
+| tx batched: create 20 Users + 40 Orders + 20 Sessions       |  10 |   20.246 |    493.934 |  2.024 | 1.136 | 9.953 | 9.953 | 1.096 |  9.953 |
+| tx mixed: delete old orders -> create new orders            | 100 |  122.343 |    817.377 |  1.223 | 1.145 | 1.309 | 1.386 | 0.981 |  8.579 |
+| tx mixed: count Orders -> conditional create                | 100 |    7.079 | 14,125.357 |  0.071 | 0.069 | 0.083 | 0.099 | 0.065 |  0.103 |
+| tx complex: read User+Orders -> aggregate -> create Session | 100 |    15.71 |  6,365.173 |  0.157 | 0.117 | 0.216 |  0.33 | 0.107 |  2.822 |
 
 <!-- performance end -->
 
