@@ -1202,7 +1202,9 @@ interface KeyPathOptions {
    * Key generator to invoke when creating a record whose key field is absent
    * or empty.
    *
-   * - `'uuid'`      - UUID v4 string via {@link KeyGenerators.uuid}.
+   * - `'uuid'`      - UUID v4 string via {@link KeyGenerators.uuidV4} (RFC 4122, random-based).
+   * - `'uuidv4'`    - UUID v4 string via {@link KeyGenerators.uuidV4} (RFC 4122, random-based).
+   * - `'uuidv6'`    - UUID v6 string via {@link KeyGenerators.uuidV6} (RFC 4122, time-based, better for indexing).
    * - `'timestamp'` - `Date.now()` integer via {@link KeyGenerators.timestamp}.
    * - `'random'`    - Short random alphanumeric string via {@link KeyGenerators.random}.
    * - `function`    - Custom generator that receives the item and returns a
@@ -1210,6 +1212,8 @@ interface KeyPathOptions {
    */
   generator?:
   | 'uuid'
+  | 'uuidv4'
+  | 'uuidv6'
   | 'timestamp'
   | 'random'
   | ((item?: any) => string | number);
@@ -1315,28 +1319,100 @@ interface KeyPathMetadata {
  * ```ts
  * import { KeyGenerators } from 'idb-ts';
  *
- * const id        = KeyGenerators.uuid();      // "a1b2c3d4-..."
+ * const id        = KeyGenerators.uuid();      // UUID v4 (backward compatible)
+ * const idV4      = KeyGenerators.uuidV4();    // RFC 4122 v4 (random)
+ * const idV6      = KeyGenerators.uuidV6();    // RFC 4122 v6 (time-based)
  * const timestamp = KeyGenerators.timestamp(); // 1696118400000
  * const random    = KeyGenerators.random();    // "xyz789abc123"
  * ```
  */
 class KeyGenerators {
+  private static getRandomValues(array: Uint8Array): Uint8Array {
+    if (typeof globalThis !== 'undefined' && (globalThis as any).crypto?.getRandomValues) {
+      (globalThis as any).crypto.getRandomValues(array);
+      return array;
+    }
+    try {
+      const { randomBytes } = require('crypto');
+      const bytes = randomBytes(array.length);
+      return new Uint8Array(bytes);
+    } catch {
+      for (let i = 0; i < array.length; i++) {
+        array[i] = Math.random() * 256 | 0;
+      }
+      return array;
+    }
+  }
+
   /**
-   * Generates a RFC 4122 UUID v4 string.
-   * The implementation does not rely on any external dependency.
+   * Generates a RFC 4122 UUID v4 string using cryptographically secure random.
+   * Uses Node.js crypto module when available, falls back to browser crypto API,
+   * then to Math.random() as final fallback.
    *
    * @returns A UUID v4 string, e.g., `"a1b2c3d4-e5f6-4789-abcd-ef1234567890"`.
    */
+  static uuidV4(): string {
+    try {
+      if (typeof globalThis !== 'undefined' && (globalThis as any).crypto?.randomUUID) {
+        return (globalThis as any).crypto.randomUUID();
+      }
+    } catch {
+      // Silently continue to fallback
+    }
+
+    try {
+      const { randomUUID } = require('crypto');
+      return randomUUID();
+    } catch {
+      // Silently continue to fallback
+    }
+
+    const bytes = new Uint8Array(16);
+    this.getRandomValues(bytes);
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+  }
+
+  /**
+   * Generates a RFC 4122 UUID v6 string (time-based with random component).
+   * UUID v6 offers better database indexing performance than v4 due to temporal ordering.
+   *
+   * @returns A UUID v6 string, e.g., `"1ef5a6c2-0000-6000-8000-000000000000"`.
+   */
+  static uuidV6(): string {
+    const bytes = new Uint8Array(16);
+    this.getRandomValues(bytes);
+
+    const now = Date.now();
+    const timeHi = Math.floor(now / 1000) & 0xffffffff;
+    const timeLo = (now % 1000) * 4096;
+
+    bytes[0] = (timeHi >>> 24) & 0xff;
+    bytes[1] = (timeHi >>> 16) & 0xff;
+    bytes[2] = (timeHi >>> 8) & 0xff;
+    bytes[3] = timeHi & 0xff;
+    bytes[4] = (timeLo >>> 8) & 0xff;
+    bytes[5] = timeLo & 0xff;
+
+    bytes[6] = (bytes[6] & 0x0f) | 0x60;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}`;
+  }
+
+  /**
+   * Generates a RFC 4122 UUID v4 string (alias for uuidV4).
+   * For backward compatibility and convenience.
+   *
+   * @returns A UUID v4 string.
+   */
   static uuid(): string {
-    // Simple UUID v4 implementation without external dependencies
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-      /[xy]/g,
-      function (c) {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      },
-    );
+    return this.uuidV4();
   }
 
   /**
@@ -1987,7 +2063,11 @@ class Database {
   };
 
   /** @internal Use {@link Database.build} to create instances. */
-  private constructor(dbName: string, classes: Function[], printEnabled = false) {
+  private constructor(
+    dbName: string,
+    classes: Function[],
+    printEnabled = false,
+  ) {
     this.dbName = dbName;
     this.printEnabled = printEnabled;
     if (!classes.every((cls) => Reflect.getMetadata('dataclass', cls))) {
@@ -2382,7 +2462,10 @@ class Database {
 
       switch (generator) {
         case 'uuid':
-          return KeyGenerators.uuid();
+        case 'uuidv4':
+          return KeyGenerators.uuidV4();
+        case 'uuidv6':
+          return KeyGenerators.uuidV6();
         case 'timestamp':
           return KeyGenerators.timestamp();
         case 'random':
