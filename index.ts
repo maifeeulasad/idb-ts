@@ -1422,17 +1422,22 @@ function KeyPath(options?: KeyPathOptions): PropertyDecorator {
  * of fields rather than a single property.
  *
  * @param fields  - An ordered array of field names that together form the key.
- * @param options - Optional key generation configuration (note: auto-generated
- *   keys are not supported for composite keys).
+ * @param options - Optional key path configuration. Key generation is **not
+ *   supported** for composite keys: passing `generator` or `autoIncrement`
+ *   throws immediately at decoration time instead of being silently ignored.
  *
  * @remarks
- * Apply `@CompositeKeyPath` **before** `@DataClass` (decorators execute
- * bottom-up). `@KeyPath` must **not** also be used on the same class.
+ * `@CompositeKeyPath` must execute **before** `@DataClass`. Decorators are
+ * applied bottom-up, so write it *below* `@DataClass` (closer to the `class`
+ * keyword). `@KeyPath` must **not** also be used on the same class.
+ *
+ * @throws `Error` - At decoration time when `options.generator` or
+ *   `options.autoIncrement` is provided.
  *
  * @example
  * ```ts
- * @CompositeKeyPath(['userId', 'projectId'])
  * @DataClass()
+ * @CompositeKeyPath(['userId', 'projectId'])
  * class UserProject {
  *   userId!: string;
  *   projectId!: string;
@@ -1448,6 +1453,18 @@ function CompositeKeyPath(
   options?: KeyPathOptions,
 ): ClassDecorator {
   return (target: Function) => {
+    if (options?.generator) {
+      throw new Error(
+        `Key generators are not supported for composite keys on class ${target.name}. ` +
+        'Provide all key fields explicitly before calling create().',
+      );
+    }
+    if (options?.autoIncrement) {
+      throw new Error(
+        `autoIncrement is not supported for composite keys on class ${target.name}.`,
+      );
+    }
+
     const metadata: KeyPathMetadata = {
       fields: fields,
       options: options,

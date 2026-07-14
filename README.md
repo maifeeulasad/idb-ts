@@ -150,11 +150,13 @@ Designates the decorated property as the primary key of the object store. Exactl
 
 #### `@CompositeKeyPath(fields, options?)`
 
-Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`.
+Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`. Write it *below* `@DataClass` (decorators are applied bottom-up, and the key path must be registered before `@DataClass` validates it).
+
+Key generation is not supported for composite keys: passing `generator` or `autoIncrement` throws at decoration time. Provide every key field explicitly before `create()`.
 
 ```typescript
-@CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
+@CompositeKeyPath(['userId', 'projectId'])
 class UserProject {
   userId!: string;
   projectId!: string;
@@ -426,9 +428,11 @@ KeyGenerators.random(); // "xyz789abc"
 
 ### Composite keys
 
+Key generation (`generator` / `autoIncrement`) is not supported for composite keys and throws at decoration time.
+
 ```typescript
-@CompositeKeyPath(['userId', 'projectId'])
 @DataClass()
+@CompositeKeyPath(['userId', 'projectId'])
 class UserProject {
   userId!: string;
   projectId!: string;
