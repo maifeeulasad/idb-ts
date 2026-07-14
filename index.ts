@@ -841,7 +841,13 @@ class QueryBuilder<T> {
 
   /**
    * Constrains the IDB key range used when reading via {@link QueryBuilder.useIndex}.
-   * Has no effect unless `useIndex` has been called.
+   *
+   * Unlike {@link QueryBuilder.where} conditions - which are evaluated
+   * **in memory** after candidates are fetched - the range is applied natively
+   * at the IndexedDB layer, so it narrows the candidate set before any
+   * in-memory filtering runs. Because a range is meaningless without an index
+   * to apply it to, executing a query that sets a range without calling
+   * `useIndex` throws instead of silently ignoring the bounds.
    *
    * @param start - Inclusive lower bound of the key range, or `undefined` for an open lower bound.
    * @param end   - Inclusive upper bound of the key range, or `undefined` for an open upper bound.
@@ -892,6 +898,15 @@ class QueryBuilder<T> {
   /** @internal */
   private createReadRequest(store: IDBObjectStore): IDBRequest {
     if (!this.indexName) {
+      if (this.rangeStart !== undefined || this.rangeEnd !== undefined) {
+        throw new Error(
+          'range() requires useIndex(): key ranges are applied at the ' +
+          'IndexedDB layer through an index. Either call useIndex(indexName) ' +
+          'before range(), or express the bounds as in-memory filters via ' +
+          'where(field).between(start, end) / gte() / lte().',
+        );
+      }
+
       return store.getAll();
     }
 
