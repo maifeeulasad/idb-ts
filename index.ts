@@ -1959,6 +1959,15 @@ interface EntityRepository<T> {
   count(): Promise<number>;
 
   /**
+   * Returns the primary keys of all records in the store, without loading
+   * the record values.
+   *
+   * @returns A promise resolving to an array of primary keys, in the
+   *   store's natural key order.
+   */
+  getKeys(): Promise<IDBValidKey[]>;
+
+  /**
    * Returns whether a record with the given primary key exists.
    *
    * @param key - The primary key to check. Accepts the same key shapes as
@@ -3126,6 +3135,24 @@ class Database {
             return new Promise<number>((resolve, reject) => {
               request.onsuccess = () => {
                 this.printDebug(`Count for ${cls.name}:`, request.result);
+                resolve(request.result);
+              };
+              request.onerror = () => reject(request.error);
+            });
+          },
+          transaction,
+        );
+      },
+
+      getKeys: async (): Promise<IDBValidKey[]> => {
+        return this.performOperation(
+          cls.name,
+          'readonly',
+          (store) => {
+            const request = store.getAllKeys();
+            return new Promise<IDBValidKey[]>((resolve, reject) => {
+              request.onsuccess = () => {
+                this.printDebug(`Keys for ${cls.name}:`, request.result);
                 resolve(request.result);
               };
               request.onerror = () => reject(request.error);
