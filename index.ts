@@ -880,6 +880,66 @@ class QueryBuilder<T> {
     };
   }
 
+  /**
+   * Returns an independent copy of this builder carrying all accumulated
+   * state (filter clauses, ordering, pagination, index and range settings).
+   *
+   * Use it to derive query variations from a shared base without the
+   * variations mutating each other - appending clauses to the clone never
+   * affects the original, and vice versa.
+   *
+   * @returns A new {@link QueryBuilder} with identical state.
+   *
+   * @example
+   * ```ts
+   * const adults = db.User.query().where('age').gte(18);
+   * const admins  = adults.clone().where('role').equals('admin');
+   * const guests  = adults.clone().where('role').equals('guest');
+   * ```
+   */
+  clone(): QueryBuilder<T> {
+    const copy = new QueryBuilder<T>(this.db, this.storeName, this.transaction);
+    copy.clauses = [...this.clauses];
+    copy.orderField = this.orderField;
+    copy.orderDirection = this.orderDirection;
+    copy.limitCount = this.limitCount;
+    copy.offsetCount = this.offsetCount;
+    copy.indexName = this.indexName;
+    copy.rangeStart = this.rangeStart;
+    copy.rangeEnd = this.rangeEnd;
+    copy.groupField = this.groupField;
+    copy.pendingConnector = this.pendingConnector;
+    return copy;
+  }
+
+  /**
+   * Clears every accumulated clause and setting, returning the builder to
+   * its freshly-created state so it can be reused safely.
+   *
+   * @returns `this` for chaining.
+   *
+   * @example
+   * ```ts
+   * const query = db.User.query();
+   * const admins = await query.where('role').equals('admin').execute();
+   * const everyone = await query.reset().execute();
+   * ```
+   */
+  reset(): this {
+    this.clauses = [];
+    this.orderField = undefined;
+    this.orderDirection = 'asc';
+    this.limitCount = undefined;
+    this.offsetCount = undefined;
+    this.indexName = undefined;
+    this.rangeStart = undefined;
+    this.rangeEnd = undefined;
+    this.currentField = undefined;
+    this.groupField = undefined;
+    this.pendingConnector = 'and';
+    return this;
+  }
+
   /** @internal */
   private async loadCandidates(): Promise<T[]> {
     const store = this.transaction
