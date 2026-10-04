@@ -79,7 +79,7 @@ import { Database, DataClass, KeyPath, Index } from 'idb-ts';
 @DataClass()
 class User {
   @KeyPath({ generator: 'uuid' })
-  id!: string;
+  id?: string;
 
   @Index({ unique: true })
   email!: string;
@@ -93,7 +93,6 @@ const db = await Database.build<{ User: EntityRepository<User> }>('mydb', [
 ]);
 
 await db.User.create({
-  id: '',
   name: 'Alice',
   age: 30,
   email: 'alice@example.com',
@@ -113,7 +112,7 @@ import { Database, DataClass, KeyPath, Index, Validate } from 'idb-ts';
 @DataClass({ version: 1 })
 class User {
   @KeyPath({ generator: 'uuid' })
-  id!: string;
+  id?: string;
 
   @Index({ unique: true })
   @Validate(
@@ -147,6 +146,8 @@ Designates the decorated property as the primary key of the object store. Exactl
 | --------------- | ----------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------- |
 | `autoIncrement` | `boolean`                                                               | `false` | Delegate key assignment to IndexedDB's auto-increment mechanism.                   |
 | `generator`     | `'uuid'` \| `'timestamp'` \| `'random'` \| `(item) => string \| number` | -       | Automatic key generator invoked when the key field is absent or empty on `create`. |
+
+> When using `autoIncrement` or `generator`, declare the key field as optional (`id?: string`) so TypeScript doesn't force you to pass a placeholder value on `create`.
 
 #### `@CompositeKeyPath(fields, options?)`
 
@@ -400,7 +401,7 @@ const byStatus = await db.Order.query().groupBy('status').count();
 @DataClass()
 class Task {
   @KeyPath({ autoIncrement: true })
-  id!: number; // Assigned by IndexedDB: 1, 2, 3, …
+  id?: number; // Assigned by IndexedDB: 1, 2, 3, …
 
   title!: string;
 }
@@ -412,19 +413,19 @@ class Task {
 @DataClass()
 class Document {
   @KeyPath({ generator: 'uuid' }) // RFC 4122 v4
-  id!: string;
+  id?: string;
 }
 
 @DataClass()
 class Event {
   @KeyPath({ generator: 'timestamp' }) // Date.now()
-  id!: number;
+  id?: number;
 }
 
 @DataClass()
 class Session {
   @KeyPath({ generator: 'random' }) // Base-36 random string
-  id!: string;
+  id?: string;
 }
 ```
 
@@ -437,7 +438,7 @@ class Invoice {
     generator: (entity) =>
       `INV-${entity.year}-${String(entity.number).padStart(4, '0')}`,
   })
-  invoiceId!: string;
+  invoiceId?: string;
 
   year!: number;
   number!: number;
@@ -524,7 +525,7 @@ import { Calculated } from 'idb-ts';
 @DataClass()
 class OrderLine {
   @KeyPath({ generator: 'uuid' })
-  id!: string;
+  id?: string;
 
   quantity!: number;
   unitPrice!: number;
@@ -533,7 +534,7 @@ class OrderLine {
   total!: number;
 }
 
-await db.OrderLine.create({ id: '', quantity: 3, unitPrice: 9.5 } as OrderLine);
+await db.OrderLine.create({ quantity: 3, unitPrice: 9.5 } as OrderLine);
 (await db.OrderLine.read(id))!.total; // 28.5 - computed and persisted
 ```
 
@@ -589,7 +590,7 @@ All repository operations performed through the `tx` handle share the same nativ
 @DataClass()
 class Session {
   @KeyPath({ generator: 'uuid' })
-  id!: string;
+  id?: string;
 
   userId!: string;
 }
@@ -823,6 +824,8 @@ Entities
   property, or @CompositeKeyPath(['fieldA','fieldB']) on the class
   (written BELOW @DataClass - decorators apply bottom-up).
 - generator: 'uuid' | 'timestamp' | 'random' | (item) => string | number.
+- With autoIncrement or generator, declare the key field optional (id?: ...)
+  so create() doesn't require a placeholder value for it.
 - Secondary indexes: @Index({ unique?: boolean }) on properties.
 - Validation: @Validate((value, item) => boolean, 'message') on properties.
 - Auto-expiry: @RetentionPolicy({ seconds, field?, enabled? }) on the class.
