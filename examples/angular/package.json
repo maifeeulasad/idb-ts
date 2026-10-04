@@ -31,7 +31,7 @@
     "@angular/cli": "^21.2.24",
     "@angular/compiler-cli": "^21.2.25",
     "@types/express": "^5.0.6",
-    "@types/node": "^20.19.43",
+    "@types/node": "^26.6.4",
     "jsdom": "^28.1.0",
     "prettier": "^3.9.9",
     "typescript": "~5.9.3",
