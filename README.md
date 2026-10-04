@@ -19,7 +19,7 @@
   <a href="https://github.com/maifeeulasad/idb-ts/watchers">
     <img src="https://img.shields.io/github/watchers/maifeeulasad/idb-ts" alt="GitHub watchers">
   </a>
-  <a href="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases">
+  <a href="https://github.com/maifeeulasad/idb-ts/commits/main">
     <img src="https://img.shields.io/github/commits-since/maifeeulasad/idb-ts/latest/main?include_prereleases" alt="Commits since release">
   </a>
 </p>
