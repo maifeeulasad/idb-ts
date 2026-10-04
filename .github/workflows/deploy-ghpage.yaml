@@ -190,6 +190,32 @@ jobs:
             content = title_pattern.sub(lambda match: f'<title>{prefix}{match.group(1)}</title>', content, count=1)
             path.write_text(content)
           PY
+      - name: Generate coverage badge data
+        run: |
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          summary = json.loads(Path('./coverage/coverage-summary.json').read_text())
+          pct = summary['total']['lines']['pct']
+
+          if pct >= 90:
+            color = 'brightgreen'
+          elif pct >= 75:
+            color = 'yellow'
+          elif pct >= 50:
+            color = 'orange'
+          else:
+            color = 'red'
+
+          badge = {
+            'schemaVersion': 1,
+            'label': 'coverage',
+            'message': f'{pct:.1f}%',
+            'color': color,
+          }
+          Path('./coverage/coverage-badge.json').write_text(json.dumps(badge))
+          PY
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
@@ -239,7 +265,6 @@ jobs:
   #         git add -f README.md
   #         git commit -m "[report]: updated performance report" || echo "No changes to commit"
   #         git push
-
 
   generate-docs:
     if: github.actor != 'github-actions[bot]'
@@ -304,8 +329,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs:
-      [
+    needs: [
         build-react,
         build-vue,
         build-typescript,
