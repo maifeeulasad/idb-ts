@@ -23,11 +23,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - name: Install build tools
+        run: npm i -g pnpm
       - name: Install dependencies
-        run: yarn
+        run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/vite+react
       - name: Build React App
-        run: yarn build
+        run: pnpm build
         working-directory: ./examples/vite+react
       - name: Upload React Build Artifacts
         uses: actions/upload-artifact@v4
@@ -45,11 +47,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - name: Install build tools
+        run: npm i -g pnpm
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/vue
       - name: Build Vue App
-        run: npm run build
+        run: pnpm build
         working-directory: ./examples/vue
       - name: Upload Vue Build Artifacts
         uses: actions/upload-artifact@v4
@@ -67,11 +71,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - name: Install build tools
+        run: npm i -g pnpm
       - name: Install dependencies
-        run: npm ci
+        run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/typescript
       - name: Build TypeScript App
-        run: npm run build
+        run: pnpm build
         working-directory: ./examples/typescript
       - name: Upload TypeScript Build Artifacts
         uses: actions/upload-artifact@v4
