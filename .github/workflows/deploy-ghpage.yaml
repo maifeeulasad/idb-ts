@@ -4,8 +4,14 @@ on:
   push:
     branches: [main]
 
-# permissions:
-#   contents: write
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   build-react:
@@ -267,6 +273,9 @@ jobs:
   deploy:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     needs:
       [
         build-react,
@@ -315,9 +324,10 @@ jobs:
         with:
           name: coverage-report
           path: ./public/coverage
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
-          publish_dir: ./public
-          allow_empty_commit: true
+          path: ./public
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
