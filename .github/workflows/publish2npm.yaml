@@ -18,12 +18,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: ${{ matrix.registry-url }}
-      - name: Install build tools
-        run: npm i -g pnpm
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - name: 'Installing prod deps'
         run: pnpm i --frozen-lockfile
       - name: 'Build'

@@ -19,12 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: examples/vite+react/package.json
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
-      - name: Install build tools
-        run: npm i -g pnpm
+          cache: pnpm
+          cache-dependency-path: examples/vite+react/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/vite+react
@@ -43,12 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: examples/vue/package.json
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
-      - name: Install build tools
-        run: npm i -g pnpm
+          cache: pnpm
+          cache-dependency-path: examples/vue/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/vue
@@ -67,12 +73,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: examples/typescript/package.json
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
-      - name: Install build tools
-        run: npm i -g pnpm
+          cache: pnpm
+          cache-dependency-path: examples/typescript/pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/typescript
@@ -91,12 +100,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: examples/angular/package.json
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
+          cache: pnpm
+          cache-dependency-path: examples/angular/pnpm-lock.yaml
       - name: Install build tools
-        run: npm i -g pnpm && npm i -g @angular/cli
+        run: npm i -g @angular/cli
       - name: Install dependencies
         run: pnpm i --frozen-lockfile --ignore-workspace
         working-directory: ./examples/angular
@@ -115,12 +129,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
-      - name: Install build tools
-        run: npm i -g pnpm
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - name: Install dependencies
         run: pnpm i --frozen-lockfile
       - name: Run tests with coverage
@@ -233,12 +250,17 @@ jobs:
     #   ]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.1
       - name: Use Node.js 26.x
         uses: actions/setup-node@v4
         with:
           node-version: 26.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
       - name: Install dependencies
-        run: npm i -g pnpm && pnpm i --frozen-lockfile
+        run: pnpm i --frozen-lockfile
       - name: Generate Documentation
         run: pnpm docs:generate
       - name: Add Google tag to generated documentation pages
