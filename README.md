@@ -10,6 +10,18 @@
   <a href="https://badgen.net/bundlephobia/minzip/idb-ts">
     <img src="https://badgen.net/bundlephobia/minzip/idb-ts&cache-control=no-cache" alt="minified + gzipped">
   </a>
+  <a href="https://github.com/maifeeulasad/idb-ts/blob/main/LICENSE">
+    <img src="https://img.shields.io/npm/l/idb-ts" alt="License">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/maifeeulasad/idb-ts/actions/workflows/ci.yaml">
+    <img src="https://github.com/maifeeulasad/idb-ts/actions/workflows/ci.yaml/badge.svg" alt="Test and Coverage">
+  </a>
+  <a href="https://maifeeulasad.github.io/idb-ts/coverage/lcov-report/">
+    <img src="https://img.shields.io/endpoint?url=https://maifeeulasad.github.io/idb-ts/coverage/coverage-badge.json" alt="Coverage">
+  </a>
 </p>
 
 <p align="center">
@@ -50,6 +62,19 @@ yarn add idb-ts
   }
 }
 ```
+
+---
+
+## Compatibility
+
+| Requirement            | Supported versions                                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Runtime**            | Any environment exposing a global `indexedDB` - all current browsers - or Node.js via a polyfill such as [`fake-indexeddb`](https://www.npmjs.com/package/fake-indexeddb) (used by this project's own test suite). |
+| **TypeScript**         | `>=4.5`, with `experimentalDecorators` and `emitDecoratorMetadata` enabled. Tested against the TypeScript version pinned in this repo's `package.json`.                                                            |
+| **`reflect-metadata`** | `^0.2.2`                                                                                                                                                                                                           |
+| **`tslib`**            | `^2.8.1`                                                                                                                                                                                                           |
+| **Node.js (tooling)**  | `>=26` for building/testing this repo and its examples. The published package itself has no Node.js runtime requirement.                                                                                           |
+| **Module formats**     | ESM (`import`) and CommonJS (`require`) - see the `exports` field in [`package.json`](./package.json).                                                                                                             |
 
 ---
 
@@ -151,7 +176,7 @@ Designates the decorated property as the primary key of the object store. Exactl
 
 #### `@CompositeKeyPath(fields, options?)`
 
-Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`. Write it *below* `@DataClass` (decorators are applied bottom-up, and the key path must be registered before `@DataClass` validates it).
+Class-level decorator for composite primary keys. Cannot be combined with `@KeyPath`. Write it _below_ `@DataClass` (decorators are applied bottom-up, and the key path must be registered before `@DataClass` validates it).
 
 Key generation is not supported for composite keys: passing `generator` or `autoIncrement` throws at decoration time. Provide every key field explicitly before `create()`.
 
