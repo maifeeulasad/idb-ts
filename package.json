@@ -58,21 +58,21 @@
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.31.0",
+    "@eslint/js": "^9.39.5",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.12.0",
-    "@typescript-eslint/eslint-plugin": "^8.37.0",
-    "@typescript-eslint/parser": "^8.37.0",
-    "eslint": "^9.31.0",
+    "@types/node": "^24.19.1",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
+    "eslint": "^9.39.5",
     "fake-indexeddb": "^6.2.5",
     "globals": "^15.15.0",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "prettier": "^3.8.3",
-    "rollup": "^4.60.1",
-    "ts-jest": "^29.4.9",
-    "typedoc": "^0.28.19",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "prettier": "^3.9.9",
+    "rollup": "^4.64.0",
+    "ts-jest": "^29.4.14",
+    "typedoc": "^0.28.20",
     "typescript": "^6.0.3"
   }
 }
