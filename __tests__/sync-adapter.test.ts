@@ -85,6 +85,32 @@ describe('SyncAdapter push/pull', () => {
     db.close();
   });
 
+  it('pullFrom skips an entity when the adapter returns a non-array value', async () => {
+    const db: any = await Database.build('SyncTargetDB', [Contact]);
+    const before = await db.Contact.count();
+
+    const badAdapter: SyncAdapter = {
+      push: async () => {},
+      pull: async () => 'not-an-array' as unknown as unknown[],
+    };
+    await db.pullFrom(badAdapter);
+
+    expect(await db.Contact.count()).toBe(before);
+    db.close();
+  });
+
+  it('pullFrom resolves immediately when the adapter returns an empty array', async () => {
+    const db: any = await Database.build('SyncTargetDB', [Contact]);
+    const before = await db.Contact.count();
+
+    const adapter = new MemoryAdapter();
+    adapter.store.set('Contact', []);
+    await db.pullFrom(adapter);
+
+    expect(await db.Contact.count()).toBe(before);
+    db.close();
+  });
+
   it('round-trips between two databases through the adapter', async () => {
     const adapter = new MemoryAdapter();
 

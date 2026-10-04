@@ -105,4 +105,28 @@ describe('Database export/import', () => {
     ).resolves.toBeUndefined();
     target.close();
   });
+
+  it('skips a dump entry whose value is not an array of records', async () => {
+    const target: any = await Database.build('ImportTargetDB', [Author, Book]);
+    const before = await target.Author.count();
+
+    await expect(
+      target.importDatabase({ Author: 'not-an-array' } as any),
+    ).resolves.toBeUndefined();
+
+    expect(await target.Author.count()).toBe(before);
+    target.close();
+  });
+
+  it('resolves immediately for a registered entity with no records to import', async () => {
+    const target: any = await Database.build('ImportTargetDB', [Author, Book]);
+    const before = await target.Author.count();
+
+    await expect(
+      target.importDatabase({ Author: [] }),
+    ).resolves.toBeUndefined();
+
+    expect(await target.Author.count()).toBe(before);
+    target.close();
+  });
 });
