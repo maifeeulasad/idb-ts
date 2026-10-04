@@ -84,3 +84,29 @@ describe('Retention policy cleanup', () => {
     expect(afterSecondWaitLong[0].id).toBe('long-2');
   });
 });
+
+describe('RetentionPolicy decoration-time validation', () => {
+  it('rejects a non-integer seconds value', () => {
+    expect(() => {
+      @RetentionPolicy({ seconds: 1.5 })
+      @DataClass()
+      class Invalid {
+        @KeyPath()
+        id!: string;
+      }
+      void Invalid;
+    }).toThrow('RetentionPolicy.seconds must be a positive integer.');
+  });
+
+  it('rejects a zero or negative seconds value', () => {
+    expect(() => {
+      @RetentionPolicy({ seconds: 0 })
+      @DataClass()
+      class Invalid {
+        @KeyPath()
+        id!: string;
+      }
+      void Invalid;
+    }).toThrow('RetentionPolicy.seconds must be a positive integer.');
+  });
+});

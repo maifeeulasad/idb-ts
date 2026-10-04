@@ -123,4 +123,17 @@ describe('Transaction API', () => {
     expect(await db.User.read('u4')).toBeUndefined();
     expect(await db.Order.read('o4')).toBeUndefined();
   });
+
+  it('rejects beginTransaction with an entity name that is not registered', async () => {
+    await expect(
+      db.beginTransaction(['User', 'Ghost'], 'readwrite'),
+    ).rejects.toThrow(`Entity 'Ghost' is not registered in ${dbName}.`);
+  });
+
+  it('rejects beginTransaction once the database connection has been closed', async () => {
+    db.close();
+    await expect(db.beginTransaction(['User'], 'readwrite')).rejects.toThrow(
+      'Database not initialized.',
+    );
+  });
 });

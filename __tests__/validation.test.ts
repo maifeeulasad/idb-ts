@@ -1,6 +1,22 @@
 import { Database, DataClass, Index, KeyPath, Validate } from '../index';
 
 @DataClass()
+class ThrowingPredicateEntity {
+  @KeyPath()
+  id!: string;
+
+  @Validate(() => {
+    throw new Error('predicate exploded');
+  }, 'must satisfy the predicate')
+  value!: string;
+
+  constructor(id: string, value: string) {
+    this.id = id;
+    this.value = value;
+  }
+}
+
+@DataClass()
 class ValidatedUser {
   @KeyPath()
   @Validate((value: string) => value.length > 0, 'ID cannot be empty')
@@ -73,5 +89,28 @@ describe('Validation decorator', () => {
 
     const stored = await db.ValidatedUser.read('u2');
     expect(stored?.email).toBe('valid@example.com');
+  });
+
+  it('treats a throwing predicate as a validation failure rather than propagating', async () => {
+    const throwingDbName = `validation-throw-${Date.now()}-${Math.random()}`;
+    const deleteRequest = indexedDB.deleteDatabase(throwingDbName);
+    await new Promise<void>((resolve) => {
+      deleteRequest.onsuccess = () => resolve();
+      deleteRequest.onerror = () => resolve();
+    });
+
+    const throwingDb: any = await Database.build(throwingDbName, [
+      ThrowingPredicateEntity,
+    ]);
+
+    await expect(
+      throwingDb.ThrowingPredicateEntity.create(
+        new ThrowingPredicateEntity('t1', 'anything'),
+      ),
+    ).rejects.toThrow(
+      /Validation failed for ThrowingPredicateEntity: value: must satisfy the predicate/,
+    );
+
+    throwingDb.close();
   });
 });
